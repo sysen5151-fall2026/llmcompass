@@ -7,9 +7,37 @@ SYSEN 5151 — Foundations of Systems Engineering: AI-Assisted Product Build
 > README reflects what's actually in the repo today and will expand as the project
 > moves through the SE lifecycle (concept → requirements → architecture → build).
 
-## Project
+## Product
 
-_TBD — concept and requirements not yet written up._
+**LLM Compass** — an LLM Selection and Evaluation Agent that helps organizations pick
+the right language model for their AI product. Team: Daniel Distor (dd745), Khai Xin
+Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifli
+(ty456).
+
+## Operational Concept
+
+> TBD — pending the team's Innoslate asset diagram for Universe context and OpsCon
+> narrative (Lab 1 / Tutorial 3). Once that model exists, its narrative text goes
+> here **copied verbatim, not paraphrased** — see docs/decisions and course Week 2
+> materials for why.
+>
+> Working draft, not yet sourced from the model: a user (Application Developer,
+> Budget Owner, Compliance Officer, Product Owner, or Technical Lead) describes an
+> application's requirements in plain language; LLM Compass checks candidate LLMs
+> against published benchmark scores and vendor specifications and returns a ranked
+> recommendation with a rationale.
+
+## External Systems
+
+Draft — pending the Innoslate context diagram; see [docs/context.md](docs/context.md).
+
+- Requirement Submitter (the stakeholder roles above)
+- Benchmark Source
+- Vendor Specification Source
+
+## Status
+
+Scaffold only. No feature code — see SPEC.md, Chapter 3.
 
 ## Toolset
 
@@ -38,14 +66,26 @@ See the team's Toolset Justification doc for full rationale.
 
 ```
 .
-├── .github/workflows/ci.yml   # CI stub — currently just a "hello world" job
+├── .github/workflows/ci.yml     # CI stub — currently just a "hello world" job
 ├── backend/
-│   └── requirements.txt       # Python deps for the planned backend (not yet implemented)
-├── hello.txt                  # initial pipeline smoke test
+│   └── requirements.txt         # Python deps for the planned backend (not yet implemented)
+├── requirement-submitter/       # boundary element scaffold — see docs/context.md
+├── benchmark-source/            # boundary element scaffold — see docs/context.md
+├── vendor-specification-source/ # boundary element scaffold — see docs/context.md
+├── hello.txt                    # initial pipeline smoke test
+├── SPEC.md                      # stub — Chapter 3 headings only
+├── docs/
+│   ├── context.md               # external systems, draft pending Innoslate diagram
+│   ├── environment.md
+│   ├── prompt-log.md
+│   └── decisions/0001-initial-toolchain.md
 └── README.md
 ```
 
-No application code has been written yet — this is repo scaffolding only.
+No application code has been written yet — this is repo scaffolding only. The three
+boundary-element directories are provisional, named from the draft context inventory
+in docs/context.md — rename/add to match once the team's Innoslate context diagram is
+final.
 
 ## Getting started
 
