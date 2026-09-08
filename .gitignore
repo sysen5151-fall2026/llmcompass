@@ -1,3 +1,6 @@
+# Local-only course material (slides, handouts) — never pushed
+/reference/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
