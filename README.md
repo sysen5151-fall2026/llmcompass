@@ -211,6 +211,7 @@ See the team's Toolset Justification doc for full rationale.
 .
 ├── .github/workflows/ci.yml   # CI stub — currently just a "hello world" job
 ├── backend/
+│   ├── app.py                 # no-op entry point — see Getting started below
 │   └── requirements.txt       # Python deps for the planned backend (not yet implemented)
 ├── hello.txt                  # initial pipeline smoke test
 ├── SPEC.md                    # stub — Chapter 3 headings only
@@ -228,7 +229,12 @@ the course's own worked example).
 
 ## Getting started
 
-Nothing runnable yet. Setup instructions will be added once the first backend slice exists.
+```
+python backend/app.py
+```
+
+That's it — it's a no-op entry point. It starts and exits immediately; no feature
+code exists yet (see SPEC.md, Chapter 3, still TBD).
 
 ## Roadmap
 
