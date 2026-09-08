@@ -2,10 +2,8 @@
 
 SYSEN 5151 — Foundations of Systems Engineering: AI-Assisted Product Build
 
-> **Status: early setup phase.** Toolset is chosen and CI scaffolding exists, but the
-> product concept, requirements, and architecture haven't been finalized yet. This
-> README reflects what's actually in the repo today and will expand as the project
-> moves through the SE lifecycle (concept → requirements → architecture → build).
+Early setup phase. Toolset's picked and CI is stubbed in; concept, requirements, and
+architecture come next as we move through the SE lifecycle.
 
 ## Product
 
@@ -16,20 +14,16 @@ Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifl
 
 ## Operational Concept
 
-> TBD — pending the team's Innoslate asset diagram for Universe context and OpsCon
-> narrative (Lab 1 / Tutorial 3). Once that model exists, its narrative text goes
-> here **copied verbatim, not paraphrased** — see docs/decisions and course Week 2
-> materials for why.
->
-> Working draft, not yet sourced from the model: a user (Application Developer,
-> Budget Owner, Compliance Officer, Product Owner, or Technical Lead) describes an
-> application's requirements in plain language; LLM Compass checks candidate LLMs
-> against published benchmark scores and vendor specifications and returns a ranked
-> recommendation with a rationale.
+A user — Application Developer, Budget Owner, Compliance Officer, Product Owner, or
+Technical Lead — describes an application's requirements in plain language. LLM
+Compass checks candidate LLMs against published benchmark scores and vendor specs
+and returns a ranked recommendation with the reasoning behind it.
+
+(Swapping this in for the real OpsCon narrative once it's written in Innoslate.)
 
 ## External Systems
 
-Draft — pending the Innoslate context diagram; see [docs/context.md](docs/context.md).
+See [docs/context.md](docs/context.md).
 
 - Requirement Submitter (the stakeholder roles above)
 - Benchmark Source

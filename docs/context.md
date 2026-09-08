@@ -1,8 +1,7 @@
 # Context
 
-> Draft, based on the LLM Compass product concept — pending the team's context
-> diagram (Innoslate). Once that diagram exists, verify every entry below against it
-> and add anything it shows that this draft missed.
+External systems for LLM Compass. Will match this up against the Innoslate context
+diagram once it's built.
 
 ## System Context — External Systems
 
