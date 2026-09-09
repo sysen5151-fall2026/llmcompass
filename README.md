@@ -167,13 +167,15 @@ Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifl
 
 See [docs/context.md](docs/context.md).
 
-- Application Developer
-- Technical Lead / Architect
-- Budget Owner
-- Compliance Officer
-- Operations Lead
-- Public Benchmark Data
-- Vendor Specifications
+- Stakeholder actors
+  - Application Developer
+  - Technical Lead / Architect
+  - Budget Owner
+  - Compliance Officer
+  - Operations Lead
+- Data sources
+  - Public Benchmark Data
+  - Vendor Specifications
 
 (The end user of the downstream application is out of scope — per §4.3, they don't
 interact with LLM Compass directly.)
