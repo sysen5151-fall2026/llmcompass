@@ -97,3 +97,17 @@ match the worked example's field structure and content expectations.
   with the same six-category decision table as before.
 - `docs/environment.md`, `README.md` — link/path updated from `docs/decisions/` to
   `docs/adr/`.
+
+---
+
+## 2026-09-09 — Daniel Distor — Claude Code
+
+**Prompt:** Corrected the Editor/IDE row — the team actually uses both VS Code and
+Cursor (member's choice), not VS Code with Cursor as a rejected alternative. That was
+wrong in every file that recorded it.
+
+**Output:**
+- `README.md`, `docs/environment.md`, `docs/adr/0001-initial-toolchain.md` — Editor /
+  IDE row changed from "VS Code (Cursor rejected)" to "VS Code, Cursor — team uses
+  both." Team & tool ownership table already listed Cursor for Daniel and Allyanna
+  and VS Code for Khai, so no change needed there.

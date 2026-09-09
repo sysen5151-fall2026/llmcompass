@@ -11,7 +11,7 @@ Decision:
 | Category | Chosen | Rejected alternatives | Why |
 |---|---|---|---|
 | AI coding assistant | Claude Code | Cursor, Codex | Most members already familiar with Cursor-adjacent workflows; team standardized on Claude Code for agentic multi-file work. |
-| Editor / IDE | VS Code | Cursor | Free and user-friendly. |
+| Editor / IDE | VS Code, Cursor | — | Team uses both, member's choice; VS Code is free, Cursor is what some members already knew. |
 | Version control & CI | Git + GitHub, GitHub Actions | — | Course-recommended universal constant; some members have prior experience. |
 | Backend / data storage | PostgreSQL (Supabase) | SQLite | Some members have prior PostgreSQL experience. |
 | Hosting / deployment | Netlify | DigitalOcean | Free tier. |

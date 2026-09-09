@@ -189,7 +189,7 @@ Scaffold only. No feature code — see SPEC.md, Chapter 3.
 | Category | Tool Selected | Notes |
 |---|---|---|
 | AI coding assistant | Claude Code | Alternatives considered: Cursor, Codex |
-| Editor / IDE | VS Code | Alternative considered: Cursor |
+| Editor / IDE | VS Code, Cursor | Team uses both — member's choice |
 | Version control & CI | Git + GitHub, GitHub Actions | |
 | Backend / data storage | PostgreSQL (Supabase) | Alternative considered: SQLite |
 | Hosting / deployment | Netlify | Alternative considered: DigitalOcean |

@@ -7,7 +7,7 @@ rationale behind each choice.
 | Category | Tool | Alternatives Considered |
 |---|---|---|
 | AI coding assistant | Claude Code | Cursor, Codex |
-| Editor / IDE | VS Code | Cursor |
+| Editor / IDE | VS Code, Cursor | — |
 | Version control & CI | Git + GitHub, GitHub Actions | — |
 | Backend / data storage | PostgreSQL (Supabase) | SQLite |
 | Hosting / deployment | Netlify | DigitalOcean |
