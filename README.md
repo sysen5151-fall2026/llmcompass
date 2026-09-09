@@ -5,13 +5,6 @@ SYSEN 5151 — Foundations of Systems Engineering: AI-Assisted Product Build
 Early setup phase. Toolset's picked and CI is stubbed in; concept, requirements, and
 architecture come next as we move through the SE lifecycle.
 
-## Product
-
-**LLM Compass** — an LLM Selection and Evaluation Agent that helps organizations pick
-the right language model for their AI product. Team: Daniel Distor (dd745), Khai Xin
-Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifli
-(ty456).
-
 ## Operational Concept
 
 ### 1. Scope
@@ -162,6 +155,13 @@ no suitable proxy exists rather than substituting a weak one silently.
 The system supports a decision; it does not make one. Every proposed mapping between
 a requirement and a measurable criterion is presented for the user to accept,
 reject, or amend before it is used.
+
+## Product
+
+**LLM Compass** — an LLM Selection and Evaluation Agent that helps organizations pick
+the right language model for their AI product. Team: Daniel Distor (dd745), Khai Xin
+Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifli
+(ty456).
 
 ## External Systems
 
