@@ -219,7 +219,7 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── context.md             # every external system — see Operational Concept above
 │   ├── environment.md
 │   ├── prompt-log.md
-│   └── decisions/0001-initial-toolchain.md
+│   └── adr/0001-initial-toolchain.md
 └── README.md
 ```
 

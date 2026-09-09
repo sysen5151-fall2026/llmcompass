@@ -1,7 +1,7 @@
 # Environment / Toolchain
 
 Recorded from the team's Toolset Justification (Part 1). See
-[`docs/decisions/0001-initial-toolchain.md`](decisions/0001-initial-toolchain.md) for the
+[`docs/adr/0001-initial-toolchain.md`](adr/0001-initial-toolchain.md) for the
 rationale behind each choice.
 
 | Category | Tool | Alternatives Considered |

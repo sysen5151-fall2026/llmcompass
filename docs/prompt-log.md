@@ -77,3 +77,23 @@ scaffold the missing no-op entry point.
   `chromadb`), not a curated dependency list for this project.
 - Repo is named `lab-project`, not for the team — unclear if that's fixed by
   the instructor's starter repo or something the team should rename.
+
+---
+
+## 2026-09-09 — Daniel Distor — Claude Code
+
+**Prompt:** The course's "Product Build — Build Steps" slide and the Lab Manual
+(`SYSEN_5151_Innoslate_Lab_Manual_v3_0_23_5_5.pdf`, §1.4.2 and the Airport Kiosk
+worked example) disagree on the ADR path — `docs/decisions/` vs. `docs/adr/`. Per the
+professor (asked directly), followed the Lab Manual: moved the ADR and rewrote it to
+match the worked example's field structure and content expectations.
+
+**Output:**
+- `docs/adr/0001-initial-toolchain.md` — replaces `docs/decisions/0001-initial-toolchain.md`
+  (git-removed). Re-fielded as Status / Context / Decision / Rationale / What would
+  change this decision (Lab Manual's labels, not the prior Nygard-style
+  Context/Decision/Consequences/Revisit-if), and now explicitly frames the LLM API
+  choice as the local-vs-hosted decision the Lab Manual's worked example calls for,
+  with the same six-category decision table as before.
+- `docs/environment.md`, `README.md` — link/path updated from `docs/decisions/` to
+  `docs/adr/`.
