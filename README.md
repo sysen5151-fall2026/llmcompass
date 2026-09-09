@@ -57,7 +57,7 @@ provide no record of why a particular choice was made.
 
 ### 4. The proposed system
 
-#### 4.1 Overview
+**4.1 Overview**
 
 LLM Compass is a decision-support tool. A user describes an application's
 requirements and constraints; the system identifies candidate models, evaluates them
@@ -68,7 +68,7 @@ behind it.
 The system recommends. It does not host models, run inference, or make the choice on
 the user's behalf.
 
-#### 4.2 Operational scenario
+**4.2 Operational scenario**
 
 A technical lead at a small software company is starting work on an application that
 summarizes technical documents for its users. The team has agreed on rough
@@ -114,7 +114,7 @@ Four months later a new model is released. She reopens the saved decision, refre
 the data, and re-runs it. The comparison takes minutes rather than a day, and the
 resulting record shows what changed and why.
 
-#### 4.3 Users and their concerns
+**4.3 Users and their concerns**
 
 The application developer is concerned with capability: whether a model can actually
 do the task well.
@@ -137,7 +137,7 @@ and the risk of a model being deprecated by its vendor.
 The end user of the downstream application does not interact with LLM Compass, but
 the quality of their experience is what the requirements ultimately describe.
 
-#### 4.4 Operational assumptions and limitations
+**4.4 Operational assumptions and limitations**
 
 The system relies on published benchmark data and vendor-published specifications.
 It does not run its own evaluations against candidate models. Consequently its
