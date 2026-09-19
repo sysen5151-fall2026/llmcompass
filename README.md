@@ -131,8 +131,9 @@ The compliance officer is concerned with data residency, retention, and whether 
 vendor is contractually acceptable. Their concerns act as hard constraints: a model
 that fails them is excluded regardless of how well it scores.
 
-The operations lead is concerned with latency under load, rate limits, reliability,
-and the risk of a model being deprecated by its vendor.
+The product owner is accountable for the application's outcomes and priorities. They
+set the relative importance of capability, cost, and speed, which informs the
+weighting applied during selection.
 
 The end user of the downstream application does not interact with LLM Compass, but
 the quality of their experience is what the requirements ultimately describe.

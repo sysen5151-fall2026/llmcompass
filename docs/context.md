@@ -19,8 +19,11 @@ Compliance Officer (C.4)
   Out: ranked recommendation, rationale, decision record
 
 Product Owner (C.5)
-  In:  TBD — confirm against the Innoslate model (prioritization/acceptance
-       of the recommendation is assumed here, not yet verified)
+  In:  relative priority of capability, cost, and speed — informs the
+       weighting applied during selection (per Innoslate entity description:
+       "Accountable for the application's outcomes and priorities. Sets the
+       relative importance of capability, cost, and speed, which informs the
+       weighting applied during selection.")
   Out: ranked recommendation, rationale, decision record
 
 Technical Lead (C.6)
