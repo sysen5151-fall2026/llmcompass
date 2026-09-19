@@ -1,36 +1,36 @@
-def interpret_requirements(runtime_ack: dict) -> dict:
-    # UC.1.3
-    return {"proposed_criteria": ["context_length", "cost_ceiling", "latency_p95"]}
+def receive_requirements(requirements: dict) -> dict:
+    # UC.1.2
+    return {"received": True}
 
 
 def present_mapping_for_review(criteria: dict) -> dict:
-    # UC.1.5
-    return {
-        "context_length": "min_context_tokens",
-        "cost_ceiling": "usd_per_month",
-        "latency_p95": "response_time_ms",
-    }
+    # UC.1.6
+    return {"for_review": criteria["proposed_criteria"]}
 
 
-def retrieve_model_spec_and_benchmark_data(confirmed_mapping: dict) -> dict:
+def confirm_mapping(mapping: dict) -> dict:
     # UC.1.9
-    return {"model": "stub-model-1", "context_length": 200000, "cost_usd_per_month": 150}
+    return {"confirmed": True}
 
 
 def present_sensitivity_finding(spec: dict) -> dict:
-    # UC.1.14
-    return {"finding": "ranking flips at a 5% change in cost weighting"}
+    # UC.1.16
+    return {"finding": "ranking flips at a 5% change in cost weighting", "close_candidates": ["stub-model-1", "stub-model-2"]}
 
 
 def select_model(review: dict) -> dict:
-    # UC.1.15
+    # UC.1.17
     return {"selected_model": "stub-model-1"}
 
 
 def generate_decision_record(selection: dict) -> dict:
-    # UC.1.16 -- self-call, produces the walking skeleton's final output
+    # UC.1.18
     return {
-        "model": selection["selected_model"],
-        "criteria": ["context_length", "cost_ceiling", "latency_p95"],
+        "requirements": {"stub": "requirements and constraints"},
+        "criteria_mapping": ["min_context_tokens", "usd_per_month", "response_time_ms"],
+        "weights": {"min_context_tokens": 0.3, "usd_per_month": 0.4, "response_time_ms": 0.3},
+        "data_used": {"source": "vendor spec sheet", "collected_on": "2026-09-01"},
+        "ranking": ["stub-model-1", "stub-model-2"],
         "sensitivity": "ranking flips at a 5% change in cost weighting",
+        "selected_model": selection["selected_model"],
     }
