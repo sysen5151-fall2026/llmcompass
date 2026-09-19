@@ -167,3 +167,38 @@ the new version.
   direct label position (UC.1.10/1.11 and UC.1.17/1.18); resolved by numeric
   order and by which reading made semantic sense, flagged in
   `docs/walking-skeleton.md` for a quick visual confirmation in Innoslate.
+
+---
+
+## 2026-09-19 — Daniel Distor — Claude Code
+
+**Prompt:** Shared five new Innoslate exports (hierarchy diagram, spider
+diagram, and the UC.1 activity, swimlane, and sequence diagrams) and asked
+whether anything in the project is inconsistent.
+
+**Output:**
+- `docs/walking-skeleton.md` — fixed steps 2 and 6: both were attributed to
+  Technical Lead calling Language model runtime / Benchmark Data Sources
+  directly, flagged as unconfirmed in the prior entry. The actual sequence
+  diagram shows LLM Compass as the caller in both cases; Technical Lead
+  never talks to either external system directly.
+- `docs/context.md` — resolved both TBDs from the previous pass:
+  Language model runtime is LLM Compass's own requirement-interpretation
+  engine (local model, ADR 0001), not a vendor-spec feed; Benchmark Data
+  Sources now explicitly covers what used to be split across "Public
+  Benchmark Data" and "Vendor Specifications" (confirmed by UC.1.11
+  returning model specification and benchmark data together). Product
+  Owner's inbound interface is still TBD — not exercised anywhere in UC.1.
+- No changes needed to `backend/` — the stub call order in `app.py` already
+  matched the corrected sequence; only the prose attribution in the docs was
+  wrong.
+- `README.md` — External Systems summary list updated to the current 7
+  external systems (Operations Lead removed, Product Owner added, Public
+  Benchmark Data + Vendor Specifications merged into Benchmark Data Sources,
+  Language model runtime added), matching `docs/context.md`.
+
+**Still open:** the OpsCon narrative text itself (§4.3 "Users and their
+concerns") still describes an Operations Lead and doesn't mention a Product
+Owner. That text is supposed to be copied verbatim from the Innoslate OpsCon
+model, not authored here — left as-is and flagged for the team to re-copy
+from Innoslate if the narrative changed along with the diagram.

@@ -169,13 +169,14 @@ See [docs/context.md](docs/context.md).
 
 - Stakeholder actors
   - Application Developer
-  - Technical Lead / Architect
   - Budget Owner
   - Compliance Officer
-  - Operations Lead
+  - Product Owner
+  - Technical Lead
 - Data sources
-  - Public Benchmark Data
-  - Vendor Specifications
+  - Benchmark Data Sources
+  - Language model runtime (LLM Compass's own requirement-interpretation
+    engine, not a data source in the vendor-spec sense — see docs/context.md)
 
 (The end user of the downstream application is out of scope — per §4.3, they don't
 interact with LLM Compass directly.)
