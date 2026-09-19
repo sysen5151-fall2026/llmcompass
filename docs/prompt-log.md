@@ -111,3 +111,41 @@ wrong in every file that recorded it.
   IDE row changed from "VS Code (Cursor rejected)" to "VS Code, Cursor — team uses
   both." Team & tool ownership table already listed Cursor for Daniel and Allyanna
   and VS Code for Khai, so no change needed there.
+
+---
+
+## 2026-09-19 — Daniel Distor — Claude Code
+
+**Prompt:** Given screenshots of the team's Innoslate sequence diagram for UC.1
+(Technical Lead selects a model for an application), transcribed it into
+`docs/walking-skeleton.md` as a numbered call list per the Lab Manual's format
+(section 2.4.2.2.1), then asked for the four participants to be stubbed and wired
+so one call travels the whole path, per the same section's Build Steps.
+
+**Output:**
+- `docs/walking-skeleton.md` — numbered call list, matched to the Lab Manual's
+  worked example format (plain `UC.1 -- ...` heading, no extra sections).
+- `backend/language_model_runtime/__init__.py` — stub for `enter_requirements`
+  (UC.1.2).
+- `backend/benchmark_data_sources/__init__.py` — stub for `confirm_mapping`
+  (UC.1.8).
+- `backend/llm_compass/__init__.py` — stubs for `interpret_requirements` (UC.1.3),
+  `present_mapping_for_review` (UC.1.5), `retrieve_model_spec_and_benchmark_data`
+  (UC.1.9), `present_sensitivity_finding` (UC.1.14), `select_model` (UC.1.15), and
+  `generate_decision_record` (UC.1.16).
+- `backend/app.py` — replaced the no-op with the walking skeleton driver; calls
+  the eight stub functions in the order from `docs/walking-skeleton.md` and prints
+  the resulting decision record. Verified with `python3 backend/app.py`.
+- No error handling, retries, or real logic added, per the increment's scope.
+
+**Flagged, not yet fixed:**
+- Two return messages in the Innoslate sequence diagram (steps 2 and 6) have no
+  label. The stub code returns a generic placeholder for both; the diagram should
+  get real labels before this is graded.
+- Steps 1 and 5 in the diagram have the Technical Lead calling Language model
+  runtime and Benchmark Data Sources directly, bypassing LLM Compass. That
+  conflicts with `docs/context.md`, where the Technical Lead's boundary is only
+  ever with LLM Compass. The stub code was wired to match `docs/walking-skeleton.md`
+  as transcribed rather than to the "corrected" architecture, to keep the
+  Innoslate model, the doc, and the code traceable to each other — the diagram
+  itself is what needs fixing.
