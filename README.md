@@ -7,6 +7,15 @@ architecture come next as we move through the SE lifecycle.
 
 ## Operational Concept
 
+A team is building an application and has to choose a model. Today someone spends a
+day reading leaderboards and vendor pages, picks something, and the reasoning lives
+in a Slack thread. With LLM Compass, the technical lead enters the application's
+requirements, reviews the criteria the system proposes, adjusts the weights to
+reflect what the team actually cares about, and gets a ranked shortlist with the
+reasoning attached. They export the decision record into their design
+documentation. When a new model appears six months later, they reopen it and re-run
+rather than starting over.
+
 ### 1. Scope
 
 This document describes what LLM Compass will do and why, from the point of view of
@@ -107,8 +116,8 @@ one.
 
 She exports the decision record and attaches it to the project's design
 documentation. It states the requirements, the criteria they were mapped to, the
-weight applied, the data used with its sources and dates, the resulting ranking, and
-the sensitivity finding.
+weights applied, the data used with its sources and dates, the resulting ranking,
+and the sensitivity finding.
 
 Four months later a new model is released. She reopens the saved decision, refreshes
 the data, and re-runs it. The comparison takes minutes rather than a day, and the
@@ -116,12 +125,12 @@ resulting record shows what changed and why.
 
 **4.3 Users and their concerns**
 
-The application developer is concerned with capability: whether a model can actually
-do the task well.
+The application developer builds the AI application that will use the selected
+model. Concerned with capability fit for the specific task. Supplies the
+application's functional requirements but does not own the selection decision.
 
-The technical lead or architect owns the decision and must justify it to others.
-They are concerned with the reasoning being visible and with the cost of switching
-later.
+The technical lead owns the decision and must justify it to others. They are
+concerned with the reasoning being visible and with the cost of switching later.
 
 The budget owner is concerned with cost per token and total spend at projected
 volume, and is in direct tension with the developer's preference for the most
@@ -131,8 +140,8 @@ The compliance officer is concerned with data residency, retention, and whether 
 vendor is contractually acceptable. Their concerns act as hard constraints: a model
 that fails them is excluded regardless of how well it scores.
 
-The product owner is accountable for the application's outcomes and priorities. They
-set the relative importance of capability, cost, and speed, which informs the
+The product owner is accountable for the application's outcomes and priorities.
+Sets the relative importance of capability, cost, and speed, which informs the
 weighting applied during selection.
 
 The end user of the downstream application does not interact with LLM Compass, but
