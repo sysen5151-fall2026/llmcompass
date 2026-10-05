@@ -3,7 +3,7 @@
 ## Source of truth
 - System context & external systems: docs/context.md
 - OpsCon / overview: README.md
-- Requirements/spec: SPEC.md (requirement IDs like REQ-xxx)
+- Requirements/spec: SPEC.md (cite as need ID / StR ID, e.g. SN-TL-03 / 5.1.2.2)
 
 ## Rules
 - Only implement what traces to a SPEC.md requirement ID. Cite the ID in code comments and commit messages.
