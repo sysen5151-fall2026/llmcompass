@@ -1,4 +1,4 @@
-Append a new entry to the END of docs/prompt_log.md for the work done in this session.
+Append a new entry to the END of docs/prompt-log.md for the work done in this session.
 
 Match the existing format exactly:
 - Heading: `## YYYY-MM-DD — <name> — Claude Code` (get the name from `git config user.name`, today's date)

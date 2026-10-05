@@ -45,7 +45,8 @@ Language model runtime (C.8)
   In:  stated requirement, submitted by LLM Compass for interpretation
        (UC.1.3)
   Out: proposed measurable criteria derived from the requirement, with a
-       confidence level per criterion (UC.1.4)
+       proxy-strength rating per criterion (UC.1.4; StR 5.1.1.3, response
+       schema in SPEC.md section 3)
   Note: this is LLM Compass's own requirement-interpretation engine (the
        local model from docs/adr/0001-initial-toolchain.md), not a
        vendor-spec/pricing feed — confirmed against the UC.1 sequence

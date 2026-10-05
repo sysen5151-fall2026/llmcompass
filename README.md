@@ -224,22 +224,30 @@ See the team's Toolset Justification doc for full rationale.
 ```
 .
 ├── .github/workflows/ci.yml   # runs the SPEC.md acceptance tests (red until implemented)
+├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
-│   ├── app.py                 # no-op entry point — see Getting started below
-│   └── requirements.txt       # Python deps for the planned backend (not yet implemented)
+│   ├── app.py                 # walking skeleton — runs the UC.1 call path on stubs
+│   ├── llm_compass/           # the system itself (stub)
+│   ├── language_model_runtime/  # C.8 (stub)
+│   ├── benchmark_data_sources/  # C.7 (stub, returns the SPEC.md data-contract shape)
+│   └── requirements.txt       # Python deps for the planned backend
 ├── hello.txt                  # initial pipeline smoke test
+├── CLAUDE.md                  # project rules for the coding assistant
 ├── SPEC.md                    # needs, acceptance criteria, data + model contracts
 ├── tests/                     # one failing test per acceptance criterion
 ├── pytest.ini
 ├── docs/
 │   ├── context.md             # every external system — see Operational Concept above
+│   ├── walking-skeleton.md    # UC.1 call path from the Innoslate sequence diagram
+│   ├── PLAN.md
 │   ├── environment.md
 │   ├── prompt-log.md
+│   ├── validation/walkthroughs.csv  # timed runs for the operator-effort requirements
 │   └── adr/0001-initial-toolchain.md
 └── README.md
 ```
 
-No application code has been written yet — this is repo scaffolding only. External
+No feature code has been written yet — only the walking skeleton and stubs. External
 systems live in docs/context.md, not as folders (no per-actor directories — matches
 the course's own worked example).
 
@@ -249,17 +257,23 @@ the course's own worked example).
 python backend/app.py
 ```
 
-That's it — it's a no-op entry point. It starts and exits immediately; no feature
-code exists yet (see SPEC.md, Chapter 3, still TBD).
+It runs the UC.1 call path end to end on stubs and prints a placeholder decision
+record. To run the acceptance tests (all fail until features are built):
+
+```
+pip install pytest
+pytest
+```
 
 ## Roadmap
 
 Following the course's SE-to-build progression:
 
 - [x] Toolset justification
-- [ ] Stakeholder needs / personas
+- [x] Stakeholder needs / personas
 - [ ] Concept & ConOps (trade study, mockups)
-- [ ] Requirements (functional + non-functional)
+- [ ] Requirements (functional + non-functional) — stakeholder requirements done
+      (SPEC.md); system requirements next
 - [ ] Architecture (Innoslate model → repo skeleton)
 - [ ] Detailed design & first working slice
 - [ ] Integration (end-to-end flow)

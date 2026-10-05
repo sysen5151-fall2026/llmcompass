@@ -4,6 +4,9 @@
 - System context & external systems: docs/context.md
 - OpsCon / overview: README.md
 - Requirements/spec: SPEC.md (cite as need ID / StR ID, e.g. SN-TL-03 / 5.1.2.2)
+- Data and model contracts: SPEC.md sections 2 and 3
+- UC.1 call path: docs/walking-skeleton.md
+- Acceptance tests: tests/ (one per SPEC.md criterion; red until implemented)
 
 ## Rules
 - Only implement what traces to a SPEC.md requirement ID. Cite the ID in code comments and commit messages.

@@ -321,8 +321,7 @@ Trace gaps:
 
 Ambiguities:
 
-4. 5.1.1.3 says "proxy-strength rating" but context.md/OpsCon say "confidence
-   level". Pick one. The strong/moderate/weak scale is a placeholder.
+4. 5.1.1.3: the strong/moderate/weak scale is a placeholder. Confirm it.
 5. 5.1.4.1: is +/-10% relative (w x 1.1) or absolute (w + 0.10)? Do weights get
    renormalized? Changes which pairs count as unstable. Tests assume relative.
 6. 5.1.5.2 and 5.3.1.1: how many walkthrough trials, who runs them, and starting
