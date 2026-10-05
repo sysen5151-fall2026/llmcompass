@@ -1,3 +1,6 @@
+# STUB: LLM Compass (walking skeleton -- no real logic yet)
+
+
 def receive_requirements(requirements: dict) -> dict:
     # UC.1.2
     return {"received": True}

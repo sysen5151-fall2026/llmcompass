@@ -1,3 +1,6 @@
+# STUB: Language model runtime
+
+
 def submit_requirements(requirements: dict) -> dict:
     # UC.1.3, UC.1.4 -- call and return are the same function call
     return {
