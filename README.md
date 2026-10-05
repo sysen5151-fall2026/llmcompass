@@ -193,7 +193,8 @@ interact with LLM Compass directly.)
 
 ## Status
 
-Scaffold only. No feature code — see SPEC.md, Chapter 3.
+Scaffold only. SPEC.md is written and its acceptance tests are wired into CI; they
+fail until the features are built.
 
 ## Toolset
 
@@ -222,12 +223,14 @@ See the team's Toolset Justification doc for full rationale.
 
 ```
 .
-├── .github/workflows/ci.yml   # CI stub — currently just a "hello world" job
+├── .github/workflows/ci.yml   # runs the SPEC.md acceptance tests (red until implemented)
 ├── backend/
 │   ├── app.py                 # no-op entry point — see Getting started below
 │   └── requirements.txt       # Python deps for the planned backend (not yet implemented)
 ├── hello.txt                  # initial pipeline smoke test
-├── SPEC.md                    # stub — Chapter 3 headings only
+├── SPEC.md                    # needs, acceptance criteria, data + model contracts
+├── tests/                     # one failing test per acceptance criterion
+├── pytest.ini
 ├── docs/
 │   ├── context.md             # every external system — see Operational Concept above
 │   ├── environment.md

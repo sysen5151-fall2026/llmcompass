@@ -12,5 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Hello world
-        run: echo "Hello from GitHub Actions!"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Only pytest for now. backend/requirements.txt is UTF-16 and pulls in
+      # chromadb/onnxruntime, none of which the acceptance tests need yet.
+      - name: Install test dependencies
+        run: pip install pytest
+
+      # SPEC.md acceptance tests. Fails the check while any requirement is unmet.
+      - name: Run acceptance tests
+        run: pytest -v
