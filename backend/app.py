@@ -29,10 +29,17 @@ def run_uc1(text: str) -> dict:
     mapping = present_mapping_for_review(interpretation)                            # 4  UC.1.6
     confirmed = confirm_mapping(mapping)                                            # 5  UC.1.9
     model_data = request_model_data(confirmed)                                      # 6, 7  UC.1.10, UC.1.11
-    finding = present_sensitivity_finding(model_data, confirmed,
-                                          requirements["scenario_id"])              # 8  UC.1.16
+    finding = present_sensitivity_finding(model_data, confirmed, requirements)      # 8  UC.1.16
     selection = select_model(finding)                                               # 9  UC.1.17
-    return generate_decision_record(interpretation, finding, selection)             # 10 UC.1.18
+    record = generate_decision_record(selection)                                    # 10 UC.1.18
+    # One section per step, shown on the page in this order.
+    return {
+        "scenario_id": requirements["scenario_id"],
+        "interpreted_requirements": interpretation["interpreted_requirements"],
+        "comparison_result": finding["comparison_result"],
+        "selection_result": selection["selection_result"],
+        "decision_record": record,
+    }
 
 
 @app.route("/", methods=["GET", "POST"])

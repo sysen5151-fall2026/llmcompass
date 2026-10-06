@@ -74,11 +74,9 @@ None. `expected_outputs.json` is grouped into one section per producing step
   `test_SN_TL_01_5_1_1_1_accepts_text_requirement` stays red: text that doesn't
   match a scenario raises `StopIteration`, and the function returns
   `scenario_id`, not `requirement_id`.
-- `generate_decision_record` now takes `(interpretation, finding, selection)`,
-  not SPEC section 4's single `selection`.
-- The new record shape doesn't have SPEC 5.1.3.2's six sections.
-  `test_SN_TL_09_5_1_3_2_decision_record_has_all_sections` stays red. This is
-  expected per the docs/walking-skeleton.md notes.
+- Superseded 2026-10-07: `generate_decision_record` now takes SPEC section 4's
+  single `selection` and builds the six 5.1.3.2 sections (see "Decision record
+  (UC.1.18)" below).
 
 ## Sensitivity analysis (UC.1.16)
 
@@ -114,3 +112,36 @@ New functions in `llm_compass` (SPEC section 4): `is_stale`, `rank`, `unstable_p
   review. They reproduce the expected rankings for SCENARIO_01 to 03, and no pair
   flips under them. SCENARIO_04 excludes every model on the EU-only constraint.
 - `data_residency` comes from `providers.json` `default_data_storage_region`.
+
+## Decision record (UC.1.18)
+
+Status: implemented 2026-10-07. Traces to SN-TL-09 / 5.1.3.2.
+`test_SN_TL_09_5_1_3_2_decision_record_has_all_sections` passes.
+
+`generate_decision_record(selection)` now has the SPEC section 4 signature and
+returns the six required sections plus the selection:
+
+| Field | Comes from |
+|---|---|
+| `requirements` | the text typed at UC.1.2 |
+| `criteria_mapping` | the confirmed criteria (UC.1.9) |
+| `weights` | `criterion_id -> weight` for the weighted criteria |
+| `evidence` | every figure used, ranked and excluded models, with `source_id`, `collection_date`, `stale` |
+| `ranking` | the computed ranking (empty if every model is excluded) |
+| `sensitivity` | method, `ranking_is_stable` (None if nothing was ranked), and each unstable pair with the weight changes that flipped it |
+| `selected_model` | UC.1.17's selection, or None (UC alt flow 15a) |
+| `excluded` | each excluded model and the constraint that removed it (SN-TL-07 / 5.1.6.3) |
+
+Call path changes:
+
+- UC.1.16 `present_sensitivity_finding(model_data, confirmed, requirements)` now
+  takes the UC.1.2 `{scenario_id, text}` so the record can state the requirements,
+  and returns `record_inputs` alongside `comparison_result`.
+- UC.1.17 `select_model(finding)` (STUB: takes the scenario's expected
+  recommendation as the Technical Lead's selection) passes `record_inputs` on with
+  `selected_model`.
+- `backend/app.py` `run_uc1` assembles the page: one section per step.
+
+Still stubbed: the record's `summary`, `limitations_and_risks` and `next_action`
+come from `expected_outputs.json`. Storing, retrieving and exporting the record
+(5.1.3.3, 5.1.5.1, SPEC section 5 Q3) are not built.

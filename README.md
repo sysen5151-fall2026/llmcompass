@@ -194,7 +194,8 @@ interact with LLM Compass directly.)
 ## Status
 
 Walking skeleton for UC.1 with real ranking and sensitivity analysis (UC.1.16:
-SN-TL-05 / 5.1.4.1). The other steps are still stubs. SPEC.md is written and its
+SN-TL-05 / 5.1.4.1) and a decision record with all six required sections (UC.1.18:
+SN-TL-09 / 5.1.3.2). The other steps are still stubs. SPEC.md is written and its
 acceptance tests are wired into CI; the rest fail until their features are built.
 
 ## Toolset
@@ -229,7 +230,7 @@ See the team's Toolset Justification doc for full rationale.
 ├── backend/
 │   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
-│   ├── llm_compass/           # the system itself: rank + sensitivity are real, other steps are stubs
+│   ├── llm_compass/           # the system itself: rank, sensitivity, decision record are real; other steps are stubs
 │   ├── language_model_runtime/  # C.8 (stub, returns interpreted_requirements from sample_data)
 │   ├── benchmark_data_sources/  # C.7 (stub, loads sample_data and converts it to the SPEC §2 figure shape)
 │   └── requirements.txt       # Python deps for the planned backend
@@ -250,7 +251,7 @@ See the team's Toolset Justification doc for full rationale.
 └── README.md
 ```
 
-Feature code so far: ranking and sensitivity analysis (see docs/PLAN.md). Everything
+Feature code so far: ranking, sensitivity analysis and the decision record (see docs/PLAN.md). Everything
 else is walking skeleton and stubs. External
 systems live in docs/context.md, not as folders (no per-actor directories — matches
 the course's own worked example).
@@ -267,7 +268,9 @@ Open http://127.0.0.1:5000 and paste one of the `user_input` texts from
 The comparison result's ranking, score breakdown, evidence (source, date, stale
 flag), exclusions and sensitivity finding are computed from the sample model data,
 using the criteria and weights for that scenario in `sample_data/scenario_criteria.json`.
-Every other section is still that scenario's record from
+The decision record carries the requirements, criteria, weights, evidence, ranking,
+sensitivity finding and selected model. The written text (assessments, trade-offs,
+selection, record summary) is still that scenario's record from
 `sample_data/expected_outputs.json`. Empty input is rejected. Any other text isn't
 handled yet. To run the
 acceptance tests (most fail until features are built):

@@ -1,7 +1,7 @@
 # LLM Compass (walking skeleton)
-# rank, unstable_pairs and is_stale are real logic. The other steps are still stubs
-# that return their own section of the matched scenario's expected output from
-# sample_data/.
+# rank, unstable_pairs, is_stale and the decision record's 6 sections are real
+# logic. The other steps are still stubs that return their own section of the
+# matched scenario's expected output from sample_data/.
 
 import json
 from datetime import date, timedelta
@@ -14,6 +14,8 @@ SCENARIO_CRITERIA = SAMPLE_DATA / "scenario_criteria.json"
 
 STALE_AFTER = timedelta(days=90)
 WEIGHT_FACTORS = (0.9, 1.1)  # SN-TL-05 / 5.1.4.1 -- relative +/-10%, no renormalization (SPEC 5 Q5)
+SENSITIVITY_METHOD = "Each weight varied by -10% and +10% (relative), one at a time"
+RECORD_SECTIONS = ("requirements", "criteria_mapping", "weights", "evidence", "ranking", "sensitivity")
 
 
 def is_stale(collection_date, today) -> bool:
@@ -70,15 +72,17 @@ def rank(candidates: list, criteria: list, today) -> dict:
 
     survivors, excluded = [], []
     for cand in candidates:
-        failed = []
+        failed, evidence = [], []
         for c in hard:
             fig = _metric_figure(cand, c["metric"])
             if fig is None:
                 failed.append(f"missing_data:{c['metric']}")  # SPEC section 2, missing values
-            elif not _meets(fig["value"], c["operator"], c["threshold"]):
+                continue
+            evidence.append({**fig, "metric": c["metric"], "stale": is_stale(fig["collection_date"], today)})
+            if not _meets(fig["value"], c["operator"], c["threshold"]):
                 failed.append(c["criterion_id"])
         if failed:
-            excluded.append({"model_id": cand["model_id"], "failed_constraints": failed})
+            excluded.append({"model_id": cand["model_id"], "failed_constraints": failed, "evidence": evidence})
         else:
             survivors.append(cand)
 
@@ -158,16 +162,26 @@ def confirm_mapping(mapping: dict) -> dict:
     return {**mapping, "criteria": all_criteria[mapping["scenario_id"]]}
 
 
-def present_sensitivity_finding(model_data: dict, confirmed: dict, scenario_id: str, today=None) -> dict:
+def present_sensitivity_finding(model_data: dict, confirmed: dict, requirements: dict, today=None) -> dict:
     # UC.1.16 (SN-TL-05 / 5.1.4.1) -- ranking and sensitivity are computed;
     # candidate_assessment and tradeoffs are still the scenario's expected output.
     today = today or date.today()
+    scenario_id = requirements["scenario_id"]
     candidates, criteria = model_data["candidates"], confirmed["criteria"]
     names = {c["model_id"]: c["model_name"] for c in candidates}
 
     result = rank(candidates, criteria, today)
     flips = _flips(candidates, criteria, today)
     order = [e["model_id"] for e in result["ranked"]]
+    stable = not flips if order else None  # None = nothing ranked, so nothing to compare
+    sensitivity = [{"models": [names[m] for m in sorted(pair, key=order.index)], "flipped_by": labels}
+                   for pair, labels in flips.items()]
+    # SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2 -- every figure used (ranked and excluded), with provenance
+    evidence = [{"model": names[e["model_id"]], "metric": f["metric"], "value": f["value"], "unit": f["unit"],
+                 "source_id": f["source_id"], "collection_date": f["collection_date"], "stale": f["stale"]}
+                for e in result["ranked"] + result["excluded"] for f in e["evidence"]]
+    excluded = [{"model": names[e["model_id"]], "failed_constraints": e["failed_constraints"]}
+                for e in result["excluded"]]
 
     scenarios = json.loads(EXPECTED_OUTPUTS.read_text())
     scenario = next(s for s in scenarios if s["scenario_id"] == scenario_id)
@@ -179,37 +193,56 @@ def present_sensitivity_finding(model_data: dict, confirmed: dict, scenario_id: 
                              **{cid: round(v, 3) for cid, v in e["contributions"].items()},
                              "missing_data": e["gaps"]}
                             for i, e in enumerate(result["ranked"])],
-        # SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2 -- every figure used, with source, date and stale flag
-        "evidence": [{"model": names[e["model_id"]], "metric": f["metric"], "value": f["value"],
-                      "unit": f["unit"], "source": f["source_id"], "collected": f["collection_date"],
-                      "stale": f["stale"]}
-                     for e in result["ranked"] for f in e["evidence"]],
-        "excluded": [{"model": names[e["model_id"]], "failed_constraints": e["failed_constraints"]}
-                     for e in result["excluded"]],
-        "sensitivity_method": "Each weight varied by -10% and +10% (relative), one at a time",
-        "sensitivity": [{"models": [names[m] for m in sorted(pair, key=order.index)],
-                         "flipped_by": labels}
-                        for pair, labels in flips.items()],
-        "ranking_is_stable": not flips,
+        "evidence": evidence,
+        "excluded": excluded,
+        "sensitivity_method": SENSITIVITY_METHOD,
+        "sensitivity": sensitivity,
+        "ranking_is_stable": stable,
     })
-    return {"scenario_id": scenario_id, "comparison_result": comparison}
+    # The sections UC.1.18 needs for the decision record (SN-TL-09 / 5.1.3.2)
+    record_inputs = {
+        "requirements": [requirements["text"]],
+        "criteria_mapping": criteria,
+        "weights": {c["criterion_id"]: c["weight"] for c in criteria if c["designation"] == "weighted"},
+        "evidence": evidence,
+        "ranking": [names[m] for m in order],
+        "sensitivity": {
+            "method": SENSITIVITY_METHOD,
+            "ranking_is_stable": stable,
+            "unstable_pairs": [f"{' vs '.join(r['models'])} (flipped by {', '.join(r['flipped_by'])})"
+                               for r in sensitivity],
+        },
+        "excluded": excluded,
+    }
+    return {"scenario_id": scenario_id, "comparison_result": comparison, "record_inputs": record_inputs}
 
 
 def select_model(finding: dict) -> dict:
     # UC.1.17
+    # STUB: Technical Lead selection -- the UI has no select step, so the
+    # scenario's expected recommendation is taken as the selection.
     scenarios = json.loads(EXPECTED_OUTPUTS.read_text())
     scenario = next(s for s in scenarios if s["scenario_id"] == finding["scenario_id"])
-    return {"scenario_id": finding["scenario_id"], "selection_result": scenario["selection_result"]}
-
-
-def generate_decision_record(interpretation: dict, finding: dict, selection: dict) -> dict:
-    # UC.1.18 (SN-TL-09 / 5.1.3.2)
-    scenarios = json.loads(EXPECTED_OUTPUTS.read_text())
-    scenario = next(s for s in scenarios if s["scenario_id"] == selection["scenario_id"])
+    selection_result = scenario["selection_result"]
+    recommended = selection_result["recommended_model"]
     return {
-        "scenario_id": selection["scenario_id"],
-        "interpreted_requirements": interpretation["interpreted_requirements"],
-        "comparison_result": finding["comparison_result"],
-        "selection_result": selection["selection_result"],
-        "decision_record": scenario["decision_record"],
+        **finding["record_inputs"],
+        "scenario_id": finding["scenario_id"],
+        "selection_result": selection_result,
+        "selected_model": recommended["model_name"] if recommended else None,  # None = UC alt flow 15a
     }
+
+
+def generate_decision_record(selection: dict) -> dict:
+    # UC.1.18 (SN-TL-09 / 5.1.3.2) -- the 6 required sections plus the selection made.
+    record = {section: selection[section] for section in RECORD_SECTIONS}
+    record["selected_model"] = selection.get("selected_model")  # None = no model selected (UC alt flow 15a)
+    if "excluded" in selection:
+        record["excluded"] = selection["excluded"]  # SN-TL-07 / 5.1.6.3
+    if "scenario_id" in selection:
+        # STUB: written narrative -- summary, limitations and next action are still
+        # the scenario's expected output.
+        scenarios = json.loads(EXPECTED_OUTPUTS.read_text())
+        scenario = next(s for s in scenarios if s["scenario_id"] == selection["scenario_id"])
+        record.update(scenario["decision_record"])
+    return record

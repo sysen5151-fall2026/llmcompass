@@ -34,10 +34,10 @@
   {% macro label(key) %}{{ key | replace("_", " ") | capitalize }}{% endmacro %}
 
   {% macro value(v) %}
-    {% if v is none or v == [] %}
+    {% if v is none or v == [] or v == {} %}
       <p class="none">None</p>
     {% elif v is mapping %}
-      {% for k, x in v.items() %}<p><strong>{{ label(k) }}:</strong> {{ x }}</p>{% endfor %}
+      {% for k, x in v.items() %}<p><strong>{{ label(k) }}:</strong> {{ (x | join("; ") if x else "None") if x is iterable and x is not string and x is not mapping else x }}</p>{% endfor %}
     {% elif v is string or v is number %}
       <p>{{ v }}</p>
     {% elif v[0] is mapping %}
