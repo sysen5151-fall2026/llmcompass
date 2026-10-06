@@ -265,3 +265,67 @@ test stay red. The section 4 signatures for `receive_requirements` and
 `generate_decision_record` now differ from the skeleton's.
 
 ---
+
+## 2026-10-07 — Allyanna Panganiban — Claude Code
+
+**Prompt:** Given the Lab Manual, the team's business analysis, OpsCon narrative,
+stakeholder needs and requirements report, product description, and the UC-01 use
+case ("Select a model for an application"), asked for a plan to build the
+sensitivity analysis into the UC.1 walking skeleton for Project Milestone Check 1,
+on a new `allyanna` branch. Chose to implement the real logic and show it in the
+UI, with per-scenario weights in a new sample-data file. Follow-ups: check the
+build against the repo's own use case (README, docs/context.md, SPEC.md), show
+each model's score breakdown and evidence, update the README, then build the
+decision record (UC.1.18) with all six SPEC sections.
+
+**Output:**
+- `backend/llm_compass/__init__.py`: added `is_stale` (SN-TL-03 / 5.1.2.2), `rank`
+  (5.1.2.1, 5.1.3.1, 5.1.6.2, 5.1.6.3, 5.3.1.1) and `unstable_pairs` (SN-TL-05 /
+  5.1.4.1), using the SPEC section 4 signatures. Hard criteria exclude a model.
+  Weighted criteria are min-max normalized and summed. Sensitivity varies each
+  weight -10% and +10% (relative, one at a time) and reports every pair whose
+  order flips, plus which change flipped it.
+  - UC.1.9 `confirm_mapping` (STUB) now attaches criteria and weights.
+  - UC.1.16 now computes the ranking, score breakdown, evidence with source, date
+    and stale flag, exclusions, and the sensitivity finding.
+  - UC.1.17 `select_model` (STUB) passes these on.
+  - UC.1.18 `generate_decision_record(selection)` now matches SPEC section 4 and
+    builds requirements, criteria mapping, weights, evidence, ranking, sensitivity
+    and the selected model (SN-TL-09 / 5.1.3.2).
+- `backend/benchmark_data_sources/__init__.py`: also returns `candidates` in the
+  SPEC section 2 figure shape, built from the three sample files.
+- `sample_data/scenario_criteria.json` (new): criteria and weights for each of the
+  4 scenarios. These are starting values for the team to review, set so they
+  reproduce the expected rankings. Scenario 4 is one hard EU-residency constraint.
+- `backend/app.py`: `run_uc1` passes the confirmed mapping and requirements down
+  the chain, and assembles the page from each step's output.
+- `backend/templates/index.html`: lists inside a section show as text, and empty
+  dicts show as "None".
+- `tests/test_walking_skeleton.py` (new): computed rankings match
+  `expected_outputs.json`, scenario 4 excludes all models, score breakdown and
+  evidence are present, and the decision record has all six sections. The Flask
+  end-to-end test is skipped in CI, which installs pytest only.
+  `tests/test_technical_lead.py`: fixed a comment pointing to the wrong SPEC open
+  question (7 → 5).
+- `docs/PLAN.md`, `docs/walking-skeleton.md`, `README.md`: documented the new step
+  mapping, the scoring and ±10% assumptions, and which sections are computed vs.
+  still canned.
+- Verified with pytest: 29 pass and 19 fail, up from 3 passing on `main`. The
+  newly passing SPEC tests are 5.1.2.1, 5.1.2.2, 5.1.3.1, 5.1.4.1, 5.1.6.2,
+  5.1.6.3, 5.3.1.1 (10 candidates) and 5.1.3.2. Every remaining failure is a
+  function or walkthrough not built yet. Also checked all 4 scenarios through the
+  Flask test client. Scenarios 1–3 are stable under the starting weights, and
+  setting scenario 2's capability weight to 0.45 produces a Fable/Haiku flip.
+
+**Still open:**
+- SPEC section 5 Q5: ±10% is implemented as relative with no renormalization (what
+  the 5.1.4.1 test assumes). Needs team confirmation.
+- SPEC section 2: excluding a model with missing data for a hard constraint still
+  needs team sign-off.
+- The weights in `scenario_criteria.json` need team review.
+- Still stubbed in UC.1: requirement interpretation (UC.1.3/1.4), reviewing and
+  editing criteria and weights (UC.1.6/1.9), model selection (UC.1.17), and the
+  record's summary, limitations and next action. Storing, retrieving and
+  re-running records (5.1.3.3, 5.1.5.1, 5.1.5.2) aren't built.
+
+---
