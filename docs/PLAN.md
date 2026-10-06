@@ -79,3 +79,37 @@ None. `expected_outputs.json` is grouped into one section per producing step
 - The new record shape doesn't have SPEC 5.1.3.2's six sections.
   `test_SN_TL_09_5_1_3_2_decision_record_has_all_sections` stays red. This is
   expected per the docs/walking-skeleton.md notes.
+
+## Sensitivity analysis (UC.1.16)
+
+Status: implemented 2026-10-07. Traces to SN-TL-05 / 5.1.4.1.
+
+UC.1.16 now computes the ranking and sensitivity finding instead of returning the
+canned `comparison_result`. `candidate_assessment` and `tradeoffs` are still canned.
+
+### Changes to the step mapping
+
+| Step | Function | Change |
+|---|---|---|
+| UC.1.9 | `confirm_mapping(mapping)` | STUB: adds `criteria` (designation + weight) from `sample_data/scenario_criteria.json` (SN-TL-07 / 5.1.6.1) |
+| UC.1.10 | `request_model_data(confirmed)` | also returns `candidates` in the SPEC section 2 figure shape, built from the 3 sample files |
+| UC.1.16 | `present_sensitivity_finding(data, confirmed, scenario_id)` | computes `ranking`, `excluded`, `sensitivity`, `sensitivity_method`, `ranking_is_stable` |
+
+New functions in `llm_compass` (SPEC section 4): `is_stale`, `rank`, `unstable_pairs`.
+
+### Rules and assumptions
+
+- Hard criteria exclude a candidate that fails them, or that has no data for them
+  (`missing_data:<metric>`).
+- Weighted criteria are min-max normalized across the remaining candidates.
+  `>=` means higher is better, `<=` means lower is better, and `==`/`in` score 1 or 0.
+  Missing data scores 0 and is listed in `gaps`. Score = sum of weight x normalized.
+  Ties are broken by `model_id`.
+- Sensitivity: each weight is multiplied by 0.9 and 1.1, one at a time, with no
+  renormalization. Any pair whose relative order changes is reported with the
+  variations that flipped it. This is the relative reading of SPEC section 5 Q5,
+  and it is what the 5.1.4.1 test assumes. Needs team confirmation.
+- The weights in `scenario_criteria.json` are a starting point for the team to
+  review. They reproduce the expected rankings for SCENARIO_01 to 03, and no pair
+  flips under them. SCENARIO_04 excludes every model on the EU-only constraint.
+- `data_residency` comes from `providers.json` `default_data_storage_region`.

@@ -119,7 +119,7 @@ def _order(rank, candidates, criteria, today):
 
 
 def test_SN_TL_05_5_1_4_1_unstable_pairs_match_brute_force(candidates, criteria, today):
-    # Assumes relative +/-10% (w * 0.9, w * 1.1). See SPEC.md open question 7.
+    # Assumes relative +/-10% (w * 0.9, w * 1.1). See SPEC.md open question 5.
     rank = impl("llm_compass", "rank")
     unstable_pairs = impl("llm_compass", "unstable_pairs")
 

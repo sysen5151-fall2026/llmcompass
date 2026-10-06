@@ -1,0 +1,157 @@
+{
+  "SCENARIO_01": [
+    {
+      "criterion_id": "factual_reliability",
+      "metric": "aa_omniscience_index",
+      "operator": ">=",
+      "threshold": null,
+      "unit": "index (-100 to 100)",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.4
+    },
+    {
+      "criterion_id": "long_context_reasoning",
+      "metric": "aa_lcr_v1_1_percent",
+      "operator": ">=",
+      "threshold": null,
+      "unit": "%",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.4
+    },
+    {
+      "criterion_id": "input_cost",
+      "metric": "input_price",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "USD per 1M input tokens",
+      "category": "cost",
+      "designation": "weighted",
+      "weight": 0.1
+    },
+    {
+      "criterion_id": "response_speed",
+      "metric": "time_to_first_answer_token_seconds",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "seconds",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.1
+    }
+  ],
+  "SCENARIO_02": [
+    {
+      "criterion_id": "overall_capability",
+      "metric": "intelligence_index",
+      "operator": ">=",
+      "threshold": null,
+      "unit": "index",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.6
+    },
+    {
+      "criterion_id": "input_cost",
+      "metric": "input_price",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "USD per 1M input tokens",
+      "category": "cost",
+      "designation": "weighted",
+      "weight": 0.2
+    },
+    {
+      "criterion_id": "output_cost",
+      "metric": "output_price",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "USD per 1M output tokens",
+      "category": "cost",
+      "designation": "weighted",
+      "weight": 0.2
+    }
+  ],
+  "SCENARIO_03": [
+    {
+      "criterion_id": "input_cost",
+      "metric": "input_price",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "USD per 1M input tokens",
+      "category": "cost",
+      "designation": "weighted",
+      "weight": 0.3
+    },
+    {
+      "criterion_id": "output_cost",
+      "metric": "output_price",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "USD per 1M output tokens",
+      "category": "cost",
+      "designation": "weighted",
+      "weight": 0.2
+    },
+    {
+      "criterion_id": "response_speed",
+      "metric": "time_to_first_answer_token_seconds",
+      "operator": "<=",
+      "threshold": null,
+      "unit": "seconds",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.3
+    },
+    {
+      "criterion_id": "reasoning_capability",
+      "metric": "intelligence_index",
+      "operator": ">=",
+      "threshold": null,
+      "unit": "index",
+      "category": "capability",
+      "designation": "weighted",
+      "weight": 0.2
+    }
+  ],
+  "SCENARIO_04": [
+    {
+      "criterion_id": "eu_only_data",
+      "metric": "data_residency",
+      "operator": "in",
+      "threshold": [
+        "AT",
+        "BE",
+        "BG",
+        "HR",
+        "CY",
+        "CZ",
+        "DK",
+        "EE",
+        "FI",
+        "FR",
+        "DE",
+        "GR",
+        "HU",
+        "IE",
+        "IT",
+        "LV",
+        "LT",
+        "LU",
+        "MT",
+        "NL",
+        "PL",
+        "PT",
+        "RO",
+        "SK",
+        "SI",
+        "ES",
+        "SE"
+      ],
+      "unit": "ISO 3166-1 alpha-2",
+      "category": "compliance",
+      "designation": "hard"
+    }
+  ]
+}
