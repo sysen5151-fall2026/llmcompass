@@ -174,6 +174,16 @@ def present_sensitivity_finding(model_data: dict, confirmed: dict, scenario_id: 
     comparison = dict(scenario["comparison_result"])
     comparison.update({
         "ranking": [names[m] for m in order] or None,  # None = every candidate excluded (UC alt flow 10a)
+        # SN-TL-04 / 5.1.3.1 -- one row per ranked model, one column per weighted criterion
+        "score_breakdown": [{"rank": i + 1, "model": names[e["model_id"]], "score": round(e["score"], 3),
+                             **{cid: round(v, 3) for cid, v in e["contributions"].items()},
+                             "missing_data": e["gaps"]}
+                            for i, e in enumerate(result["ranked"])],
+        # SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2 -- every figure used, with source, date and stale flag
+        "evidence": [{"model": names[e["model_id"]], "metric": f["metric"], "value": f["value"],
+                      "unit": f["unit"], "source": f["source_id"], "collected": f["collection_date"],
+                      "stale": f["stale"]}
+                     for e in result["ranked"] for f in e["evidence"]],
         "excluded": [{"model": names[e["model_id"]], "failed_constraints": e["failed_constraints"]}
                      for e in result["excluded"]],
         "sensitivity_method": "Each weight varied by -10% and +10% (relative), one at a time",

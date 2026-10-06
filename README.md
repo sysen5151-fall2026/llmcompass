@@ -193,8 +193,9 @@ interact with LLM Compass directly.)
 
 ## Status
 
-Scaffold only. SPEC.md is written and its acceptance tests are wired into CI; they
-fail until the features are built.
+Walking skeleton for UC.1 with real ranking and sensitivity analysis (UC.1.16:
+SN-TL-05 / 5.1.4.1). The other steps are still stubs. SPEC.md is written and its
+acceptance tests are wired into CI; the rest fail until their features are built.
 
 ## Toolset
 
@@ -226,13 +227,13 @@ See the team's Toolset Justification doc for full rationale.
 ├── .github/workflows/ci.yml   # runs the SPEC.md acceptance tests (red until implemented)
 ├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
-│   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path on stubs
+│   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
-│   ├── llm_compass/           # the system itself (stub)
+│   ├── llm_compass/           # the system itself: rank + sensitivity are real, other steps are stubs
 │   ├── language_model_runtime/  # C.8 (stub, returns interpreted_requirements from sample_data)
-│   ├── benchmark_data_sources/  # C.7 (stub, loads model/provider/benchmark data from sample_data)
+│   ├── benchmark_data_sources/  # C.7 (stub, loads sample_data and converts it to the SPEC §2 figure shape)
 │   └── requirements.txt       # Python deps for the planned backend
-├── sample_data/               # 4 UC.1 scenarios (user_inputs + expected_outputs) and model data
+├── sample_data/               # 4 UC.1 scenarios (user_inputs, expected_outputs, scenario_criteria) and model data
 ├── hello.txt                  # initial pipeline smoke test
 ├── CLAUDE.md                  # project rules for the coding assistant
 ├── SPEC.md                    # needs, acceptance criteria, data + model contracts
@@ -249,7 +250,8 @@ See the team's Toolset Justification doc for full rationale.
 └── README.md
 ```
 
-No feature code has been written yet — only the walking skeleton and stubs. External
+Feature code so far: ranking and sensitivity analysis (see docs/PLAN.md). Everything
+else is walking skeleton and stubs. External
 systems live in docs/context.md, not as folders (no per-actor directories — matches
 the course's own worked example).
 
@@ -261,10 +263,13 @@ python3 backend/app.py
 ```
 
 Open http://127.0.0.1:5000 and paste one of the `user_input` texts from
-`sample_data/user_inputs.json`. The UC.1 call path runs end to end on stubs.
-Each step returns its section of that scenario's record from
-`sample_data/expected_outputs.json`, and the page shows the assembled decision
-record. Empty input is rejected. Any other text isn't handled yet. To run the
+`sample_data/user_inputs.json`. The UC.1 call path runs end to end.
+The comparison result's ranking, score breakdown, evidence (source, date, stale
+flag), exclusions and sensitivity finding are computed from the sample model data,
+using the criteria and weights for that scenario in `sample_data/scenario_criteria.json`.
+Every other section is still that scenario's record from
+`sample_data/expected_outputs.json`. Empty input is rejected. Any other text isn't
+handled yet. To run the
 acceptance tests (most fail until features are built):
 
 ```

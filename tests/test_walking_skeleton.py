@@ -32,6 +32,24 @@ def test_SN_TL_05_5_1_4_1_skeleton_ranking_matches_expected(scenario_id):
     assert result["ranking_is_stable"] == (not result["sensitivity"])
 
 
+@pytest.mark.parametrize("scenario_id", ["SCENARIO_01", "SCENARIO_02", "SCENARIO_03"])
+def test_SN_TL_04_5_1_3_1_skeleton_shows_score_breakdown(scenario_id):
+    result = finding(scenario_id)
+    weighted = {c["criterion_id"] for c in confirm_mapping({"scenario_id": scenario_id})["criteria"]
+                if c["designation"] == "weighted"}
+    assert [row["model"] for row in result["score_breakdown"]] == result["ranking"]
+    for row in result["score_breakdown"]:
+        assert weighted <= set(row)
+
+
+@pytest.mark.parametrize("scenario_id", ["SCENARIO_01", "SCENARIO_02", "SCENARIO_03"])
+def test_SN_TL_02_5_1_2_1_skeleton_shows_evidence_provenance(scenario_id):
+    result = finding(scenario_id)
+    assert {row["model"] for row in result["evidence"]} == set(result["ranking"])
+    for row in result["evidence"]:
+        assert row["source"] and row["collected"] and isinstance(row["stale"], bool)
+
+
 def test_SN_TL_07_5_1_6_3_skeleton_eu_scenario_excludes_all():
     result = finding("SCENARIO_04")
     assert result["ranking"] is None

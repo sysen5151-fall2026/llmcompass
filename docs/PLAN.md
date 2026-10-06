@@ -94,6 +94,7 @@ canned `comparison_result`. `candidate_assessment` and `tradeoffs` are still can
 | UC.1.9 | `confirm_mapping(mapping)` | STUB: adds `criteria` (designation + weight) from `sample_data/scenario_criteria.json` (SN-TL-07 / 5.1.6.1) |
 | UC.1.10 | `request_model_data(confirmed)` | also returns `candidates` in the SPEC section 2 figure shape, built from the 3 sample files |
 | UC.1.16 | `present_sensitivity_finding(data, confirmed, scenario_id)` | computes `ranking`, `excluded`, `sensitivity`, `sensitivity_method`, `ranking_is_stable` |
+| UC.1.16 | (same) | also shows `score_breakdown` (each weighted criterion's contribution per ranked model, SN-TL-04 / 5.1.3.1) and `evidence` (every figure used, with source, date and stale flag, SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2) |
 
 New functions in `llm_compass` (SPEC section 4): `is_stale`, `rank`, `unstable_pairs`.
 
