@@ -1,0 +1,94 @@
+[
+  {
+    "provider": "Anthropic",
+    "model_name": "Claude Fable 5.1",
+    "model_id": "claude-fable-5-1",
+
+    "positioning": "For demanding reasoning and long-horizon agentic work",
+    "latency_category": "slower",
+
+    "context_window_tokens": 1000000,
+    "max_output_tokens": 128000,
+
+    "input_price_per_1m_tokens_usd": 10.00,
+    "output_price_per_1m_tokens_usd": 50.00,
+
+    "reliable_knowledge_cutoff": "2026-06",
+
+    "text_input": true,
+    "image_input": true,
+    "text_output": true,
+    "tool_use": true,
+
+    "retirement_not_before": "2027-09-01",
+
+    "retention_override": {
+    "default": "30 days",
+    "reason": "safety monitoring",
+    "zero_data_retention_available_for_eligible_customers": true
+    },
+
+    "source_type": "official_provider",
+    "source": "Anthropic Models Overview",
+    "source_url": "https://platform.claude.com/docs/en/models/overview",
+    "retrieved_date": "2026-10-05"
+  },
+
+  {
+    "provider": "Anthropic",
+    "model_name": "Claude Sonnet 5.5",
+    "model_id": "claude-sonnet-5-5",
+
+    "positioning": "The best combination of speed and intelligence",
+    "latency_category": "fast",
+
+    "context_window_tokens": 1000000,
+    "max_output_tokens": 128000,
+
+    "input_price_per_1m_tokens_usd": 2.00,
+    "output_price_per_1m_tokens_usd": 10.00,
+
+    "reliable_knowledge_cutoff": "2026-06",
+
+    "text_input": true,
+    "image_input": true,
+    "text_output": true,
+    "tool_use": true,
+
+    "retirement_not_before": "2027-09-28",
+
+    "source_type": "official_provider",
+    "source": "Anthropic Models Overview",
+    "source_url": "https://platform.claude.com/docs/en/models/overview",
+    "retrieved_date": "2026-10-05"
+  },
+
+  {
+    "provider": "Anthropic",
+    "model_name": "Claude Haiku 4.5",
+    "model_id": "claude-haiku-4-5-20251001",
+
+    "positioning": "The fastest model with near-frontier intelligence",
+    "latency_category": "fastest",
+
+    "context_window_tokens": 200000,
+    "max_output_tokens": 64000,
+
+    "input_price_per_1m_tokens_usd": 1.00,
+    "output_price_per_1m_tokens_usd": 5.00,
+
+    "reliable_knowledge_cutoff": "2025-02",
+
+    "text_input": true,
+    "image_input": true,
+    "text_output": true,
+    "tool_use": true,
+
+    "retirement_not_before": "2026-10-15",
+
+    "source_type": "official_provider",
+    "source": "Anthropic Models Overview",
+    "source_url": "https://platform.claude.com/docs/en/models/overview",
+    "retrieved_date": "2026-10-05"
+  }
+]

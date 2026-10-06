@@ -1,28 +1,16 @@
 # STUB: Benchmark Data Sources
-# Return shape follows the SPEC.md section 2 data contract.
+# Loads the manually entered model, provider and benchmark data from sample_data/.
+
+import json
+from pathlib import Path
+
+SAMPLE_DATA = Path(__file__).resolve().parents[2] / "sample_data"
 
 
 def request_model_data(confirmed_mapping: dict) -> dict:
-    # UC.1.10, UC.1.11 -- call and return are the same function call
-    def figure(value, unit):
-        return {
-            "value": value,
-            "unit": unit,
-            "source_id": "vendor spec sheet",
-            "collection_date": "2026-09-01",
-        }
-
+    # UC.1.10, UC.1.11 -- call and return are the same function call (SN-TL-02 / 5.1.2.1)
     return {
-        "candidates": [
-            {
-                "model_id": "stub-model-1",
-                "vendor": "stub-vendor",
-                "model_name": "stub-model-1",
-                "input_price": figure(1.00, "USD per 1M input tokens"),
-                "output_price": figure(4.00, "USD per 1M output tokens"),
-                "context_window": figure(200000, "tokens"),
-                "latency_p50": figure(0.8, "seconds"),
-                "benchmarks": [],
-            }
-        ]
+        "models": json.loads((SAMPLE_DATA / "model_spec.json").read_text()),
+        "providers": json.loads((SAMPLE_DATA / "providers.json").read_text()),
+        "benchmark": json.loads((SAMPLE_DATA / "benchmark.json").read_text()),
     }

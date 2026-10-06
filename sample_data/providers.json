@@ -1,0 +1,94 @@
+{
+  "provider_id": "anthropic_api",
+  "provider_name": "Anthropic",
+  "service": "Anthropic API",
+
+  "data_handling": {
+    "default_input_output_retention": "up to 30 days",
+    "zero_data_retention_available": true,
+    "zero_data_retention_conditions": "Available to approved enterprise API customers; some API features may override ZDR.",
+    "customer_data_used_for_model_training_by_default": false,
+    "default_data_storage_region": "United States",
+    "default_processing_regions": [
+      "United States",
+      "Europe",
+      "Asia",
+      "Australia"
+    ],
+    "us_only_processing_available": true
+  },
+
+  "compliance": {
+    "soc_2_type_2": true,
+    "iso_27001": true,
+    "iso_42001": true,
+    "csa_star": true,
+    "hipaa_capable": true,
+    "hipaa_baa_available": "conditional",
+    "nist_800_171": true
+  },
+
+  "legal_and_contractual": {
+    "dpa_available": true,
+    "standard_contractual_clauses": true,
+    "customer_owns_outputs": true,
+    "copyright_indemnity": true
+  },
+
+  "security": {
+    "encryption_at_rest": "AES-256 GCM",
+    "encryption_in_transit": "TLS 1.2+"
+  },
+
+  "sources": [
+    {
+      "source_id": "anthropic_retention",
+      "name": "Anthropic Privacy Center - Data Retention",
+      "type": "official_provider",
+      "url": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_training",
+      "name": "Anthropic Privacy Center - Model Training",
+      "type": "official_provider",
+      "url": "https://privacy.anthropic.com/en/articles/7996868-is-my-data-used-for-model-training",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_data_location",
+      "name": "Anthropic Privacy Center - Data Locations",
+      "type": "official_provider",
+      "url": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_zdr",
+      "name": "Anthropic Privacy Center - Zero Data Retention",
+      "type": "official_provider",
+      "url": "https://privacy.anthropic.com/en/articles/8956058-i-have-a-zero-data-retention-agreement-with-anthropic-what-products-does-it-apply-to",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_trust",
+      "name": "Anthropic Trust Center",
+      "type": "official_provider",
+      "url": "https://trust.anthropic.com/",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_dpa",
+      "name": "Anthropic Privacy Center - Data Processing Addendum",
+      "type": "official_provider",
+      "url": "https://privacy.anthropic.com/en/articles/7996862-how-do-i-view-and-sign-your-data-processing-addendum-dpa",
+      "retrieved_date": "2026-10-05"
+    },
+    {
+      "source_id": "anthropic_legal_protection",
+      "name": "Anthropic - Expanded Legal Protections",
+      "type": "official_provider",
+      "url": "https://www.anthropic.com/news/expanded-legal-protections-api-improvements",
+      "retrieved_date": "2026-10-05"
+    }
+  ]
+}

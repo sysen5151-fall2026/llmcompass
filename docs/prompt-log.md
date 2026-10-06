@@ -217,3 +217,51 @@ open item above.
   Owner paragraph built from the verbatim Innoslate description above.
 - `docs/context.md` — Product Owner's (C.5) inbound interface updated from
   TBD to the same description; no longer an open item.
+
+---
+
+## 2026-10-06 — KhaiXin30 — Claude Code
+
+**Prompt:** Build the UC.1 walking skeleton from `docs/walking-skeleton.md` with
+a minimal local Flask UI: one page with a text box, Submit, and the decision
+record, in black/grey/white with no logic in the UI. No LLM call and no ranking.
+Each call-list step's stub returns its own section of the matched scenario's
+expected record from `sample_data/`, and the plan had to be approved before
+any code. Follow-ups asked for empty-input rejection, a more readable output,
+and doc updates.
+
+**Output:**
+- `docs/PLAN.md`: step → function → module → output mapping for UC.1.2–1.18.
+  After `sample_data/expected_outputs.json` was regrouped (by the user) into
+  one section per step, every field had an owner. Updated to "implemented"
+  with the UI and test-impact notes.
+- `backend/llm_compass/__init__.py`: UC.1.2 finds `scenario_id` by exact match
+  in `user_inputs.json` and rejects empty/whitespace text with `ValueError`
+  (SN-TL-01 / 5.1.1.1). UC.1.6/1.9 pass the mapping through. UC.1.16/1.17/1.18
+  return `comparison_result` / `selection_result` / `decision_record`, and
+  UC.1.18 assembles the full output.
+- `backend/language_model_runtime/__init__.py`: UC.1.3/1.4 stub returns
+  `interpreted_requirements`.
+- `backend/benchmark_data_sources/__init__.py`: UC.1.10/1.11 stub loads
+  `model_spec.json`, `providers.json`, `benchmark.json`.
+- `backend/app.py`: Flask app. `run_uc1()` calls the 8 functions in call order,
+  and the route renders the result or the UC.1.2 rejection message.
+- `backend/templates/index.html` (new): the single page. The record shows as
+  one section per step, with tables for lists of objects and bullets for text
+  lists, plus a collapsible raw-JSON toggle. No JS.
+- `backend/requirements.txt`: added `Flask==2.2.2`, keeping the file's UTF-16
+  encoding.
+- `README.md`, `docs/walking-skeleton.md`: repo layout, run instructions, and
+  stub notes updated to match.
+- Verified with the Flask test client. All 4 scenarios render and equal
+  `expected_outputs.json` exactly. Empty input shows the error. Headless-Chrome
+  screenshots of scenarios 1 and 4 were checked. pytest wasn't run because it
+  isn't installed on the local `python3`.
+
+**Still open:** text that doesn't match a scenario raises `StopIteration`
+(no error handling, per the brief).
+`test_SN_TL_01_5_1_1_1_accepts_text_requirement` and the SPEC 5.1.3.2 record
+test stay red. The section 4 signatures for `receive_requirements` and
+`generate_decision_record` now differ from the skeleton's.
+
+---

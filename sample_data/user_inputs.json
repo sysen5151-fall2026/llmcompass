@@ -1,0 +1,18 @@
+[
+  {
+    "scenario_id": "SCENARIO_01",
+    "user_input": "We need to analyze very long technical reports. Factual reliability and reasoning across the whole document are the most important. Cost and response speed are less important."
+  },
+  {
+    "scenario_id": "SCENARIO_02",
+    "user_input": "We are building a general AI product that needs strong overall capability, but we also need to keep operating cost reasonable. Cost matters, but we do not want to sacrifice too much capability."
+  },
+  {
+    "scenario_id": "SCENARIO_03",
+    "user_input": "This is a high-volume customer assistant handling relatively straightforward requests. Keeping cost low and responding quickly are more important than having the strongest reasoning model."
+  },
+  {
+    "scenario_id": "SCENARIO_04",
+    "user_input": "Our application handles EU customer data. Company policy requires customer data to be stored and processed only within the EU. This requirement is non-negotiable."
+  }
+]

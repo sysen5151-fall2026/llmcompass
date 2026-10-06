@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LLM Compass</title>
+  <style>
+    body { background: #fff; color: #000; font-family: sans-serif; line-height: 1.5; max-width: 860px; margin: 40px auto; padding: 0 16px; }
+    textarea { width: 100%; height: 120px; box-sizing: border-box; border: 1px solid #888; padding: 8px; font: inherit; color: #000; background: #fff; }
+    button { margin-top: 8px; padding: 6px 16px; border: 1px solid #000; background: #000; color: #fff; font: inherit; cursor: pointer; }
+    .error { margin-top: 16px; padding: 8px 12px; border: 1px solid #000; font-weight: bold; }
+    section { margin-top: 28px; border-top: 2px solid #000; padding-top: 4px; }
+    section h2 { font-size: 1.2em; margin: 8px 0; }
+    h3 { font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin: 16px 0 4px; }
+    p, ul { margin: 0; }
+    ul { padding-left: 20px; }
+    .none { color: #888; font-style: italic; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+    th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #000; color: #fff; font-weight: normal; }
+    .scroll { overflow-x: auto; }
+    details { margin-top: 28px; color: #888; }
+    pre { padding: 12px; border: 1px solid #888; color: #000; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>LLM Compass</h1>
+  <form method="post">
+    <textarea name="requirements">{{ text }}</textarea>
+    <button type="submit">Submit</button>
+  </form>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  {% macro label(key) %}{{ key | replace("_", " ") | capitalize }}{% endmacro %}
+
+  {% macro value(v) %}
+    {% if v is none or v == [] %}
+      <p class="none">None</p>
+    {% elif v is mapping %}
+      {% for k, x in v.items() %}<p><strong>{{ label(k) }}:</strong> {{ x }}</p>{% endfor %}
+    {% elif v is string or v is number %}
+      <p>{{ v }}</p>
+    {% elif v[0] is mapping %}
+      {% set ns = namespace(cols=[]) %}
+      {% for row in v %}{% for k in row %}{% if k not in ns.cols %}{% set ns.cols = ns.cols + [k] %}{% endif %}{% endfor %}{% endfor %}
+      <div class="scroll"><table>
+        <tr>{% for k in ns.cols %}<th>{{ label(k) }}</th>{% endfor %}</tr>
+        {% for row in v %}<tr>{% for k in ns.cols %}{% set c = row.get(k, "") %}<td>{{ c | join(", ") if c is iterable and c is not string else c }}</td>{% endfor %}</tr>{% endfor %}
+      </table></div>
+    {% else %}
+      <ul>{% for x in v %}<li>{{ x }}</li>{% endfor %}</ul>
+    {% endif %}
+  {% endmacro %}
+
+  {% if record %}
+    <p style="margin-top: 24px"><strong>Scenario:</strong> {{ record.scenario_id }}</p>
+    {% for name, fields in record.items() if fields is mapping %}
+    <section>
+      <h2>{{ label(name) }}</h2>
+      {% for k, v in fields.items() %}
+        <h3>{{ label(k) }}</h3>
+        {{ value(v) }}
+      {% endfor %}
+    </section>
+    {% endfor %}
+    <details>
+      <summary>Raw JSON</summary>
+      <pre>{{ raw }}</pre>
+    </details>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,375 @@
+[
+  {
+    "scenario_id": "SCENARIO_01",
+
+    "interpreted_requirements": {
+      "primary_priorities": [
+        "factual reliability",
+        "long-context reasoning"
+      ],
+      "secondary_priorities": [],
+      "lower_priorities": [
+        "cost",
+        "response speed"
+      ],
+      "hard_constraints": []
+    },
+
+    "comparison_result": {
+      "candidate_assessment": [
+        {
+          "model_name": "Claude Fable 5.1",
+          "assessment": "strongest fit",
+          "reason": "Fable has the strongest factual-reliability and long-context reasoning evidence among the evaluated candidates."
+        },
+        {
+          "model_name": "Claude Sonnet 5.5",
+          "assessment": "close alternative",
+          "reason": "Sonnet provides strong long-context reasoning but has lower factual-reliability evidence than Fable."
+        },
+        {
+          "model_name": "Claude Haiku 4.5",
+          "assessment": "lower fit",
+          "reason": "Haiku is cheaper and faster but is substantially weaker on factual reliability and long-context reasoning."
+        }
+      ],
+
+      "ranking": [
+        "Claude Fable 5.1",
+        "Claude Sonnet 5.5",
+        "Claude Haiku 4.5"
+      ],
+
+      "tradeoffs": [
+        "Fable provides the strongest evidence for factual reliability and long-context reasoning but is substantially more expensive than Sonnet and Haiku.",
+        "Sonnet offers slightly lower performance on the highest-priority criteria but at a much lower cost than Fable.",
+        "Haiku provides the lowest cost and faster response but sacrifices substantial reasoning capability."
+      ]
+    },
+
+    "selection_result": {
+      "status": "recommendation_available",
+
+      "recommended_model": {
+        "model_name": "Claude Fable 5.1",
+        "provider": "Anthropic"
+      },
+
+      "decision_confidence": "high",
+
+      "supporting_evidence": [
+        {
+          "criterion": "factual reliability",
+          "metric": "AA-Omniscience Index",
+          "value": 43,
+          "source_id": "aa_fable_5_1",
+          "source_name": "Artificial Analysis"
+        },
+        {
+          "criterion": "long-context reasoning",
+          "metric": "AA-LCR v1.1",
+          "value": 85,
+          "unit": "percent",
+          "source_id": "aa_fable_5_1",
+          "source_name": "Artificial Analysis"
+        }
+      ]
+    },
+
+    "decision_record": {
+      "summary": "Claude Fable 5.1 is recommended because factual reliability and long-context reasoning are the user's highest priorities. Among the evaluated candidates, Fable provides the strongest evidence on both criteria.",
+
+      "limitations_and_risks": [
+        "Fable is substantially more expensive than the other evaluated candidates.",
+        "Fable has lower measured output speed than Sonnet and Haiku.",
+        "Artificial Analysis benchmarks provide general independent evidence and do not guarantee performance on the organization's specific technical documents.",
+        "Application-specific validation should be performed before deployment."
+      ],
+
+      "next_action": "Validate Claude Fable 5.1 using representative technical documents from the intended application before making the final deployment decision."
+    }
+  },
+
+  {
+    "scenario_id": "SCENARIO_02",
+
+    "interpreted_requirements": {
+      "primary_priorities": [
+        "overall model capability"
+      ],
+      "secondary_priorities": [
+        "operating cost"
+      ],
+      "lower_priorities": [],
+      "hard_constraints": []
+    },
+
+    "comparison_result": {
+      "candidate_assessment": [
+        {
+          "model_name": "Claude Sonnet 5.5",
+          "assessment": "strongest overall fit",
+          "reason": "Sonnet provides the highest overall Intelligence Index while remaining substantially less expensive than Fable."
+        },
+        {
+          "model_name": "Claude Fable 5.1",
+          "assessment": "higher-cost alternative",
+          "reason": "Fable provides stronger factual-reliability and long-context evidence but has a slightly lower overall Intelligence Index and substantially higher token pricing."
+        },
+        {
+          "model_name": "Claude Haiku 4.5",
+          "assessment": "lower-cost alternative",
+          "reason": "Haiku is substantially cheaper but has much lower overall benchmark capability."
+        }
+      ],
+
+      "ranking": [
+        "Claude Sonnet 5.5",
+        "Claude Fable 5.1",
+        "Claude Haiku 4.5"
+      ],
+
+      "tradeoffs": [
+        "Sonnet provides the strongest overall capability at a much lower cost than Fable.",
+        "Fable provides stronger factual-reliability and long-context evidence but at substantially higher cost.",
+        "Haiku provides the lowest operating cost but sacrifices significant overall capability."
+      ]
+    },
+
+    "selection_result": {
+      "status": "recommendation_available",
+
+      "recommended_model": {
+        "model_name": "Claude Sonnet 5.5",
+        "provider": "Anthropic"
+      },
+
+      "decision_confidence": "moderate",
+
+      "supporting_evidence": [
+        {
+          "criterion": "overall model capability",
+          "metric": "Artificial Analysis Intelligence Index",
+          "value": 56,
+          "source_id": "aa_sonnet_5_5",
+          "source_name": "Artificial Analysis"
+        },
+        {
+          "criterion": "input cost",
+          "metric": "input price per 1M tokens",
+          "value": 2.0,
+          "unit": "USD",
+          "source_id": "anthropic_models",
+          "source_name": "Anthropic"
+        },
+        {
+          "criterion": "output cost",
+          "metric": "output price per 1M tokens",
+          "value": 10.0,
+          "unit": "USD",
+          "source_id": "anthropic_models",
+          "source_name": "Anthropic"
+        }
+      ]
+    },
+
+    "decision_record": {
+      "summary": "Claude Sonnet 5.5 is recommended because it provides the strongest balance between overall model capability and operating cost. It has the highest Intelligence Index among the evaluated candidates while costing substantially less than Fable.",
+
+      "limitations_and_risks": [
+        "The Artificial Analysis Intelligence Index combines multiple general evaluations and may not fully represent the application's actual workload.",
+        "Sonnet does not provide the strongest factual-reliability score among the evaluated candidates.",
+        "The recommendation may change if stakeholder priorities shift toward factual reliability, long-context reasoning, or minimum cost."
+      ],
+
+      "next_action": "Validate Claude Sonnet 5.5 using representative application tasks and confirm that the current balance between capability and cost reflects stakeholder priorities."
+    }
+  },
+
+  {
+    "scenario_id": "SCENARIO_03",
+
+    "interpreted_requirements": {
+      "primary_priorities": [
+        "low cost",
+        "fast response"
+      ],
+      "secondary_priorities": [],
+      "lower_priorities": [
+        "advanced reasoning capability"
+      ],
+      "hard_constraints": []
+    },
+
+    "comparison_result": {
+      "candidate_assessment": [
+        {
+          "model_name": "Claude Haiku 4.5",
+          "assessment": "strongest fit",
+          "reason": "Haiku provides the lowest cost and the fastest measured time to first answer token among the evaluated candidates."
+        },
+        {
+          "model_name": "Claude Sonnet 5.5",
+          "assessment": "higher-capability alternative",
+          "reason": "Sonnet provides substantially stronger overall capability but at higher cost."
+        },
+        {
+          "model_name": "Claude Fable 5.1",
+          "assessment": "lower fit",
+          "reason": "Fable provides stronger factual and long-context reasoning but is substantially more expensive and slower for this cost-sensitive application."
+        }
+      ],
+
+      "ranking": [
+        "Claude Haiku 4.5",
+        "Claude Sonnet 5.5",
+        "Claude Fable 5.1"
+      ],
+
+      "tradeoffs": [
+        "Haiku provides the lowest cost and fastest measured response but has substantially lower overall reasoning capability.",
+        "Sonnet costs more but provides significantly stronger overall capability.",
+        "Fable provides stronger factual and long-context reasoning but does not align well with the application's cost and responsiveness priorities."
+      ]
+    },
+
+    "selection_result": {
+      "status": "recommendation_available",
+
+      "recommended_model": {
+        "model_name": "Claude Haiku 4.5",
+        "provider": "Anthropic"
+      },
+
+      "decision_confidence": "high",
+
+      "supporting_evidence": [
+        {
+          "criterion": "benchmark cost",
+          "metric": "cost per Artificial Analysis Intelligence Index task",
+          "value": 0.28,
+          "unit": "USD",
+          "source_id": "aa_haiku_4_5_reasoning",
+          "source_name": "Artificial Analysis"
+        },
+        {
+          "criterion": "responsiveness",
+          "metric": "time to first answer token",
+          "value": 18.85,
+          "unit": "seconds",
+          "source_id": "aa_haiku_4_5_reasoning",
+          "source_name": "Artificial Analysis"
+        },
+        {
+          "criterion": "input cost",
+          "metric": "input price per 1M tokens",
+          "value": 1.0,
+          "unit": "USD",
+          "source_id": "anthropic_models",
+          "source_name": "Anthropic"
+        },
+        {
+          "criterion": "output cost",
+          "metric": "output price per 1M tokens",
+          "value": 5.0,
+          "unit": "USD",
+          "source_id": "anthropic_models",
+          "source_name": "Anthropic"
+        }
+      ]
+    },
+
+    "decision_record": {
+      "summary": "Claude Haiku 4.5 is recommended because the application prioritizes low cost and fast response over advanced reasoning capability. Haiku provides the lowest cost and the fastest measured time to first answer token among the evaluated candidates.",
+
+      "limitations_and_risks": [
+        "Haiku has substantially lower overall reasoning capability than Sonnet and Fable.",
+        "Haiku also has lower factual-reliability and long-context reasoning benchmark scores.",
+        "Selecting Haiku primarily for cost and responsiveness may reduce performance on complex or reasoning-intensive customer requests.",
+        "Latency measurements are time-sensitive benchmark observations and may change with workload and provider infrastructure."
+      ],
+
+      "next_action": "Test Claude Haiku 4.5 using representative customer requests to confirm that its lower reasoning capability is sufficient for the intended workload."
+    }
+  },
+
+  {
+    "scenario_id": "SCENARIO_04",
+
+    "interpreted_requirements": {
+      "primary_priorities": [],
+      "secondary_priorities": [],
+      "lower_priorities": [],
+      "hard_constraints": [
+        "customer data must be stored only within the European Union",
+        "customer data must be processed only within the European Union"
+      ]
+    },
+
+    "comparison_result": {
+      "candidate_assessment": [
+        {
+          "model_name": "Claude Fable 5.1",
+          "assessment": "not_demonstrated_compliant",
+          "reason": "The evaluated Anthropic API provider information does not demonstrate EU-only data storage and processing."
+        },
+        {
+          "model_name": "Claude Sonnet 5.5",
+          "assessment": "not_demonstrated_compliant",
+          "reason": "The evaluated Anthropic API provider information does not demonstrate EU-only data storage and processing."
+        },
+        {
+          "model_name": "Claude Haiku 4.5",
+          "assessment": "not_demonstrated_compliant",
+          "reason": "The evaluated Anthropic API provider information does not demonstrate EU-only data storage and processing."
+        }
+      ],
+
+      "ranking": null,
+
+      "tradeoffs": []
+    },
+
+    "selection_result": {
+      "status": "no_feasible_model",
+
+      "recommended_model": null,
+
+      "decision_confidence": "high",
+
+      "supporting_evidence": [
+        {
+          "criterion": "EU-only data storage",
+          "metric": "default data storage region",
+          "value": "United States",
+          "source_id": "anthropic_data_location",
+          "source_name": "Anthropic Privacy Center"
+        },
+        {
+          "criterion": "EU-only data processing",
+          "metric": "documented processing regions",
+          "value": [
+            "United States",
+            "Europe",
+            "Asia",
+            "Australia"
+          ],
+          "source_id": "anthropic_data_location",
+          "source_name": "Anthropic Privacy Center"
+        }
+      ]
+    },
+
+    "decision_record": {
+      "summary": "No feasible model can be recommended from the current candidate set because the available provider evidence does not demonstrate compliance with the mandatory requirement that customer data be stored and processed only within the European Union.",
+
+      "limitations_and_risks": [
+        "This result does not establish that Anthropic can never support an EU-only arrangement under another contract or deployment configuration.",
+        "It establishes only that the evidence currently available to LLM Compass does not demonstrate compliance with the stated mandatory requirement.",
+        "Because EU-only storage and processing are hard constraints, benchmark performance, capability, and cost should not override the compliance requirement."
+      ],
+
+      "next_action": "Expand the candidate set to providers or deployment options with verified EU-only data storage and processing, or obtain additional contractual evidence demonstrating that the requirement can be satisfied."
+    }
+  }
+]

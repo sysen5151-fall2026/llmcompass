@@ -1,0 +1,174 @@
+{
+  "benchmark_provider": {
+    "name": "Artificial Analysis",
+    "type": "independent_benchmark_provider",
+    "methodology_url": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
+    "performance_methodology_url": "https://artificialanalysis.ai/methodology/performance-benchmarking",
+    "intelligence_index_version": "4.3.2",
+    "retrieved_date_utc": "2026-10-06"
+  },
+
+  "models": [
+    {
+      "model_id": "claude-fable-5-1",
+      "model_name": "Claude Fable 5.1",
+
+      "benchmark_configuration": {
+        "reasoning": true,
+        "reasoning_effort": "max",
+        "fallback": "default",
+        "artificial_analysis_name": "Claude Fable 5.1 (Max, Default Fallback)"
+      },
+
+      "quality": {
+        "intelligence_index": {
+          "value": 53,
+          "higher_is_better": true
+        },
+        "aa_omniscience_index": {
+          "value": 43,
+          "higher_is_better": true,
+          "range": "-100 to 100"
+        },
+        "aa_lcr_v1_1_percent": {
+          "value": 85,
+          "higher_is_better": true
+        }
+      },
+
+      "benchmark_cost": {
+        "cost_per_intelligence_index_task_usd": 7.63,
+        "lower_is_better": true
+      },
+
+      "performance": {
+        "output_speed_tokens_per_second": 64,
+        "time_to_first_answer_token_seconds": 259.90,
+        "end_to_end_500_token_response_seconds": 267.77,
+        "higher_output_speed_is_better": true,
+        "lower_latency_is_better": true
+      },
+
+      "sources": [
+        {
+          "source_id": "aa_fable_5_1",
+          "name": "Artificial Analysis - Claude Fable 5.1",
+          "url": "https://artificialanalysis.ai/models/claude-fable-5-1"
+        },
+        {
+          "source_id": "aa_fable_5_1_comparison",
+          "name": "Artificial Analysis - Claude Fable 5.1 High vs Max",
+          "url": "https://artificialanalysis.ai/models/comparisons/claude-fable-5-1-high-vs-claude-fable-5-1"
+        }
+      ]
+    },
+
+    {
+      "model_id": "claude-sonnet-5-5",
+      "model_name": "Claude Sonnet 5.5",
+
+      "benchmark_configuration": {
+        "reasoning": true,
+        "reasoning_effort": "max",
+        "fallback": "default",
+        "artificial_analysis_name": "Claude Sonnet 5.5 (Max, Default Fallback)"
+      },
+
+      "quality": {
+        "intelligence_index": {
+          "value": 56,
+          "higher_is_better": true
+        },
+        "aa_omniscience_index": {
+          "value": 32,
+          "higher_is_better": true,
+          "range": "-100 to 100"
+        },
+        "aa_lcr_v1_1_percent": {
+          "value": 83,
+          "higher_is_better": true
+        }
+      },
+
+      "benchmark_cost": {
+        "cost_per_intelligence_index_task_usd": 7.67,
+        "lower_is_better": true
+      },
+
+      "performance": {
+        "output_speed_tokens_per_second": 132,
+        "time_to_first_answer_token_seconds": 454.56,
+        "end_to_end_500_token_response_seconds": 458.34,
+        "higher_output_speed_is_better": true,
+        "lower_latency_is_better": true
+      },
+
+      "sources": [
+        {
+          "source_id": "aa_sonnet_5_5",
+          "name": "Artificial Analysis - Claude Sonnet 5.5",
+          "url": "https://artificialanalysis.ai/models/claude-sonnet-5-5"
+        },
+        {
+          "source_id": "aa_sonnet_5_5_comparison",
+          "name": "Artificial Analysis - Claude Sonnet 5.5 High vs Max",
+          "url": "https://artificialanalysis.ai/models/comparisons/claude-sonnet-5-5-high-vs-claude-sonnet-5-5"
+        }
+      ]
+    },
+
+    {
+      "model_id": "claude-haiku-4-5-20251001",
+      "model_name": "Claude Haiku 4.5",
+
+      "benchmark_configuration": {
+        "reasoning": true,
+        "reasoning_effort": null,
+        "fallback": null,
+        "artificial_analysis_name": "Claude 4.5 Haiku (Reasoning)"
+      },
+
+      "quality": {
+        "intelligence_index": {
+          "value": 17,
+          "higher_is_better": true
+        },
+        "aa_omniscience_index": {
+          "value": -4,
+          "higher_is_better": true,
+          "range": "-100 to 100"
+        },
+        "aa_lcr_v1_1_percent": {
+          "value": 74,
+          "higher_is_better": true
+        }
+      },
+
+      "benchmark_cost": {
+        "cost_per_intelligence_index_task_usd": 0.28,
+        "lower_is_better": true
+      },
+
+      "performance": {
+        "output_speed_tokens_per_second": 98,
+        "time_to_first_answer_token_seconds": 18.85,
+        "end_to_end_500_token_response_seconds": 23.94,
+        "higher_output_speed_is_better": true,
+        "lower_latency_is_better": true
+      },
+
+      "sources": [
+        {
+          "source_id": "aa_haiku_4_5_reasoning",
+          "name": "Artificial Analysis - Claude 4.5 Haiku Reasoning",
+          "url": "https://artificialanalysis.ai/models/claude-4-5-haiku-reasoning"
+        },
+        {
+          "source_id": "aa_haiku_4_5_comparison",
+          "name": "Artificial Analysis - Claude 4.5 Haiku Reasoning vs Non-reasoning",
+          "url": "https://artificialanalysis.ai/models/comparisons/claude-4-5-haiku-reasoning-vs-claude-4-5-haiku"
+        }
+      ]
+    }
+  ]
+}
