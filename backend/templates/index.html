@@ -16,6 +16,8 @@
     .none { color: #888; font-style: italic; }
     table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
     th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; vertical-align: top; }
+    a { color: #000; }
+    a.url { overflow-wrap: anywhere; }
     th { background: #000; color: #fff; font-weight: normal; }
     .scroll { overflow-x: auto; }
     details { margin-top: 28px; color: #888; }
@@ -45,7 +47,7 @@
       {% for row in v %}{% for k in row %}{% if k not in ns.cols %}{% set ns.cols = ns.cols + [k] %}{% endif %}{% endfor %}{% endfor %}
       <div class="scroll"><table>
         <tr>{% for k in ns.cols %}<th>{{ label(k) }}</th>{% endfor %}</tr>
-        {% for row in v %}<tr>{% for k in ns.cols %}{% set c = row.get(k, "") %}<td>{{ c | join(", ") if c is iterable and c is not string else c }}</td>{% endfor %}</tr>{% endfor %}
+        {% for row in v %}<tr>{% for k in ns.cols %}{% set c = row.get(k, "") %}<td>{% if c is string and c.startswith("http") %}<a class="url" href="{{ c }}">{{ c }}</a>{% else %}{{ c | join(", ") if c is iterable and c is not string else c }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
       </table></div>
     {% else %}
       <ul>{% for x in v %}<li>{{ x }}</li>{% endfor %}</ul>

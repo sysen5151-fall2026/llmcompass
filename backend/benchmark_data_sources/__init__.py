@@ -28,7 +28,7 @@ def _to_candidates(models: list, providers: dict, benchmark: dict) -> list:
     bench_date = benchmark["benchmark_provider"]["retrieved_date_utc"]
     residency_source = next(s for s in providers["sources"] if s["source_id"] == "anthropic_data_location")
     residency = _figure([COUNTRY_CODES[providers["data_handling"]["default_data_storage_region"]]],
-                        "ISO 3166-1 alpha-2", residency_source["source_id"], residency_source["retrieved_date"])
+                        "ISO 3166-1 alpha-2", residency_source["url"], residency_source["retrieved_date"])
     candidates = []
     for m in models:
         src, when = m["source_url"], m["retrieved_date"]
@@ -48,7 +48,7 @@ def _to_candidates(models: list, providers: dict, benchmark: dict) -> list:
                 raw = b[group][key]
                 value = raw["value"] if isinstance(raw, dict) else raw
                 cand["benchmarks"].append({"benchmark_id": bid,
-                                           "score": _figure(value, unit, b["sources"][0]["source_id"], bench_date)})
+                                           "score": _figure(value, unit, b["sources"][0]["url"], bench_date)})
         candidates.append(cand)
     return candidates
 
