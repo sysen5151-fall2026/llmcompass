@@ -317,7 +317,7 @@ Report and the Stakeholder Needs and Requirements Definition.
       it. Open: decompose F.1 into sub-functions, and trace requirements to the UC.1.n
       actions rather than only to functions
 - [ ] Detailed design & first working slice — first slice done: ranking, sensitivity
-      analysis and the decision record are real (UC.1.13–1.16, UC.1.18). The remaining
+      analysis and the decision record are real (UC.1.12–1.16, UC.1.18). The remaining
       UC.1 steps are stubs
 - [ ] Integration (end-to-end flow) — the UC.1 path runs end to end with C.7 and C.8
       stubbed; real benchmark ingestion and a real runtime call come next
