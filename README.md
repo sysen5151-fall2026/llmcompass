@@ -2,7 +2,8 @@
 
 SYSEN 5151 — Foundations of Systems Engineering: AI-Assisted Product Build
 
-Early setup phase. Toolset's picked and CI is stubbed in; concept, requirements, and
+Walking skeleton runs end to end for UC.1. Stakeholder needs and requirements are
+baselined in SPEC.md with acceptance tests wired into CI; system requirements and
 architecture come next as we move through the SE lifecycle.
 
 ## Operational Concept
@@ -123,26 +124,33 @@ Four months later a new model is released. She reopens the saved decision, refre
 the data, and re-runs it. The comparison takes minutes rather than a day, and the
 resulting record shows what changed and why.
 
-**4.3 Users and their concerns**
+**4.3 Users and contributors**
+
+Only the technical lead uses LLM Compass. The others shape the selection without
+operating the system: their requirements and constraints reach it as values the
+technical lead states, and they see the result through the technical lead rather
+than from the system. This is a deliberate boundary decision — see docs/context.md.
+
+The technical lead owns the decision and must justify it to others. They are the
+sole operator of the system, and are concerned with the reasoning being visible and
+with the cost of switching later.
 
 The application developer builds the AI application that will use the selected
 model. Concerned with capability fit for the specific task. Supplies the
-application's functional requirements but does not own the selection decision.
+application's functional requirements to the technical lead, but does not own the
+selection decision.
 
-The technical lead owns the decision and must justify it to others. They are
-concerned with the reasoning being visible and with the cost of switching later.
-
-The budget owner is concerned with cost per token and total spend at projected
-volume, and is in direct tension with the developer's preference for the most
-capable model available.
+The budget owner sets the cost ceiling the selection must respect, and is concerned
+with cost per token and total spend at projected volume — in direct tension with the
+developer's preference for the most capable model available.
 
 The compliance officer is concerned with data residency, retention, and whether a
 vendor is contractually acceptable. Their concerns act as hard constraints: a model
 that fails them is excluded regardless of how well it scores.
 
 The product owner is accountable for the application's outcomes and priorities.
-Sets the relative importance of capability, cost, and speed, which informs the
-weighting applied during selection.
+Sets the relative importance of capability, cost, and speed, which the technical
+lead applies as weights during selection.
 
 The end user of the downstream application does not interact with LLM Compass, but
 the quality of their experience is what the requirements ultimately describe.
@@ -173,20 +181,27 @@ the right language model for their AI product. Team: Daniel Distor (dd745), Khai
 Kuan (kk996), Charlie Liu (yl4432), Allyanna Panganiban (amp388), Turkhan Yusifli
 (ty456).
 
-## External Systems
+## External Assets
 
 See [docs/context.md](docs/context.md).
 
-- Stakeholder actors
-  - Application Developer
-  - Budget Owner
-  - Compliance Officer
-  - Product Owner
-  - Technical Lead
-- Data sources
-  - Benchmark Data Sources
-  - Language model runtime (LLM Compass's own requirement-interpretation
-    engine, not a data source in the vendor-spec sense — see docs/context.md)
+Three hold an interface to LLM Compass. These are the only crossings of the system
+boundary:
+
+- Technical Lead — the sole human interface
+- Benchmark Data Sources — model specifications and benchmark figures, with source
+  and collection date
+- Language model runtime — LLM Compass's own requirement-interpretation engine, not
+  a data source in the vendor-spec sense (see docs/context.md)
+
+Four contribute to the selection without an interface. Their constraints and
+priorities reach the system through the Technical Lead, and they appear on the
+context diagram with no connection to LLM Compass:
+
+- Application Developer
+- Budget Owner
+- Compliance Officer
+- Product Owner
 
 (The end user of the downstream application is out of scope — per §4.3, they don't
 interact with LLM Compass directly.)
@@ -241,7 +256,7 @@ See the team's Toolset Justification doc for full rationale.
 ├── tests/                     # one failing test per acceptance criterion
 ├── pytest.ini
 ├── docs/
-│   ├── context.md             # every external system — see Operational Concept above
+│   ├── context.md             # external assets, and which of them hold an interface
 │   ├── walking-skeleton.md    # UC.1 call path from the Innoslate sequence diagram
 │   ├── PLAN.md
 │   ├── environment.md
@@ -253,8 +268,9 @@ See the team's Toolset Justification doc for full rationale.
 
 Feature code so far: ranking, sensitivity analysis and the decision record (see docs/PLAN.md). Everything
 else is walking skeleton and stubs. External
-systems live in docs/context.md, not as folders (no per-actor directories — matches
-the course's own worked example).
+assets live in docs/context.md, not as folders (no per-actor directories — matches
+the course's own worked example). Only C.7 and C.8 have code folders, because they
+are the only external assets the system calls.
 
 ## Getting started
 
@@ -282,15 +298,31 @@ pytest
 
 ## Roadmap
 
-Following the course's SE-to-build progression:
+Following the course's SE-to-build progression. Submitted so far: the Business Analysis
+Report and the Stakeholder Needs and Requirements Definition.
 
 - [x] Toolset justification
-- [x] Stakeholder needs / personas
-- [ ] Concept & ConOps (trade study, mockups)
-- [ ] Requirements (functional + non-functional) — stakeholder requirements done
-      (SPEC.md); system requirements next
-- [ ] Architecture (Innoslate model → repo skeleton)
-- [ ] Detailed design & first working slice
-- [ ] Integration (end-to-end flow)
-- [ ] Verification & Validation (test suite)
+- [x] Stakeholder needs / personas — personas and empathy maps for both Players,
+      Power-Interest Grid, and needs derived in three traced stages: primitive →
+      critical-to-quality → effective (SNRD §2)
+- [x] Concept & ConOps — OpsCon and the solution-class trade study in the Business
+      Analysis Report (§3, §8, Appendix 1). No separate mockups; the walking-skeleton
+      UI stands in for them
+- [ ] Requirements (functional + non-functional) — stakeholder requirements done:
+      19 statements with rationale, measures of effectiveness and validation criteria
+      (SPEC.md; SNRD §3), passing Innoslate Intelligence at 100%. System requirements
+      next
+- [ ] Architecture (Innoslate model → repo skeleton) — behaviour model done for UC.1
+      (use case, action, activity and sequence diagrams) and the repo skeleton matches
+      it. Open: decompose F.1 into sub-functions, and trace requirements to the UC.1.n
+      actions rather than only to functions
+- [ ] Detailed design & first working slice — first slice done: ranking, sensitivity
+      analysis and the decision record are real (UC.1.13–1.16, UC.1.18). The remaining
+      UC.1 steps are stubs
+- [ ] Integration (end-to-end flow) — the UC.1 path runs end to end with C.7 and C.8
+      stubbed; real benchmark ingestion and a real runtime call come next
+- [ ] Verification & Validation (test suite) — one acceptance test per criterion wired
+      into CI, passing for the implemented slice. Validation criteria are defined
+      (SNRD §3.4) but not yet run: they need test data the team hasn't built, including
+      a requirement set with known-weak proxies and a deliberately marginal ranking
 - [ ] Final delivery (deployed app + demo + known-limitations writeup)
