@@ -25,8 +25,8 @@ rationale behind each choice.
 
 ## Repo access (as of last check)
 
-- GitHub org: `sysen-5151-Fall26`
-- Repo: `lab-project`
+- GitHub org: `sysen5151-fall2026`
+- Repo: `llmcompass`
 - Collaborators: allyannap, DanielDistor, KhaiXin30, charlie111801-lyc, turkhan1
 - Branch protection on `main`: **not yet set** — requires admin access, which no team
   member currently has (all are Write/Triage). Needs instructor/org-admin action.
