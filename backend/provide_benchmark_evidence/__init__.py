@@ -1,5 +1,6 @@
 # STUB: Benchmark Data Sources
 # Loads the manually entered model, provider and benchmark data from sample_data/.
+"""Implements F.7 -- Provide Benchmark Evidence. Mechanism: C.7 Benchmark Data Sources."""
 
 import json
 from pathlib import Path
@@ -53,14 +54,37 @@ def _to_candidates(models: list, providers: dict, benchmark: dict) -> list:
     return candidates
 
 
-def request_model_data(confirmed_mapping: dict) -> dict:
-    # UC.1.10, UC.1.11 -- call and return are the same function call (SN-TL-02 / 5.1.2.1)
+def _load_catalog():
+    # The stored catalog: increment 1 is manual entry in sample_data/ (SPEC section 2).
     models = json.loads((SAMPLE_DATA / "model_spec.json").read_text())
     providers = json.loads((SAMPLE_DATA / "providers.json").read_text())
     benchmark = json.loads((SAMPLE_DATA / "benchmark.json").read_text())
+    return models, providers, benchmark
+
+
+def request_model_data(confirmed_mapping: dict) -> dict:
+    # UC.1.10, UC.1.11 -- call and return are the same function call (SN-TL-02 / 5.1.2.1)
+    models, providers, benchmark = _load_catalog()
     return {
         "models": models,
         "providers": providers,
         "benchmark": benchmark,
         "candidates": _to_candidates(models, providers, benchmark),
     }
+
+
+# --- F.7 ICOM signature (Lab Manual 4.4); body added in Chapter 5 (5.3) ---
+
+
+def provide_model_data(*, data_request: dict) -> list:
+    """Function: F.7 -- Provide Benchmark Evidence. Signature from Chapter 4; body added this increment.
+
+    control: data_request. out: model_data_with_provenance.
+    """
+    # SR 1.3.3, SR 1.2.1 (catalog side), SR 1.4.1 (catalog side), SN-TL-02 / 5.1.2.1
+    # UC.1.10, UC.1.11 -- no live source in increment 1, so the stored catalog answers.
+    candidates = _to_candidates(*_load_catalog())
+    # SR 1.2.1 -- "all" requests every candidate in the catalog; a list requests those model_ids.
+    if data_request["models"] == "all":
+        return candidates
+    return [c for c in candidates if c["model_id"] in data_request["models"]]

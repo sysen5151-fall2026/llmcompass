@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from conftest import TODAY
-from benchmark_data_sources import request_model_data
-from llm_compass import (confirm_mapping, generate_decision_record, present_sensitivity_finding,
+from provide_benchmark_evidence import request_model_data
+from provide_llm_selection_decision_support import (confirm_mapping, generate_decision_record, present_sensitivity_finding,
                          select_model)
 
 SAMPLE_DATA = Path(__file__).resolve().parent.parent / "sample_data"

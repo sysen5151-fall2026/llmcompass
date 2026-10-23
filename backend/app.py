@@ -9,8 +9,8 @@ import json
 
 from flask import Flask, render_template, request
 
-from language_model_runtime import submit_requirements
-from llm_compass import (
+from provide_requirement_interpretation import submit_requirements
+from provide_llm_selection_decision_support import (
     receive_requirements,
     present_mapping_for_review,
     confirm_mapping,
@@ -18,7 +18,7 @@ from llm_compass import (
     select_model,
     generate_decision_record,
 )
-from benchmark_data_sources import request_model_data
+from provide_benchmark_evidence import request_model_data
 
 app = Flask(__name__)
 

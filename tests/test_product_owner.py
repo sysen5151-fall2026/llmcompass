@@ -21,8 +21,8 @@ def monthly_cost_formula(c, requests_per_day, input_tokens, output_tokens):
 # SN-PO-01 / SN-PO-07 --------------------------------------------------------
 
 def test_SN_PO_01_5_2_2_1_summaries_have_no_technical_terms(candidates, criteria, today):
-    rank = impl("llm_compass", "rank")
-    summaries = impl("llm_compass", "tradeoff_summaries")
+    rank = impl("provide_llm_selection_decision_support", "rank")
+    summaries = impl("provide_llm_selection_decision_support", "tradeoff_summaries")
     result = rank(candidates, criteria, today)
     out = summaries(result)
 
@@ -41,7 +41,7 @@ def test_SN_PO_01_5_2_2_1_summaries_have_no_technical_terms(candidates, criteria
 
 @pytest.mark.parametrize("requests_per_day", [100, 10_000])
 def test_SN_PO_02_5_2_1_1_monthly_cost_across_volumes(candidates, usage, requests_per_day):
-    monthly_cost = impl("llm_compass", "monthly_cost")
+    monthly_cost = impl("provide_llm_selection_decision_support", "monthly_cost")
     for c in candidates:
         got = monthly_cost(c, requests_per_day, usage["input_tokens"], usage["output_tokens"])
         want = monthly_cost_formula(c, requests_per_day, usage["input_tokens"], usage["output_tokens"])
@@ -51,8 +51,8 @@ def test_SN_PO_02_5_2_1_1_monthly_cost_across_volumes(candidates, usage, request
 # SN-PO-03 -------------------------------------------------------------------
 
 def test_SN_PO_03_5_2_2_1_states_gains_and_losses(candidates, criteria, today):
-    rank = impl("llm_compass", "rank")
-    summaries = impl("llm_compass", "tradeoff_summaries")
+    rank = impl("provide_llm_selection_decision_support", "rank")
+    summaries = impl("provide_llm_selection_decision_support", "tradeoff_summaries")
     result = rank(candidates, criteria, today)
     out = summaries(result)
 
@@ -69,7 +69,7 @@ def test_SN_PO_03_5_2_2_1_states_gains_and_losses(candidates, criteria, today):
 # SN-PO-04 -------------------------------------------------------------------
 
 def test_SN_PO_04_5_2_3_1_risk_fields_reported(candidates):
-    risk_report = impl("llm_compass", "risk_report")
+    risk_report = impl("provide_llm_selection_decision_support", "risk_report")
     for c in candidates:
         report = risk_report(c)
         for field in ("vendor_dependence", "switching_cost", "deprecation_risk"):
@@ -79,9 +79,9 @@ def test_SN_PO_04_5_2_3_1_risk_fields_reported(candidates):
 # SN-PO-06 -------------------------------------------------------------------
 
 def test_SN_PO_06_5_2_4_1_flags_over_capability_with_premium(candidates, criteria, usage, today):
-    rank = impl("llm_compass", "rank")
-    over_capability = impl("llm_compass", "over_capability")
-    monthly_cost = impl("llm_compass", "monthly_cost")
+    rank = impl("provide_llm_selection_decision_support", "rank")
+    over_capability = impl("provide_llm_selection_decision_support", "over_capability")
+    monthly_cost = impl("provide_llm_selection_decision_support", "monthly_cost")
 
     # model-b exceeds every capability threshold (ctx >= 100k, lcqa >= 70).
     # model-c meets them exactly and is cheaper. model-a is excluded.

@@ -17,11 +17,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Only pytest for now. backend/requirements.txt is UTF-16 and pulls in
-      # chromadb/onnxruntime, none of which the acceptance tests need yet.
+      # pytest plus Flask, so the web-interface tests run instead of being skipped
+      # (Lab Manual 5.3: an unmet requirement must fail the build).
+      # backend/requirements.txt is UTF-16 and pulls in chromadb/onnxruntime,
+      # none of which the tests need, so the two are pinned here instead.
+      # Werkzeug 3 breaks Flask 2.2.2.
       - name: Install test dependencies
-        run: pip install pytest
+        run: pip install pytest "Flask==2.2.2" "Werkzeug<3"
 
-      # SPEC.md acceptance tests. Fails the check while any requirement is unmet.
-      - name: Run acceptance tests
+      # SPEC.md acceptance tests (stakeholder needs, section 1) and system
+      # requirement tests (SR 1.1.1-1.4.1, section 6). Fails the check while any
+      # requirement is unmet.
+      - name: Run acceptance and system requirement tests
         run: pytest -v

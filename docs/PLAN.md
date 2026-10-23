@@ -28,24 +28,26 @@ A stub reads `expected_outputs.json` itself and returns its section for that
 
 | Step | Function | Module | Input | Output (record field) |
 |---|---|---|---|---|
-| UC.1.2 | `receive_requirements(text)` | llm_compass | typed text | `scenario_id` (exact match on `user_input`); empty/whitespace text raises `ValueError` (SN-TL-01 / 5.1.1.1) |
-| UC.1.3 | `submit_requirements(req)` | language_model_runtime (STUB) | `{scenario_id, text}` | `interpreted_requirements` |
+| UC.1.2 | `receive_requirements(text)` | provide_llm_selection_decision_support | typed text | `scenario_id` (exact match on `user_input`); empty/whitespace text raises `ValueError` (SN-TL-01 / 5.1.1.1) |
+| UC.1.3 | `submit_requirements(req)` | provide_requirement_interpretation (STUB) | `{scenario_id, text}` | `interpreted_requirements` |
 | UC.1.4 | return value of UC.1.3 | - | - | - |
-| UC.1.6 | `present_mapping_for_review(interp)` | llm_compass | `interpreted_requirements` | passes the mapping through, no new field |
-| UC.1.9 | `confirm_mapping(mapping)` | llm_compass | mapping | auto-confirms (the UI has no confirm step), no new field |
-| UC.1.10 | `request_model_data(confirmed)` | benchmark_data_sources (STUB) | confirmed mapping | `{models, providers, benchmark}` loaded from the 3 files, not a record field |
+| UC.1.6 | `present_mapping_for_review(interp)` | provide_llm_selection_decision_support | `interpreted_requirements` | passes the mapping through, no new field |
+| UC.1.9 | `confirm_mapping(mapping)` | provide_llm_selection_decision_support | mapping | auto-confirms (the UI has no confirm step), no new field |
+| UC.1.10 | `request_model_data(confirmed)` | provide_benchmark_evidence (STUB) | confirmed mapping | `{models, providers, benchmark}` loaded from the 3 files, not a record field |
 | UC.1.11 | return value of UC.1.10 | - | - | - |
-| UC.1.16 | `present_sensitivity_finding(data)` | llm_compass | model data + `scenario_id` | `comparison_result` (`candidate_assessment`, `ranking`, `tradeoffs`) |
-| UC.1.17 | `select_model(finding)` | llm_compass | finding | `selection_result` (`status`, `recommended_model`, `decision_confidence`, `supporting_evidence`) |
-| UC.1.18 | `generate_decision_record(...)` | llm_compass | all sections above | `decision_record` (`summary`, `limitations_and_risks`, `next_action`), then assembles the full output: `scenario_id` + the 4 sections, in file order |
+| UC.1.16 | `present_sensitivity_finding(data)` | provide_llm_selection_decision_support | model data + `scenario_id` | `comparison_result` (`candidate_assessment`, `ranking`, `tradeoffs`) |
+| UC.1.17 | `select_model(finding)` | provide_llm_selection_decision_support | finding | `selection_result` (`status`, `recommended_model`, `decision_confidence`, `supporting_evidence`) |
+| UC.1.18 | `generate_decision_record(...)` | provide_llm_selection_decision_support | all sections above | `decision_record` (`summary`, `limitations_and_risks`, `next_action`), then assembles the full output: `scenario_id` + the 4 sections, in file order |
 
 This keeps the function names and pairings already in `backend/`. Each
 call/return pair (UC.1.3/1.4 and UC.1.10/1.11) is one function whose return value
 is the return message.
 
-The Technical Lead is the receiving participant for UC.1.6, 1.16 and 1.18 but has
-no module. Those functions stay in `llm_compass`, the sender, so the UI holds no
-logic.
+The Technical Lead is the receiving participant for UC.1.6, 1.16 and 1.18 but had
+no module when this was written. Those functions stay in
+`provide_llm_selection_decision_support`, the sender, so the UI holds no logic.
+(Since 2026-10-22 the Technical Lead's function F.6 has its own module; see
+"Module decomposition from the IDEF0" below.)
 
 ### 2. UI files
 
@@ -94,7 +96,7 @@ canned `comparison_result`. `candidate_assessment` and `tradeoffs` are still can
 | UC.1.16 | `present_sensitivity_finding(data, confirmed, scenario_id)` | computes `ranking`, `excluded`, `sensitivity`, `sensitivity_method`, `ranking_is_stable` |
 | UC.1.16 | (same) | also shows `score_breakdown` (each weighted criterion's contribution per ranked model, SN-TL-04 / 5.1.3.1) and `evidence` (every figure used, with source, date and stale flag, SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2) |
 
-New functions in `llm_compass` (SPEC section 4): `is_stale`, `rank`, `unstable_pairs`.
+New functions in `provide_llm_selection_decision_support` (SPEC section 4): `is_stale`, `rank`, `unstable_pairs`.
 
 ### Rules and assumptions
 
@@ -145,3 +147,332 @@ Call path changes:
 Still stubbed: the record's `summary`, `limitations_and_risks` and `next_action`
 come from `expected_outputs.json`. Storing, retrieving and exporting the record
 (5.1.3.3, 5.1.5.1, SPEC section 5 Q3) are not built.
+
+## Module decomposition from the IDEF0 (Lab Manual 4.4)
+
+Status: signatures only, 2026-10-22. Bodies arrive in Chapter 5, driven by tests.
+
+The model's top-level IDEF0 is the Metafunction diagram (SRD §2.3, Fig. 2): eight
+functions, each with exactly one mechanism from the Universe hierarchy. F.1 is not
+decomposed yet; the seven-function breakdown in SRD Table 1 is still planned, not
+modeled, so it does not drive modules this week. One module per function, named
+with the function's verb phrase. The three existing modules were renamed to match
+(`llm_compass` -> F.1, `benchmark_data_sources` -> F.7,
+`language_model_runtime` -> F.8). `backend/app.py` is the analogue of the kiosk's
+`kiosk_service`: it calls the functions in UC.1 order and is not a function on the
+IDEF0, so it has no traceability row.
+
+### IDEF0 functions (transcribed from the model: SRD Table 2, Fig. 2, §2.3)
+
+```
+F.1 -- Provide LLM Selection Decision Support
+  in:      stated_requirements (from F.6), proposed_criteria (from F.8),
+           model_data_with_provenance (from F.7), model_selection (from F.6)
+  control: confirmed_criteria_mapping (from F.6)
+  out:     interpretation_request (to F.8), data_request (to F.7),
+           presented_mapping (to F.6), presented_ranking_and_sensitivity (to F.6),
+           decision_record (to F.6)
+  mechanism: C.1 LLM Compass
+
+F.2 -- Define Application Technical Needs
+  out:     application_technical_needs (to F.6)
+  mechanism: C.2 Application Developer
+
+F.3 -- Define Budget Constraints
+  out:     budget_constraints (to F.6, as control)
+  mechanism: C.3 Budget Owner
+
+F.4 -- Define Compliance Constraints
+  out:     compliance_constraints (to F.6, as control)
+  mechanism: C.4 Compliance Officer
+
+F.5 -- Define Product Needs and Priorities
+  out:     product_priorities (to F.6)
+  mechanism: C.5 Product Owner
+
+F.6 -- Provide Technical Decision Oversight
+  in:      application_technical_needs (from F.2), product_priorities (from F.5),
+           presented_mapping (from F.1), presented_ranking_and_sensitivity (from F.1),
+           decision_record (from F.1)
+  control: budget_constraints (from F.3), compliance_constraints (from F.4)
+  out:     stated_requirements (to F.1), confirmed_criteria_mapping (to F.1, as
+           control), model_selection (to F.1)
+  mechanism: C.6 Technical Lead
+
+F.7 -- Provide Benchmark Evidence
+  control: data_request (from F.1)
+  out:     model_data_with_provenance (to F.1)
+  mechanism: C.7 Benchmark Data Sources
+
+F.8 -- Provide Requirement Interpretation
+  control: interpretation_request (from F.1)
+  out:     proposed_criteria (to F.1)
+  mechanism: C.8 Language model runtime
+```
+
+14 arrows, each with one source and one destination function (no tunnels).
+
+### Translation rules (Lab Manual Table F-2)
+
+- Input -> positional parameter. Control -> keyword-only parameter (after `*`).
+  Output -> return value. Body -> `raise NotImplementedError`.
+- Mechanism -> the module itself, as in the manual's worked example (each module is
+  performed by exactly one mechanism). It is named in the module docstring, not
+  passed as a parameter. External mechanisms keep a `# STUB: <system name>` line.
+- A function whose inputs arrive at different points in UC.1 gets one `def` per
+  exchange, as the kiosk splits A1 into `accept_flight_number` and
+  `display_status`. Each `def` takes only the ICOMs of that exchange.
+- F.1's control exists only after UC.1.9, so it governs the `def`s from that step
+  on, not the two before it.
+- New `def` names must not collide with the SPEC §4 functions already in a module.
+  Those stay as they are: they are tested, and moving their logic under the ICOM
+  signatures is Chapter 5 work.
+
+### Signatures
+
+| Function | Module | def | ICOMs | UC.1 step |
+|---|---|---|---|---|
+| F.1 | provide_llm_selection_decision_support | `request_interpretation(stated_requirements: str) -> dict` | in: stated_requirements; out: interpretation_request | 1.2-1.3 |
+| F.1 | (same) | `present_criteria_mapping(proposed_criteria: dict) -> dict` | in: proposed_criteria; out: presented_mapping | 1.4-1.6 |
+| F.1 | (same) | `request_benchmark_evidence(*, confirmed_criteria_mapping: list) -> dict` | control: confirmed_criteria_mapping; out: data_request | 1.9-1.10 |
+| F.1 | (same) | `present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirmed_criteria_mapping: list) -> dict` | in: model_data_with_provenance; control; out: presented_ranking_and_sensitivity | 1.11-1.16 |
+| F.1 | (same) | `record_decision(model_selection: Optional[str], *, confirmed_criteria_mapping: list) -> dict` | in: model_selection; control; out: decision_record | 1.17-1.18 |
+| F.2 | define_application_technical_needs | `define_application_technical_needs() -> str` | out: application_technical_needs | before 1.2 |
+| F.3 | define_budget_constraints | `define_budget_constraints() -> list` | out: budget_constraints | before 1.2 |
+| F.4 | define_compliance_constraints | `define_compliance_constraints() -> list` | out: compliance_constraints | before 1.2 |
+| F.5 | define_product_needs_and_priorities | `define_product_needs_and_priorities() -> dict` | out: product_priorities | before 1.2 |
+| F.6 | provide_technical_decision_oversight | `state_requirements(application_technical_needs: str, *, budget_constraints: list, compliance_constraints: list) -> str` | in; controls; out: stated_requirements | 1.2 |
+| F.6 | (same) | `confirm_criteria_mapping(presented_mapping: dict, product_priorities: dict, *, budget_constraints: list, compliance_constraints: list) -> list` | in x2; controls; out: confirmed_criteria_mapping | 1.7-1.9 |
+| F.6 | (same) | `choose_model(presented_ranking_and_sensitivity: dict, *, budget_constraints: list, compliance_constraints: list) -> Optional[str]` | in; controls; out: model_selection | 1.17 |
+| F.6 | (same) | `keep_decision_record(decision_record: dict) -> None` | in: decision_record; no output on the model | after 1.18 |
+| F.7 | provide_benchmark_evidence | `provide_model_data(*, data_request: dict) -> list` | control: data_request; out: model_data_with_provenance | 1.10-1.11 |
+| F.8 | provide_requirement_interpretation | `propose_criteria(*, interpretation_request: dict) -> dict` | control: interpretation_request; out: proposed_criteria | 1.3-1.4 |
+
+Types follow SPEC §2 (candidate list with figures), §3 (interpretation request
+`{requirement_id, text}` and response) and 5.1.3.2 (decision record).
+`model_selection` identifies the chosen model, or is None for UC alt flow 15a.
+Today's `select_model` STUB passes the `model_name`. `Optional[str]`, not
+`str | None`, so the modules still import on the macOS system Python 3.9.
+
+### Findings to take back to the model (not fixed in code)
+
+- F.6 receives `decision_record` but none of F.6's outputs is made from it. By the
+  Table F-2 input test ("if the routine could run without it, it is not an
+  input"), it is a terminal arrow: the Technical Lead keeps the record. The
+  signature returns None and says so, like the kiosk's `display_status`. The team
+  should decide whether F.6 needs an output here (for example, a retrieval
+  request for 5.1.5.1), which is already noted as missing in SRD §4.
+- F.8's `interpretation_request` is modeled as a control, but by Table F-2 it is
+  an input. F.8 transforms the requirement text into the proposed criteria, and it
+  cannot run without that text. This is the reverse of the manual's A4 example
+  (there, a control was modeled as an input). The SRD's reason, "the service
+  produces only what it is asked for", fits F.7 better than F.8: `data_request`
+  only selects which stored figures come back. But the independent review
+  disagrees: in the kiosk, A2's lookup key (`validated_flight_number`) is an
+  input, and F.7 has the same pattern. The team should decide F.7 and F.8
+  together.
+  Proposed fix in Innoslate: make `interpretation_request` an input to F.8 and
+  give F.8 a real control, such as the SPEC §3 response schema, as A3 has in the
+  kiosk. Then regenerate `propose_criteria`. Until the model changes, the code
+  follows the model as it stands (keyword-only).
+- `record_decision` gets only `model_selection` and the control. The other 5.1.3.2
+  sections (requirements, evidence, ranking, sensitivity) come from F.1's own
+  earlier exchanges, so they are state inside F.1, not arrows. They become
+  internal arrows when F.1 is decomposed (SRD Table 1). Today `record_inputs`
+  carries them.
+- `present_ranking_and_sensitivity` has no `today` arrow, but the 90-day stale
+  check (5.1.2.2) needs one. The clock reads as part of mechanism C.1. The
+  policies that govern ranking do not: the 90-day stale threshold (SPEC §2,
+  5.1.2.2) and the ±10% sensitivity method (SPEC §5 Q5) are "policy, threshold,
+  or limit" in Table F-2 terms. They are unmodeled controls, like the kiosk's
+  Query Timeout Policy on A2.
+- Splitting F.1 into one `def` per exchange exposes a role problem. The confirmed
+  criteria mapping is a true control only for ranking. `request_benchmark_evidence`
+  has no other ICOM, so the mapping is what it works on. `record_decision`
+  copies the mapping and weights into the record, so for that def the mapping is
+  content. The F.1 decomposition (SRD Table 1) should give those steps the
+  mapping as an input.
+- `state_requirements` (F.6) takes budget and compliance constraints as
+  controls, but the stated requirements carry them. For example, "Stay under two
+  hundred dollars a month…" is one of the reference requirements in
+  tests/test_technical_lead.py. By the A4 test ("nothing about it ends up
+  inside the output"), they act as inputs for this exchange. The SRD's "hard
+  limits" reading holds for confirming the mapping and choosing a model.
+- F.2–F.5 have no control arrow, which SRD §2.3 leaves out on purpose. IEEE
+  1320.1 expects one control per box. This is informational: it isn't on the
+  course's assessment list.
+- Fig. 2's "Proposed criteria" label is clipped at the left edge ("osed
+  criteria"). That fails the "diagram content is legible" criterion, so move the
+  label in Innoslate.
+- The existing STUBs `confirm_mapping` and `select_model` in the F.1 module stand
+  in for the Technical Lead, so they perform F.6, not F.1. They stay where they are
+  this week so the walking skeleton keeps running. In Chapter 5 they move to
+  `provide_technical_decision_oversight`.
+
+## Requirement-driven tests and first bodies (Lab Manual 5.3)
+
+Status: done, 2026-10-22. 11 of 14 system requirement tests pass. The other
+three are unmet requirements, not code faults: SR 1.2.1 (the catalog has 3 models,
+not 10), and SR 1.3.1 and 1.4.1 (no walkthrough logged; the web confirm and select
+steps are pending). The full suite gives 83 passed and 18 failed. No test was
+changed after it was written: the hashes were checked before and after the bodies.
+
+The model authorizes this increment. It has 14 leaf system requirements
+(1.1.1-1.4.1, SRD §3), each with a verification criterion (SRD Table 9), and the
+RVTM (SRD Fig. 9). They are copied verbatim into SPEC.md §6. One test per
+requirement goes in `tests/test_system_requirements.py`, named
+`test_SR_<id>_<what>`. The tests are written from the requirement text first,
+by an agent that is not shown the bodies. Bodies are then generated one module
+at a time, by different agents, and none of them may edit a test.
+
+### Which defs each requirement exercises
+
+| Requirement | Exercised through | Other function on the arrow |
+|---|---|---|
+| 1.1.5, 1.2.3 | F.1 `request_interpretation` | F.6 sends, F.8 receives |
+| 1.1.4, 1.2.4 | F.1 `present_criteria_mapping` | F.8 sends, F.6 receives |
+| 1.1.1, 1.2.1 | F.1 `request_benchmark_evidence` (+ F.7 `provide_model_data` for the catalog) | F.6 sends, F.7 receives |
+| 1.1.2, 1.2.5 | F.1 `present_ranking_and_sensitivity` | F.7 sends, F.6 receives |
+| 1.1.3, 1.2.2 | F.1 `record_decision` | F.6 sends and receives |
+| 1.3.2 | F.1 <-> F.8 conduit: the two F.1 defs above that touch F.8 | |
+| 1.3.3 | F.1 <-> F.7 conduit: `provide_model_data` and `present_ranking_and_sensitivity` | |
+| 1.3.1 | the web interface (`backend/app.py`, C.1 <-> C.6) | |
+| 1.4.1 | all of the above plus a timed walkthrough | |
+
+### Interface details the tests rely on
+
+The Chapter 4 signatures don't change. These details fix what each def returns.
+
+- **F.1 holds the decision in progress.** Its defs are called in UC.1 order, and
+  `request_interpretation` starts a new decision. F.1 is still one function on
+  the model, with C.1 as its mechanism, so the requirements, mapping, evidence,
+  ranking and sensitivity are state inside it, not arrows. This resolves the
+  Chapter 4 `record_decision` finding until F.1 is decomposed.
+- **`request_interpretation(stated_requirements)`** returns `{"requirement_id":
+  str, "text": <unaltered>}`, the SPEC §3 request. It raises `ValueError` on
+  empty or whitespace-only text.
+- **`present_criteria_mapping(proposed_criteria)`** takes the SPEC §3 response.
+  `None` means no response or a timeout, and is handled like an invalid response.
+  It returns `{"requirement_id", "requirement": <text>, "status", "no_suitable_proxy",
+  "criteria"}`. Each criterion also carries `"requirement"` (the text it stands
+  for) and its `proxy_strength`.
+  - `status` is `"proposed"` for a valid response.
+  - On the first invalid response for a requirement, `status` is `"retry"`, and the
+    caller sends the same interpretation request to F.8 again.
+  - On the second, `status` is `"interpretation_failed"` with no criteria, and the
+    Technical Lead enters criteria by hand (SPEC §3).
+  - A valid response has 1+ criteria or `no_suitable_proxy` (not both), and every
+    metric is a known one (SPEC §2 field names plus the catalog's benchmark ids,
+    SPEC §5 Q7). Every `proxy_strength` is strong, moderate or weak.
+- **`request_benchmark_evidence(*, confirmed_criteria_mapping)`** validates every
+  criterion first. `designation` must be `hard` or `weighted`, and a weighted
+  criterion needs a numeric `weight`, else `ValueError`. It returns the data
+  request `{"models": "all", "metrics": [<each criterion's metric>]}`, so every
+  candidate in the catalog is requested.
+- **`provide_model_data(*, data_request)`** (F.7) returns one SPEC §2 candidate
+  for every model in the catalog.
+- **`present_ranking_and_sensitivity(model_data_with_provenance, *,
+  confirmed_criteria_mapping)`**:
+  - It raises `ValueError` if any figure lacks a `source_id` or `collection_date`
+    (SPEC §2: rejected at entry).
+  - It returns `{"ranking": [model_id], "excluded": [{"model_id",
+    "failed_constraints"}], "score_breakdown": [{"model_id", "score",
+    "contributions": {criterion_id: value}, "gaps": [metrics with no data]}], "unstable_pairs": [[a, b]],
+    "evidence": [{"model_id", "metric", "value", "unit", "source_id",
+    "collection_date", "stale"}]}`.
+  - Staleness is measured against today's date: the clock belongs to mechanism C.1.
+- **`record_decision(model_selection, *, confirmed_criteria_mapping)`** returns
+  the record with the seven sections `requirements`, `criteria_mapping`,
+  `weights`, `evidence`, `ranking`, `sensitivity` and `selected_model`, plus
+  `excluded`.
+  - `selected_model` is `model_selection` unchanged.
+  - A selection that isn't in the ranking raises `ValueError`.
+  - `None` is allowed, for UC alt flow 15a.
+- `ValueError` is the project's rejection convention, as in 5.1.1.1 and 5.1.6.1.
+
+### Scope of bodies this increment
+
+- F.1: all five defs. The SPEC §4 helpers they need (`validate_interpretation`,
+  `validate_criterion`, and `requirement_id` from `receive_requirements`) come
+  with them.
+- F.7: `provide_model_data`, from the stored sample catalog. There is no live
+  source in increment 1, as in the manual's A2.
+- Pending, with rows marked as such in docs/traceability.md:
+  - F.8 needs the LM Studio runtime (ADR-0001). Its requirements are verified on
+    F.1's side.
+  - F.6 is a human mechanism, and its requirements are verified on F.1's
+    receiving side.
+  - F.2-F.5 have no system requirements: SRD §3.2 says those exchanges don't
+    cross the boundary.
+  - The web interface's confirm and select steps (1.3.1) are pending, like the
+    manual's A1.
+
+### Findings from this increment (to take back to the model or the team)
+
+Requirement text:
+- SR 1.2.2 says "six sections" but lists seven, and its MOP says 7 of 7. Its
+  parent, 5.1.3.2, has six. Decide whether the selection is a section, then fix
+  the model.
+- SR 1.3.1 can't be verified as logged. walkthroughs.csv records neither the
+  exchanges completed (6 of 6) nor whether any step bypassed the interface. The
+  test is green as soon as any `full_comparison` row exists. Add a column, or
+  reword the criterion.
+- SR 1.4.1: "all leaf-level requirements pass" is checked by the whole CI run,
+  not by one test. The CSV has no candidate count, so the test uses the catalog
+  size (>= 10) as a stand-in.
+- SR 1.3.3: the source can't be made "unavailable" while increment 1 has no live
+  source. Only the "last stored figures, dated and flagged" half is tested.
+- SR 1.1.2: "every figure received is stored". F.1 stores, and the test checks,
+  the figures for the confirmed criteria's metrics: the ones used, as 5.1.2.1
+  reads. Confirm that this is the intended reading.
+
+Model (unmodeled controls on F.1, as in the Chapter 4 findings):
+- The known-metric vocabulary (SPEC §2 fields plus the catalog's benchmark ids) governs
+  `present_criteria_mapping`. F.1 imports it from F.7 (`BENCHMARK_IDS`). It is a
+  control, like the kiosk's Model Response Contract on A3.
+- The operator/threshold compatibility check, the XOR rule (criteria vs
+  no_suitable_proxy) and the requirement_id match rule were added to validation.
+  The first and last aren't in SPEC §3's "Valid only if" list, so confirm both.
+
+Data:
+- SR 1.2.1 and 1.4.1 need at least 10 sourced models in the catalog. sample_data
+  has 3. The team enters them, as increment 1's manual entry; they aren't
+  generated.
+
+Code, known limits that no requirement covers:
+- F.1 keeps one decision in a module-level dict. That suits one local operator,
+  but it must become per-session before the web UI calls the ICOM defs.
+- `backend/app.py` still runs the walking-skeleton helpers. The ICOM defs are
+  tested but not yet on the UI path, and SR 1.3.1 being red covers that.
+- Accepted without rule: NaN or negative weights, duplicate model_ids, an
+  unknown metric in a hand-entered confirmed mapping, and a missing required
+  SPEC §2 field (ranked with a gap). Each needs a requirement before it gets code.
+- Text that matches no sample scenario still returns HTTP 500, from the F.8 stub
+  (unchanged since before Chapter 4). The `SN_TL_01_5_1_1_2` reference-set tests
+  fail inside that stub too, until the real F.8 exists.
+- tests/test_walking_skeleton.py still says "CI installs pytest only". The test
+  files were frozen for this increment, so the comment was left as is.
+
+### Chapter 4 findings this increment resolves
+
+- `record_decision` state: resolved. F.1 holds the decision in progress, the record
+  has all seven sections, and it is checked against the mapping the ranking used
+  (SR 1.2.2 passes).
+- `today` arrow: resolved as the mechanism's clock (`date.today()`). The 90-day
+  threshold is still an unmodeled control.
+- F.2-F.6 defs with no SPEC ID: resolved for F.6, which sits at the other end of
+  SR 1.1.1, 1.1.3, 1.1.5, 1.2.2, 1.2.4 and 1.2.5. For F.2-F.5 it is explained:
+  SRD §3.2 generates no system requirement for them, and docs/traceability.md
+  says so.
+- Confirmed mapping as content for the data request and the record: confirmed.
+  `request_benchmark_evidence` builds the request from the mapping's metrics, and
+  `record_decision` copies the mapping. Still a model fix.
+- Not resolved (they need Innoslate changes or later chapters):
+  - F.8 and F.7 request role (input vs control)
+  - budget and compliance constraints in `state_requirements`
+  - unmodeled stale and ±10% controls
+  - F.6 `decision_record` with no output (5.1.3.3 and 5.1.5.1 are still red)
+  - the clipped Fig. 2 label
+  - moving `confirm_mapping` and `select_model` to F.6, which would mean changing
+    `test_walking_skeleton.py`'s imports (forbidden this increment); it waits
+    for the UI confirm and select steps (SR 1.3.1)

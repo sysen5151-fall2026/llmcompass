@@ -329,3 +329,163 @@ decision record (UC.1.18) with all six SPEC sections.
   re-running records (5.1.3.3, 5.1.5.1, 5.1.5.2) aren't built.
 
 ---
+
+## 2026-10-22 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Built from:** F.1–F.8, the Metafunction IDEF0 in the SRD (Table 2, Fig. 2, §2.3).
+F.1 isn't decomposed yet, so the seven planned functions in SRD Table 1 don't
+drive modules.
+
+**Prompt:** Lab Manual 4.4, Product Build: Module Decomposition from the IDEF0
+(pp. 82–88), with SystemRequirementsDefinition.pdf as the model, run through
+multiple agents with validation. The team chose the Metafunction IDEF0 and asked
+for every module, including the three existing ones, to be named with its
+function's verb phrase. Generation prompts: prompts/2026-10-22-icom-signatures.md
+(one per function group, Component Prompt Template).
+
+**Output:**
+- Renamed `backend/llm_compass/` to `provide_llm_selection_decision_support/`
+  (F.1), `benchmark_data_sources/` to `provide_benchmark_evidence/` (F.7), and
+  `language_model_runtime/` to `provide_requirement_interpretation/` (F.8), with
+  git mv. Imports updated in `backend/app.py` and `tests/` (module names only).
+- New stub modules (signatures only), each `# STUB: <mechanism>`:
+  `define_application_technical_needs/` (F.2), `define_budget_constraints/` (F.3),
+  `define_compliance_constraints/` (F.4), `define_product_needs_and_priorities/`
+  (F.5), `provide_technical_decision_oversight/` (F.6).
+- 15 ICOM signatures, each a `def` whose body is `raise NotImplementedError`.
+  Inputs are positional, controls keyword-only, outputs are return values (Table
+  F-2). Each module docstring states the function ID it implements and its
+  mechanism. F.1 and F.6 get one `def` per exchange, as the kiosk splits A1. The
+  existing SPEC §4 functions and their bodies are unchanged.
+- `docs/traceability.md` (new): one row per module with function ID, name,
+  mechanism and path. `app.py` has no row, like `kiosk_service`.
+- `docs/PLAN.md`: new section with the transcribed ICOM table, translation rules,
+  signature table, and findings to take back to the model. Old module names in
+  the earlier sections updated.
+- `SPEC.md` §4: Module column only. `README.md` repo tree, `docs/context.md`
+  `Module:` lines, `CLAUDE.md` source-of-truth and repo-structure rules.
+- Agents: three generators (F.1; F.2–F.6; F.7 and F.8), one docs-sync agent, and
+  two independent verifiers (IDEF0 criteria and Done When; spec-trace and
+  end-to-end), none of which wrote the code they checked.
+- Verified: pytest gives 29 passed and 19 failed on both Python 3.9.6 and 3.12,
+  with the same failing set as before the change. `inspect.signature` matches all
+  15 rows of the PLAN table. Every new `def` raises NotImplementedError. The
+  Flask test client renders all 4 scenarios and rejects empty text.
+
+**Assistant assumptions:**
+- Each mechanism is the module itself, as in the worked example, not an injected
+  parameter.
+- Splitting F.1 and F.6 into one `def` per exchange. F.1's control is applied
+  only from UC.1.9 on.
+- `Optional[str]` instead of `str | None`, because the macOS system Python is 3.9.
+
+**Still open:**
+- Model findings for Innoslate (details in docs/PLAN.md):
+  - F.8's `interpretation_request` is an input, not a control; F.7's
+    `data_request` is contested.
+  - Budget and compliance constraints act as inputs to `state_requirements`.
+  - The confirmed mapping is content, not a control, for the data request and
+    the record.
+  - The stale threshold and the ±10% sensitivity policy are unmodeled controls.
+  - F.6's `decision_record` arrow has no output.
+  - Fig. 2's "Proposed criteria" label is clipped.
+- The F.2–F.6 defs trace to model functions but to no SPEC.md ID, which conflicts
+  with the CLAUDE.md rule. The team should decide.
+- `confirm_mapping` and `select_model` (STUBs for the Technical Lead) still sit
+  in the F.1 module and move to F.6 in Chapter 5.
+
+---
+
+## 2026-10-22 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Built from:** F.1 and F.7 (IDEF0 functions), and system requirements SR 1.1.1–1.4.1
+(SRD §3, generated in Innoslate from the IDEF0-A0 of F.1), with SRD Table 9
+verification criteria and the Table 8 RVTM.
+
+**Prompt:** Lab Manual 5.3, Product Build: Requirement-Driven Test Suite and First
+Implementations (pp. 95–100), with SystemRequirementsDefinition.pdf as the model.
+Asked to orchestrate multiple agents, validate and verify, and say which Chapter 4
+open items this resolves. Prompts:
+- prompts/2026-10-22-system-requirement-tests.md (tests)
+- prompts/2026-10-22-f1-f7-implementations.md (bodies, filled Component Prompt
+  Templates)
+
+**Output:**
+- `SPEC.md` §6 (new): the 14 system requirements, with statements, verification
+  criteria, and MOP and target copied verbatim from the SRD, plus the StR trace and
+  the citation and test-name convention (`SR 1.1.5`, `test_SR_1_1_5_*`).
+- `tests/test_system_requirements.py` (new): one test per requirement (14 tests,
+  53 cases). An agent that saw only SPEC §6, the Chapter 4 signatures and the PLAN
+  interface wrote them before any body existed. The test files were hashed then
+  and again after the bodies, and no test changed.
+- `backend/provide_llm_selection_decision_support/__init__.py`:
+  - Bodies for the five F.1 ICOM defs. F.1 holds the decision in progress.
+  - The SPEC §4 helpers `validate_interpretation` and `validate_criterion`.
+  - `receive_requirements` now returns a `requirement_id`.
+  - A second round fixed six reviewer defects: a record mixing two mappings,
+    operator/threshold mismatches, ValueError for rejections, the retry counter,
+    out-of-order calls, and citations.
+- `backend/provide_benchmark_evidence/__init__.py`: a `provide_model_data` body
+  over the stored catalog (no live source in increment 1).
+- `.github/workflows/ci.yml`: installs Flask 2.2.2 (with Werkzeug<3) next to
+  pytest, so the web-interface tests run instead of being skipped. Any unmet
+  requirement fails the build.
+- `docs/traceability.md`: function → module, and requirement → StR → need → test →
+  status.
+- `docs/PLAN.md`: increment plan, interface details, findings, and the Chapter 4
+  findings resolved.
+- `README.md`, `CLAUDE.md`: tree and source-of-truth lines.
+- Agents:
+  - one test writer
+  - two implementers (F.7; F.1, resumed once for the fix round)
+  - two independent verifiers: Done-When, test derivation and code review; and CI
+    simulation, SPEC fidelity and the app
+- Verified:
+  - 83 passed and 18 failed on Python 3.9.6, on 3.12, and in a fresh venv built
+    exactly as ci.yml does (exit 1, 0 skipped). That was 29 passed and 19 failed
+    before.
+  - 11 of 14 SR tests pass.
+  - 4 earlier SPEC §4 tests turned green: 5.1.1.1 accepts text, 5.1.1.2 rejects
+    neither, 5.1.1.3, and 5.1.6.1.
+  - The Flask app renders all 4 scenarios.
+
+
+**Assistant assumptions (not yet promoted to the model):**
+- F.1 holds one decision in progress in module state.
+- Status values are `proposed`, `retry` and `interpretation_failed`. The caller
+  re-sends to F.8 on `retry`.
+- `None` stands for a timeout.
+- Rejections raise `ValueError`.
+- Validation rules: the known-metric vocabulary comes from F.7's benchmark ids,
+  operator/threshold compatibility is checked, and a response must carry the
+  request's `requirement_id`.
+
+**Still open:**
+- SR 1.2.1 and 1.4.1 need at least 10 sourced models in the catalog (3 now). SR
+  1.3.1 and 1.4.1 need a logged `full_comparison` walkthrough, and SR 1.3.1 also
+  needs the web confirm and select steps.
+- Requirement text to repair in the model:
+  - SR 1.2.2 "six" vs seven sections
+  - SR 1.3.1 isn't verifiable from the walkthrough log
+  - SR 1.4.1's "all leaf pass"
+  - SR 1.3.3's "source unavailable"
+- Bodies still pending: F.8 (LM Studio), F.6 (human), F.2–F.5 (no system
+  requirement). `app.py` doesn't yet call the ICOM defs.
+- Chapter 4 open items:
+  - Resolved:
+    - `record_decision` state
+    - `today` as the mechanism's clock
+    - F.6 now traces to SR IDs
+    - F.2–F.5 are explained as having no system requirement
+  - Confirmed but still a model fix: the confirmed mapping is content for the data
+    request and the record.
+  - Not resolved:
+    - F.8/F.7 request roles
+    - constraints in `state_requirements`
+    - unmodeled stale and ±10% controls
+    - F.6 `decision_record` with no output
+    - Fig. 2 label
+    - moving `confirm_mapping`/`select_model` to F.6, which would change
+      `test_walking_skeleton.py`'s imports (forbidden this increment)
+
+---

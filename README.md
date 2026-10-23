@@ -240,24 +240,31 @@ See the team's Toolset Justification doc for full rationale.
 
 ```
 .
-├── .github/workflows/ci.yml   # runs the SPEC.md acceptance tests (red until implemented)
+├── .github/workflows/ci.yml   # runs every test with pytest + Flask; red while any requirement is unmet
 ├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
 │   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
-│   ├── llm_compass/           # the system itself: rank, sensitivity, decision record are real; other steps are stubs
-│   ├── language_model_runtime/  # C.8 (stub, returns interpreted_requirements from sample_data)
-│   ├── benchmark_data_sources/  # C.7 (stub, loads sample_data and converts it to the SPEC §2 figure shape)
+│   ├── provide_llm_selection_decision_support/  # F.1, the system itself: five ICOM defs have bodies (Lab 5); Technical Lead confirm/select are still stubs
+│   ├── define_application_technical_needs/  # F.2 (stub, signatures only)
+│   ├── define_budget_constraints/  # F.3 (stub, signatures only)
+│   ├── define_compliance_constraints/  # F.4 (stub, signatures only)
+│   ├── define_product_needs_and_priorities/  # F.5 (stub, signatures only)
+│   ├── provide_technical_decision_oversight/  # F.6 (stub, signatures only)
+│   ├── provide_requirement_interpretation/  # F.8, C.8 (stub, returns interpreted_requirements from sample_data)
+│   ├── provide_benchmark_evidence/  # F.7, C.7 (stored catalog from sample_data in the SPEC §2 figure shape; no live source yet)
 │   └── requirements.txt       # Python deps for the planned backend
 ├── sample_data/               # 4 UC.1 scenarios (user_inputs, expected_outputs, scenario_criteria) and model data
 ├── hello.txt                  # initial pipeline smoke test
 ├── CLAUDE.md                  # project rules for the coding assistant
-├── SPEC.md                    # needs, acceptance criteria, data + model contracts
-├── tests/                     # one failing test per acceptance criterion
+├── SPEC.md                    # needs, acceptance criteria, data + model contracts, system requirements (§6)
+├── tests/                     # one test per acceptance criterion; test_system_requirements.py has one per system requirement (SR 1.1.1-1.4.1)
+├── prompts/                   # generation prompts
 ├── pytest.ini
 ├── docs/
 │   ├── context.md             # external assets, and which of them hold an interface
 │   ├── walking-skeleton.md    # UC.1 call path from the Innoslate sequence diagram
+│   ├── traceability.md        # function -> module, and requirement -> need -> test
 │   ├── PLAN.md
 │   ├── environment.md
 │   ├── prompt-log.md
@@ -269,8 +276,9 @@ See the team's Toolset Justification doc for full rationale.
 Feature code so far: ranking, sensitivity analysis and the decision record (see docs/PLAN.md). Everything
 else is walking skeleton and stubs. External
 assets live in docs/context.md, not as folders (no per-actor directories — matches
-the course's own worked example). Only C.7 and C.8 have code folders, because they
-are the only external assets the system calls.
+the course's own worked example). Code folders follow the IDEF0 functions instead
+(Lab Manual 4.4): one module per function, named with its verb phrase, mapped in
+docs/traceability.md. C.7 and C.8 are the only external assets the system calls.
 
 ## Getting started
 

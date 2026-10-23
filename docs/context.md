@@ -1,7 +1,11 @@
 # Context
 
 The system of interest is C.1 LLM Compass. Everything below sits outside it,
-matched to the Innoslate hierarchy and context diagram (C.2–C.8).
+matched to the Innoslate hierarchy and context diagram (C.2–C.8). C.1 performs
+F.1 Provide LLM Selection Decision Support, in
+backend/provide_llm_selection_decision_support/. Module names follow the IDEF0
+function verb phrases (Lab Manual 4.4); docs/traceability.md maps each function
+to its module.
 
 Only three assets hold a conduit to C.1. The remaining four contribute constraints
 and priorities to the selection decision, but do not exchange anything with the
@@ -22,12 +26,14 @@ Technical Lead (C.6) — human actor; sole human interface
   Out:     ranked recommendation, rationale, sensitivity finding, exportable
            decision record
   Conduit: Requirements and recommendations
+  Module:  backend/provide_technical_decision_oversight/ (F.6)
 
 Benchmark Data Sources (C.7) — external service
   In:      request for model data (UC.1.10)
   Out:     model specification and benchmark data per candidate model, with
            source and collection date (UC.1.11)
   Conduit: Data request and model data with provenance
+  Module:  backend/provide_benchmark_evidence/ (F.7)
   Note:    covers what used to be split across "Public Benchmark Data" and
            "Vendor Specifications"; those are now one external system.
            Increment 1 is manual entry; increment 2 is automated ingestion with
@@ -41,6 +47,7 @@ Language model runtime (C.8) — external service
            proxy-strength rating per criterion (UC.1.4; StR 5.1.1.3; response
            schema in SPEC.md section 3)
   Conduit: Interpretation request and proposed criteria
+  Module:  backend/provide_requirement_interpretation/ (F.8)
   Note:    this is LLM Compass's own requirement-interpretation engine (the
            local model from docs/adr/0001-initial-toolchain.md), not a
            vendor-spec or pricing feed — confirmed against the UC.1 sequence
@@ -60,6 +67,7 @@ Application Developer (C.2)
   Reaches the system:  via Technical Lead, entered at UC.1.2
   Sees the result:     via Technical Lead, outside the system
   Function:            F.2 Define Application Technical Needs
+  Module:              backend/define_application_technical_needs/ (F.2)
 
 Budget Owner (C.3)
   Contributes:         cost ceiling / budget constraint
@@ -67,6 +75,7 @@ Budget Owner (C.3)
                        hard constraint at UC.1.7
   Sees the result:     via Technical Lead, outside the system
   Function:            F.3 Define Budget Constraints
+  Module:              backend/define_budget_constraints/ (F.3)
 
 Compliance Officer (C.4)
   Contributes:         data residency, retention, and vendor-acceptability
@@ -75,6 +84,7 @@ Compliance Officer (C.4)
                        hard constraints at UC.1.7
   Sees the result:     via Technical Lead, outside the system
   Function:            F.4 Define Compliance Constraints
+  Module:              backend/define_compliance_constraints/ (F.4)
 
 Product Owner (C.5)
   Contributes:         relative priority of capability, cost, and speed —
@@ -86,6 +96,7 @@ Product Owner (C.5)
   Reaches the system:  via Technical Lead, who assigns the weights at UC.1.8
   Sees the result:     via Technical Lead, outside the system
   Function:            F.5 Define Product Needs and Priorities
+  Module:              backend/define_product_needs_and_priorities/ (F.5)
   Open item:           four requirements exist to serve the Product Owner —
                        5.2.1.1 compute cost at volume, 5.2.2.1 provide
                        trade-off summary, 5.2.3.1 report candidate risk,
