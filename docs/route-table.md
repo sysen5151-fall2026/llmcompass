@@ -113,6 +113,10 @@ These are not entry points, and nothing here was changed in this audit.
 
   Only the SR 1.4.1.7 test redirects to `tmp_path`.
 
+  Resolved 2026-10-28: an autouse fixture in tests/conftest.py sends every test's
+  records to `tmp_path`, and the 197 test records were deleted. All of them were
+  test fixtures (model-1/2/3, model-b/c/d).
+
 ## Findings to take back to the model
 
 - Add an output arrow for UC.1.19 Export decision record, or remove the action.

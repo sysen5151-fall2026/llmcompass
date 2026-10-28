@@ -624,3 +624,23 @@ team's. I drafted the mapping from the agents' enumeration for the team to confi
 - Unmatched text still returns HTTP 500 from the F.8 stub.
 
 ---
+
+## 2026-10-28 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Prompt:** Asked whether the test records building up in `data/decision_records/` (an
+open item from the 6.4 audit) needed a fix. After the explanation, asked to fix it.
+
+**Output:**
+- `tests/conftest.py`:
+  - New autouse fixture `decision_record_dir` sets `DECISION_RECORD_DIR` to each
+    test's `tmp_path`.
+  - Test records no longer mix with real decision records (SN-TL-06 / 5.1.3.3), and
+    tests no longer depend on earlier runs.
+  - No test or assertion changed.
+- `data/decision_records/` (gitignored): deleted 197 records after checking that
+  all were test fixtures (168 with model-1/2/3, 29 with model-b/c/d).
+- `docs/route-table.md`, `docs/PLAN.md`: the finding is marked resolved.
+- Verified: two full pytest runs leave `data/decision_records/` empty. Results are
+  unchanged: 93 passed, 15 failed, same failing set.
+
+---

@@ -44,6 +44,12 @@ def candidate(model_id, input_price, output_price, context, score, residency):
     }
 
 
+@pytest.fixture(autouse=True)
+def decision_record_dir(tmp_path, monkeypatch):
+    """Keep each test's stored decision records (SN-TL-06 / 5.1.3.3) out of data/decision_records/."""
+    monkeypatch.setenv("DECISION_RECORD_DIR", str(tmp_path / "decision_records"))
+
+
 @pytest.fixture
 def today():
     return TODAY

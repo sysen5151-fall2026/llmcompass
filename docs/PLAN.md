@@ -751,7 +751,8 @@ Record: docs/route-table.md. Model: SYSEN5151_ArchitectureDefinitionReport.pdf
   - a reuse use case
   - rename UC.1.16 to "Present ranking and sensitivity finding"
 - Open, outside the audit:
-  - The SR 1.1.3, SR 1.2.2 and SN-TL-06 5.1.3.3 tests store records in
-    `data/decision_records/` (no `DECISION_RECORD_DIR`).
+  - Resolved: the SR 1.1.3, SR 1.2.2 and SN-TL-06 5.1.3.3 tests stored records in
+    `data/decision_records/`. The autouse `decision_record_dir` fixture
+    (tests/conftest.py) now redirects them to `tmp_path`.
   - The 5.1.5.1 strict-xfail marker (XPASS) is still a pending team decision.
   - Unmatched text still returns HTTP 500 from the F.8 stub.
