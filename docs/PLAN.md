@@ -444,9 +444,10 @@ Code, known limits that no requirement covers:
   but it must become per-session before the web UI calls the ICOM defs.
 - `backend/app.py` still runs the walking-skeleton helpers. The ICOM defs are
   tested but not yet on the UI path, and SR 1.3.1 being red covers that.
-- Accepted without rule: NaN or negative weights, duplicate model_ids, an
-  unknown metric in a hand-entered confirmed mapping, and a missing required
-  SPEC §2 field (ranked with a gap). Each needs a requirement before it gets code.
+- Accepted without rule: NaN or negative weights, duplicate model_ids, and a
+  missing required SPEC §2 field (ranked with a gap). Each needs a requirement
+  before it gets code. An unknown metric in a hand-entered confirmed mapping is
+  no longer on this list: SR 1.4.1.1 rejects it (kept by the team, 2026-10-28).
 - Text that matches no sample scenario still returns HTTP 500, from the F.8 stub
   (unchanged since before Chapter 4). The `SN_TL_01_5_1_1_2` reference-set tests
   fail inside that stub too, until the real F.8 exists.
@@ -628,7 +629,7 @@ The F.1 ICOM defs follow the new A-0 (Table F-2):
 The tests still call with keywords, and those calls still work. The suite result
 is unchanged.
 
-### Module plan (next, one sub-function at a time)
+### Module plan (all seven built, 2026-10-28)
 
 Following the repo rule "one module per IDEF0 function, named with its verb
 phrase": each sub-function becomes a module inside
@@ -652,6 +653,21 @@ The F.1 boundary defs become compositions of the sub-functions.
 Order: F.1.7 first, because 5.1.3.3 is traced to 1.4.1.7 and its test is red.
 Then F.1.3/F.1.4 (they split `rank`), F.1.5, F.1.2, F.1.6, F.1.1. Each step keeps
 the suite at its current result or better.
+
+As built, beyond the table:
+- F.1.1 also holds `_decision`, the decision in progress (mechanism C.1 state).
+  `request_interpretation` starts it there, and F.1's boundary defs share it, because a
+  sub-function module can't import from the package `__init__`.
+- `_metric_figure` (reads a SPEC §2 field or benchmark score) is in F.1.2, and F.1.3/F.1.4
+  import it. Data flows F.1.2 -> F.1.3 -> F.1.4, so the imports follow the arrows.
+- F.1.3's eligible candidates carry the hard-constraint figures it checked
+  (`evidence`). F.1.4 appends the weighted figures, so each ranking entry has every
+  figure used. F.1.6 gets only ranking, exclusions and finding, and needs them.
+- F.1.4's ranking entries carry `normalized` per criterion, which F.1.5 re-scores from.
+- F.1.5's finding has `method` (built from the policy) and `unstable_pairs` in
+  ranking order.
+- `record_decision` adds requirements, mapping and weights from `_decision` to F.1.6's
+  selection rationale before calling F.1.7 (first finding below).
 
 ### Findings to take back to the model
 
@@ -678,5 +694,37 @@ the suite at its current result or better.
   pass.
   - Side effect: the 5.1.5.1 not-found test passes too, so its strict xfail fails
     the run. The team decides whether to drop that marker.
-- Next: F.1.3/F.1.4 (split `rank`), then F.1.5, F.1.2, F.1.6, F.1.1.
+- 2026-10-28: team decisions. SR 1.4.1.1's derived rule (a confirmed criterion
+  whose metric is off the known metrics list is rejected, because that control
+  enters F.1.1) is kept. F.1.3/F.1.4 go next.
+- 2026-10-28: F.1.3 built as `apply_hard_constraints.py`, F.1.4 as
+  `score_and_rank_candidates.py`. `rank` (SPEC §4) is now their composition, with
+  the same output as before. Its stale flagging (`_flag_stale`) stays in F.1's
+  `__init__` until F.1.2 is built. The suite result is unchanged.
+  - The SR 1.4.1.3 and 1.4.1.4 tests are still red. They get their inputs from
+    F.1.1 `split_confirmed_mapping` and F.1.2 `receive_model_data`, which don't
+    exist yet. Run with stand-ins for those two defs, both pass.
+- 2026-10-28: F.1.5, F.1.2, F.1.6, F.1.1 built, in that order, as
+  `analyze_ranking_sensitivity.py`, `retrieve_model_data.py`,
+  `report_selection_rationale.py`, `propose_criteria_mapping.py`. The F.1 boundary
+  defs now compose F.1.1-F.1.7: `request_benchmark_evidence` is F.1.1 split + F.1.2
+  request, `present_ranking_and_sensitivity` is F.1.1 split + F.1.2 receive + F.1.3-F.1.6,
+  and `record_decision` is F.1.1 split + F.1.7. `rank`, `_flips` and `unstable_pairs`
+  compose F.1.3-F.1.5.
+  - Suite (uv, Python 3.12, with `werkzeug<3` so Flask 2.2.2 imports): 87 pass,
+    21 fail before; 93 pass, 15 fail after. SR 1.4.1.1-1.4.1.6 now pass, and nothing
+    that passed fails. Python 3.9 gives the same result on the system-requirement and
+    Technical Lead tests.
+  - Behaviour changes at the F.1 boundary:
+    - A confirmed criterion with an unknown metric is rejected
+      (`request_benchmark_evidence`, `present_ranking_and_sensitivity`,
+      `record_decision`), per SR 1.4.1.1.
+    - Every received figure gets a stale flag, not only the criteria's figures. A
+      figure with an unparseable `collection_date` is rejected.
+    - For an excluded candidate, the evidence shows the hard-constraint figures it
+      was judged on, no longer its weighted-criterion figures. For a ranked
+      candidate, hard-constraint figures come first, then the weighted ones.
+    - `rank`'s entries carry `normalized` too.
+- Next: the remaining red tests are the data gap (catalog < 10), the walkthroughs,
+  the F.8 stub, the 5.2.x Product Owner functions, and the 5.1.5.1 strict-xfail decision.
 

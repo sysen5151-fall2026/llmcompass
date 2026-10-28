@@ -489,3 +489,71 @@ open items this resolves. Prompts:
       `test_walking_skeleton.py`'s imports (forbidden this increment)
 
 ---
+
+## 2026-10-28 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Prompt:** Asked where the instructions require a timed walkthrough and what it
+requires (answered from SPEC.md 5.1.5.2, 5.3.1.1, §4 and SR 1.4.1, and from
+SystemRequirementsDefinition.pdf NFR-1/NFR-2 and TPM-3/TPM-4), and for a detailed
+explanation of the derived SR 1.4.1.1 known-metrics rule. The team then decided on
+two open items: keep that rule, and continue with F.1.3/F.1.4. After that, asked to
+build the rest of the F.1 decomposition per docs/PLAN.md "Module plan" (IDEF0 A1 of
+F.1, 2026-10-26), update the relevant documents, and log the work.
+
+**Output:**
+- `backend/provide_llm_selection_decision_support/`: one module per F.1
+  sub-function, built one at a time in PLAN order (F.1.3/F.1.4, F.1.5, F.1.2, F.1.6, F.1.1).
+  Signatures follow PLAN's ICOM table.
+  - `apply_hard_constraints.py` (F.1.3, SR 1.4.1.3): moved from the first half of
+    `rank`. Eligible candidates carry the hard-constraint figures they were checked on.
+  - `score_and_rank_candidates.py` (F.1.4, SR 1.4.1.4): moved from the second half of
+    `rank`. Each entry also carries `normalized` and `evidence`.
+  - `analyze_ranking_sensitivity.py` (F.1.5, SR 1.4.1.5): moved from `_flips`. It
+    re-scores from the ranking's normalized values, and the finding has `method`
+    and `unstable_pairs`.
+  - `retrieve_model_data.py` (F.1.2, SR 1.4.1.2): `request_model_data` and
+    `receive_model_data`. `is_stale`, `STALE_AFTER`, `FIGURE_FIELDS`, the figure
+    checks and `_metric_figure` moved here.
+  - `report_selection_rationale.py` (F.1.6, SR 1.4.1.6): moved from the rest of
+    `present_ranking_and_sensitivity` and the rationale built in `record_decision`.
+  - `propose_criteria_mapping.py` (F.1.1, SR 1.4.1.1): the vocabulary, validators,
+    `request_interpretation`, `present_criteria_mapping` and the decision-in-progress
+    state moved here. New `split_confirmed_mapping` rejects a weighted criterion
+    without a weight and a metric off the known metrics list.
+  - `__init__.py`: the boundary ICOM defs now compose F.1.1-F.1.7, and `rank`,
+    `_flips` and `unstable_pairs` compose F.1.3-F.1.5. It re-exports the moved names,
+    so test and app imports are unchanged.
+- `SPEC.md` §6: notes that 1.4.1.1's known-metrics rejection is derived from the A1
+  control and was kept by the team on 2026-10-28.
+- `docs/PLAN.md`:
+  - Records both decisions, and removes the unknown hand-entered metric from
+    "Accepted without rule".
+  - Marks the module plan built and adds "As built" notes on what goes beyond the table.
+  - Adds Progress entries with the boundary behaviour changes.
+- `docs/traceability.md`: all seven modules are built, and SR 1.4.1.1-1.4.1.6 are pass.
+- `README.md`: the repo-tree line for the F.1 package.
+- Verified with pytest via `uv run --with pytest --with-requirements
+  backend/requirements.txt --with "werkzeug<3"`. Without that pin, Flask 2.2.2 fails
+  to import and the 4 walking-skeleton tests fail.
+  - 87 pass and 21 fail on `main` before; 93 pass and 15 fail after.
+  - SR 1.4.1.1-1.4.1.6 turned green, and nothing that passed fails.
+  - Python 3.9 gives the same result on the system-requirement and Technical Lead tests.
+  - The walking-skeleton tests (app path through `rank`/`_flips`) pass.
+
+**Still open:**
+- Behaviour changes for the team to confirm:
+  - Excluded candidates now show only their hard-constraint figures as evidence.
+  - Every received figure gets a stale flag, so an unparseable `collection_date`
+    is rejected.
+  - The boundary defs reject unknown metrics in the confirmed mapping.
+- `_decision` lives in F.1.1, which is shared F.1 state. The PLAN finding about
+  F.1.7's missing requirements/mapping/weights arrows still stands.
+- `backend/requirements.txt` pins Flask 2.2.2 without a compatible Werkzeug.
+- Red tests not covered here:
+  - catalog < 10 (SR 1.2.1, 1.4.1)
+  - no logged walkthroughs (SR 1.3.1, 1.4.1, 5.3.1.1)
+  - F.8 stub (5.1.1.2 reference set)
+  - 5.2.x Product Owner functions
+  - 5.1.5.1 strict-xfail XPASS
+
+---

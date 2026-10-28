@@ -245,7 +245,7 @@ See the team's Toolset Justification doc for full rationale.
 ├── backend/
 │   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
-│   ├── provide_llm_selection_decision_support/  # F.1, the system itself: five ICOM defs have bodies (Lab 5); Technical Lead confirm/select are still stubs
+│   ├── provide_llm_selection_decision_support/  # F.1, the system itself: one module per sub-function F.1.1-F.1.7 (IDEF0 A1); the ICOM defs compose them; Technical Lead confirm/select are still stubs
 │   ├── define_application_technical_needs/  # F.2 (docstring only: no system requirement)
 │   ├── define_budget_constraints/  # F.3 (docstring only: no system requirement)
 │   ├── define_compliance_constraints/  # F.4 (docstring only: no system requirement)

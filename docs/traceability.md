@@ -21,17 +21,17 @@ SPEC.md §1), and the test that verifies them (tests/test_system_requirements.py
 F.1 is decomposed into F.1.1-F.1.7 (IDEF0 A1, 2026-10-26; docs/PLAN.md "F.1
 decomposition"). Each is matched by name to 1.4.1.x with the same last digit (SPEC §6). The
 satisfied-by links aren't in the spider diagram yet.
-F.1.7's module exists. The other six are planned, and their code is still in
-F.1's `__init__`.
+All seven have their modules (F.1.7 on 2026-10-26, the rest on 2026-10-28). F.1's
+`__init__` keeps the boundary ICOM defs, which compose them.
 
-| Function ID | Function Name | Requirement | Planned module (in backend/provide_llm_selection_decision_support/) |
+| Function ID | Function Name | Requirement | Module (in backend/provide_llm_selection_decision_support/) |
 |---|---|---|---|
-| F.1.1 | Propose Criteria Mapping | 1.4.1.1 | propose_criteria_mapping |
-| F.1.2 | Retrieve Model Data | 1.4.1.2 | retrieve_model_data |
-| F.1.3 | Apply Hard Constraints | 1.4.1.3 | apply_hard_constraints |
-| F.1.4 | Score and Rank Candidates | 1.4.1.4 | score_and_rank_candidates |
-| F.1.5 | Analyze Ranking Sensitivity | 1.4.1.5 | analyze_ranking_sensitivity |
-| F.1.6 | Report Selection Rationale | 1.4.1.6 | report_selection_rationale |
+| F.1.1 | Propose Criteria Mapping | 1.4.1.1 | propose_criteria_mapping (built 2026-10-28) |
+| F.1.2 | Retrieve Model Data | 1.4.1.2 | retrieve_model_data (built 2026-10-28) |
+| F.1.3 | Apply Hard Constraints | 1.4.1.3 | apply_hard_constraints (built 2026-10-28) |
+| F.1.4 | Score and Rank Candidates | 1.4.1.4 | score_and_rank_candidates (built 2026-10-28) |
+| F.1.5 | Analyze Ranking Sensitivity | 1.4.1.5 | analyze_ranking_sensitivity (built 2026-10-28) |
+| F.1.6 | Report Selection Rationale | 1.4.1.6 | report_selection_rationale (built 2026-10-28) |
 | F.1.7 | Generate and Store Decision Record | 1.4.1.7 | generate_and_store_decision_record (built 2026-10-26) |
 
 `backend/app.py` has no row. It isn't a function on the IDEF0: it calls the
@@ -66,12 +66,12 @@ Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC �
 
 | Requirement | Function | StR | Test | Status |
 |---|---|---|---|---|
-| SR 1.4.1.1 | F.1.1 | 5.1.1.2, 5.1.1.3, 5.1.6.1 | test_SR_1_4_1_1_confirmed_mapping_split_by_designation_unknown_metric_rejected | fail: module not built |
-| SR 1.4.1.2 | F.1.2 | 5.1.2.1, 5.1.2.2, 5.3.1.1 | test_SR_1_4_1_2_data_request_covers_catalog_figures_flagged_stale_unsourced_rejected | fail: module not built |
-| SR 1.4.1.3 | F.1.3 | 5.1.6.2, 5.1.6.3 | test_SR_1_4_1_3_top_scorer_failing_hard_constraint_excluded_with_reason | fail: module not built |
-| SR 1.4.1.4 | F.1.4 | 5.1.3.1 | test_SR_1_4_1_4_contributions_sum_to_score_in_known_order | fail: module not built |
-| SR 1.4.1.5 | F.1.5 | 5.1.4.1 | test_SR_1_4_1_5_unstable_pairs_match_known_answer_under_policy | fail: module not built |
-| SR 1.4.1.6 | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.x | test_SR_1_4_1_6_report_shows_sourced_dated_flagged_figures_exclusions_and_pairs | fail: module not built |
+| SR 1.4.1.1 | F.1.1 | 5.1.1.2, 5.1.1.3, 5.1.6.1 | test_SR_1_4_1_1_confirmed_mapping_split_by_designation_unknown_metric_rejected | pass |
+| SR 1.4.1.2 | F.1.2 | 5.1.2.1, 5.1.2.2, 5.3.1.1 | test_SR_1_4_1_2_data_request_covers_catalog_figures_flagged_stale_unsourced_rejected | pass |
+| SR 1.4.1.3 | F.1.3 | 5.1.6.2, 5.1.6.3 | test_SR_1_4_1_3_top_scorer_failing_hard_constraint_excluded_with_reason | pass |
+| SR 1.4.1.4 | F.1.4 | 5.1.3.1 | test_SR_1_4_1_4_contributions_sum_to_score_in_known_order | pass |
+| SR 1.4.1.5 | F.1.5 | 5.1.4.1 | test_SR_1_4_1_5_unstable_pairs_match_known_answer_under_policy | pass |
+| SR 1.4.1.6 | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.x | test_SR_1_4_1_6_report_shows_sourced_dated_flagged_figures_exclusions_and_pairs | pass |
 | SR 1.4.1.7 | F.1.7 | 5.1.3.2, 5.1.3.3 | test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart | pass |
 
 F.2-F.5 satisfy no system requirement. Their exchanges with F.6 don't cross the

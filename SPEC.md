@@ -453,6 +453,9 @@ re-run input on the IDEF0 yet. Their tests are strict xfail
 | 1.4.1.6 | T | The presented ranking and sensitivity shows every figure used with its source, date and stale flag, every excluded candidate with its failed constraints, and the unstable pairs. The selection rationale carries the same ranking, exclusions, evidence and sensitivity finding. The 5.2.x StRs are verified by their own tests (tests/test_product_owner.py). | % of figures shown with source, date and stale flag | 100% |
 | 1.4.1.7 | T | A record generated from a selection rationale and a model selection has all seven sections, with the selection unchanged. The stored record retrieved by its ID matches the original, including after a restart (module reload). A selection that isn't in the ranking is rejected. | % of records retrievable unchanged after a restart | 100% |
 
+1.4.1.1's rejection of a metric not on the known metrics list is derived from that
+control entering F.1.1 in A1. The team kept it on 2026-10-28.
+
 F.1's boundary changed with the decomposition (IDEF0 A-0 of F.1, 2026-10-26):
 Confirmed criteria mapping is now an input, not a control. Known metrics list,
 Staleness threshold and Sensitivity policy are new controls. The 1.1.x-1.3.x
