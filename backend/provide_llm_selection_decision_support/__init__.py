@@ -15,6 +15,14 @@ from typing import Optional
 
 from provide_benchmark_evidence import BENCHMARK_IDS
 
+# F.1 sub-functions (IDEF0 A1, 2026-10-26), one module each (docs/PLAN.md "F.1 decomposition")
+from .generate_and_store_decision_record import (  # noqa: F401 -- SPEC section 4 re-exports
+    RECORD_SECTIONS,
+    generate_and_store_decision_record,
+    retrieve_decision_record,
+    store_decision_record,
+)
+
 SAMPLE_DATA = Path(__file__).resolve().parents[2] / "sample_data"
 USER_INPUTS = SAMPLE_DATA / "user_inputs.json"
 EXPECTED_OUTPUTS = SAMPLE_DATA / "expected_outputs.json"
@@ -23,7 +31,6 @@ SCENARIO_CRITERIA = SAMPLE_DATA / "scenario_criteria.json"
 STALE_AFTER = timedelta(days=90)
 WEIGHT_FACTORS = (0.9, 1.1)  # SN-TL-05 / 5.1.4.1 -- relative +/-10%, no renormalization (SPEC 5 Q5)
 SENSITIVITY_METHOD = "Each weight varied by -10% and +10% (relative), one at a time"
-RECORD_SECTIONS = ("requirements", "criteria_mapping", "weights", "evidence", "ranking", "sensitivity")
 
 # SR 1.1.4, SR 1.3.2 (SPEC section 3) -- the model contract's vocabulary.
 # SPEC section 2 figure fields. With the catalog's benchmark ids (F.7's published
@@ -37,9 +44,10 @@ CATEGORIES = ("capability", "cost", "compliance", "other")  # SR 1.1.4, SR 1.3.2
 DESIGNATIONS = ("hard", "weighted")  # SN-TL-07 / 5.1.6.1
 
 
-def is_stale(collection_date, today) -> bool:
-    # SN-TL-03 / 5.1.2.2 -- older than 90 days is stale; exactly 90 is not
-    return today - date.fromisoformat(str(collection_date)) > STALE_AFTER
+def is_stale(collection_date, today, *, staleness_threshold: timedelta = STALE_AFTER) -> bool:
+    # SN-TL-03 / 5.1.2.2 -- older than 90 days is stale; exactly 90 is not.
+    # staleness_threshold is the F.1 control "Staleness threshold" (IDEF0, 2026-10-26).
+    return today - date.fromisoformat(str(collection_date)) > staleness_threshold
 
 
 def _metric_figure(candidate: dict, metric: str):
@@ -84,7 +92,7 @@ def _normalized(values: dict, operator: str, threshold) -> dict:
     return out
 
 
-def rank(candidates: list, criteria: list, today) -> dict:
+def rank(candidates: list, criteria: list, today, *, staleness_threshold: timedelta = STALE_AFTER) -> dict:
     # SN-TL-02 / 5.1.2.1, SN-TL-04 / 5.1.3.1, SN-TL-07 / 5.1.6.2, 5.1.6.3, SN-TL-08 / 5.3.1.1
     hard = [c for c in criteria if c["designation"] == "hard"]
     weighted = [c for c in criteria if c["designation"] == "weighted"]
@@ -97,7 +105,8 @@ def rank(candidates: list, criteria: list, today) -> dict:
             if fig is None:
                 failed.append(f"missing_data:{c['metric']}")  # SPEC section 2, missing values
                 continue
-            evidence.append({**fig, "metric": c["metric"], "stale": is_stale(fig["collection_date"], today)})
+            evidence.append({**fig, "metric": c["metric"],
+                             "stale": is_stale(fig["collection_date"], today, staleness_threshold=staleness_threshold)})
             if not _meets(fig["value"], c["operator"], c["threshold"]):
                 failed.append(c["criterion_id"])
         if failed:
@@ -124,7 +133,8 @@ def rank(candidates: list, criteria: list, today) -> dict:
                 gaps.append(c["metric"])
             else:
                 evidence.append({**fig, "metric": c["metric"],
-                                 "stale": is_stale(fig["collection_date"], today)})
+                                 "stale": is_stale(fig["collection_date"], today,
+                                                   staleness_threshold=staleness_threshold)})
         ranked.append({"model_id": mid, "score": sum(contributions.values()),
                        "contributions": contributions, "evidence": evidence, "gaps": gaps})
 
@@ -132,16 +142,17 @@ def rank(candidates: list, criteria: list, today) -> dict:
     return {"ranked": ranked, "excluded": excluded}
 
 
-def _flips(candidates: list, criteria: list, today) -> dict:
+def _flips(candidates: list, criteria: list, today, *, sensitivity_policy: tuple = WEIGHT_FACTORS) -> dict:
     # SN-TL-05 / 5.1.4.1 -- vary each weight by -10% and +10%, one at a time,
     # and record which variations change the relative order of each pair.
+    # sensitivity_policy is the F.1 control "Sensitivity policy" (IDEF0, 2026-10-26).
     base = [e["model_id"] for e in rank(candidates, criteria, today)["ranked"]]
     pos = {m: i for i, m in enumerate(base)}
     flips = {}
     for i, c in enumerate(criteria):
         if c["designation"] != "weighted":
             continue
-        for factor in WEIGHT_FACTORS:
+        for factor in sensitivity_policy:
             varied = [dict(x) for x in criteria]
             varied[i]["weight"] = c["weight"] * factor
             order = [e["model_id"] for e in rank(candidates, varied, today)["ranked"]]
@@ -154,9 +165,9 @@ def _flips(candidates: list, criteria: list, today) -> dict:
     return flips
 
 
-def unstable_pairs(candidates: list, criteria: list, today) -> set:
+def unstable_pairs(candidates: list, criteria: list, today, *, sensitivity_policy: tuple = WEIGHT_FACTORS) -> set:
     # SN-TL-05 / 5.1.4.1
-    return set(_flips(candidates, criteria, today))
+    return set(_flips(candidates, criteria, today, sensitivity_policy=sensitivity_policy))
 
 
 def receive_requirements(text: str) -> dict:
@@ -291,8 +302,9 @@ def _threshold_fits(operator: str, threshold) -> bool:
     return threshold is None or (isinstance(threshold, (int, float, str)) and not isinstance(threshold, bool))
 
 
-def validate_interpretation(response) -> bool:
-    # SR 1.1.4, SR 1.3.2 (SN-TL-01 / 5.1.1.2, 5.1.1.3) -- the SPEC section 3 response schema
+def validate_interpretation(response, *, known_metrics: frozenset = KNOWN_METRICS) -> bool:
+    # SR 1.1.4, SR 1.3.2 (SN-TL-01 / 5.1.1.2, 5.1.1.3) -- the SPEC section 3 response schema.
+    # known_metrics is the F.1 control "Known metrics list" (IDEF0, 2026-10-26).
     if not isinstance(response, dict):
         return False
     criteria, no_proxy = response.get("criteria"), response.get("no_suitable_proxy")
@@ -307,7 +319,7 @@ def validate_interpretation(response) -> bool:
             return False
         if not (isinstance(c.get("criterion_id"), str) and c["criterion_id"]):
             return False
-        if c.get("metric") not in KNOWN_METRICS or c.get("operator") not in OPERATORS:
+        if c.get("metric") not in known_metrics or c.get("operator") not in OPERATORS:
             return False
         if "threshold" not in c or not isinstance(c["threshold"], (int, float, str, list, type(None))):
             return False
@@ -346,10 +358,10 @@ def request_interpretation(stated_requirements: str) -> dict:
     return {"requirement_id": requirement_id, "text": stated_requirements}
 
 
-def present_criteria_mapping(proposed_criteria: dict) -> dict:
+def present_criteria_mapping(proposed_criteria: dict, *, known_metrics: frozenset = KNOWN_METRICS) -> dict:
     """Function: F.1 -- Provide LLM Selection Decision Support. Signature from Chapter 4; body added this increment.
 
-    in: proposed_criteria. out: presented_mapping.
+    in: proposed_criteria. control: known_metrics. out: presented_mapping.
     """
     # UC.1.4-1.6 (SR 1.1.4, SR 1.2.4, SR 1.3.2, SN-TL-01 / 5.1.1.2, 5.1.1.3)
     _require("requirement_id", "request_interpretation")
@@ -358,7 +370,8 @@ def present_criteria_mapping(proposed_criteria: dict) -> dict:
     attempts = _decision["invalid_responses"]
     # None = no response or a timeout, handled like an invalid response (SR 1.3.2).
     # SR 1.3.2 -- a response must answer the request it was sent for (same requirement_id).
-    if not (validate_interpretation(proposed_criteria) and proposed_criteria["requirement_id"] == requirement_id):
+    if not (validate_interpretation(proposed_criteria, known_metrics=known_metrics)
+            and proposed_criteria["requirement_id"] == requirement_id):
         attempts[requirement_id] = attempts.get(requirement_id, 0) + 1
         # First invalid response: the caller re-sends the request. Second: the
         # requirement is kept for the Technical Lead to map by hand (SPEC section 3).
@@ -371,10 +384,10 @@ def present_criteria_mapping(proposed_criteria: dict) -> dict:
             "criteria": criteria}
 
 
-def request_benchmark_evidence(*, confirmed_criteria_mapping: list) -> dict:
+def request_benchmark_evidence(confirmed_criteria_mapping: list) -> dict:
     """Function: F.1 -- Provide LLM Selection Decision Support. Signature from Chapter 4; body added this increment.
 
-    control: confirmed_criteria_mapping. out: data_request.
+    in: confirmed_criteria_mapping. out: data_request.
     """
     # UC.1.9-1.10 (SR 1.1.1, SR 1.2.1, SN-TL-07 / 5.1.6.1, SN-TL-08 / 5.3.1.1)
     for c in confirmed_criteria_mapping:
@@ -383,10 +396,13 @@ def request_benchmark_evidence(*, confirmed_criteria_mapping: list) -> dict:
     return {"models": "all", "metrics": metrics}  # every candidate in the catalog
 
 
-def present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirmed_criteria_mapping: list) -> dict:
+def present_ranking_and_sensitivity(model_data_with_provenance: list, confirmed_criteria_mapping: list, *,
+                                    staleness_threshold: timedelta = STALE_AFTER,
+                                    sensitivity_policy: tuple = WEIGHT_FACTORS) -> dict:
     """Function: F.1 -- Provide LLM Selection Decision Support. Signature from Chapter 4; body added this increment.
 
-    in: model_data_with_provenance. control: confirmed_criteria_mapping. out: presented_ranking_and_sensitivity.
+    in: model_data_with_provenance, confirmed_criteria_mapping.
+    control: staleness_threshold, sensitivity_policy. out: presented_ranking_and_sensitivity.
     """
     # UC.1.11-1.16 (SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2, SN-TL-04 / 5.1.3.1, SN-TL-05 / 5.1.4.1, SN-TL-07 / 5.1.6.2)
     # SR 1.1.2, SR 1.2.5, SR 1.3.3
@@ -409,8 +425,8 @@ def present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirm
                 raise ValueError(f"{cand['model_id']}.{field}: figure has no source_id or collection_date.")
 
     today = date.today()  # the clock belongs to mechanism C.1
-    result = rank(candidates, criteria, today)
-    flips = _flips(candidates, criteria, today)
+    result = rank(candidates, criteria, today, staleness_threshold=staleness_threshold)
+    flips = _flips(candidates, criteria, today, sensitivity_policy=sensitivity_policy)
     ranking = [e["model_id"] for e in result["ranked"]]
     excluded = [{"model_id": e["model_id"], "failed_constraints": e["failed_constraints"]}
                 for e in result["excluded"]]
@@ -432,7 +448,8 @@ def present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirm
                 evidence.append({"model_id": model_id, "metric": metric, "value": fig["value"],
                                  "unit": fig["unit"], "source_id": fig["source_id"],
                                  "collection_date": fig["collection_date"],
-                                 "stale": is_stale(fig["collection_date"], today)})
+                                 "stale": is_stale(fig["collection_date"], today,
+                                                   staleness_threshold=staleness_threshold)})
 
     presented = {"ranking": ranking, "excluded": excluded, "score_breakdown": score_breakdown,
                  "unstable_pairs": unstable, "evidence": evidence}
@@ -441,10 +458,10 @@ def present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirm
     return presented
 
 
-def record_decision(model_selection: Optional[str], *, confirmed_criteria_mapping: list) -> dict:
+def record_decision(model_selection: Optional[str], confirmed_criteria_mapping: list) -> dict:
     """Function: F.1 -- Provide LLM Selection Decision Support. Signature from Chapter 4; body added this increment.
 
-    in: model_selection. control: confirmed_criteria_mapping. out: decision_record.
+    in: model_selection, confirmed_criteria_mapping. out: decision_record.
     """
     # UC.1.17-1.18 (SR 1.1.3, SR 1.2.2, SN-TL-09 / 5.1.3.2, SN-TL-07 / 5.1.6.3)
     _require("presented_ranking", "present_ranking_and_sensitivity")
@@ -458,7 +475,9 @@ def record_decision(model_selection: Optional[str], *, confirmed_criteria_mappin
     if model_selection is not None and model_selection not in presented["ranking"]:
         raise ValueError(f"{model_selection} is not in the ranking.")
     ranking = presented["ranking"]
-    selection = {
+    # The record's requirements, mapping and weights are state inside F.1: no A1 arrow
+    # brings them to F.1.7 yet (docs/PLAN.md "F.1 decomposition", findings).
+    selection_rationale = {
         "requirements": [_decision["text"]],
         "criteria_mapping": criteria,
         "weights": {c["criterion_id"]: c["weight"] for c in criteria if c["designation"] == "weighted"},
@@ -470,6 +489,5 @@ def record_decision(model_selection: Optional[str], *, confirmed_criteria_mappin
             "unstable_pairs": presented["unstable_pairs"],
         },
         "excluded": presented["excluded"],
-        "selected_model": model_selection,  # SR 1.1.3 -- unchanged; None = UC alt flow 15a
     }
-    return generate_decision_record(selection)
+    return generate_and_store_decision_record(selection_rationale, model_selection)  # F.1.7

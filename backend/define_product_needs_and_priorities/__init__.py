@@ -1,7 +1,6 @@
-# STUB: Product Owner
-"""Implements F.5 -- Define Product Needs and Priorities. Mechanism: C.5 Product Owner."""
+"""F.5 -- Define Product Needs and Priorities. Mechanism: C.5 Product Owner.
 
-
-def define_product_needs_and_priorities() -> dict:
-    """out: product_priorities."""
-    raise NotImplementedError
+No code: no SPEC.md requirement traces here. This exchange doesn't cross the
+LLM Compass boundary (SRD §3.2); its output reaches C.1 through the Technical
+Lead at UC.1.2. The module stays so the repo mirrors the IDEF0 (docs/context.md).
+"""

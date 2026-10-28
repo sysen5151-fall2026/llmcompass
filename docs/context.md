@@ -38,7 +38,9 @@ Benchmark Data Sources (C.7) — external service
            "Vendor Specifications"; those are now one external system.
            Increment 1 is manual entry; increment 2 is automated ingestion with
            provenance and staleness — the narrative flags anything over 90 days
-           old.
+           old. Increment 2 sources (SPEC.md section 2): Artificial Analysis
+           API, models.dev, OpenRouter as fallback, plus manual entry. They are
+           all one external system, C.7, behind the one conduit.
 
 Language model runtime (C.8) — external service
   In:      stated requirement, submitted by LLM Compass for interpretation

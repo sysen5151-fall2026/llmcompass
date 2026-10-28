@@ -246,10 +246,10 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
 │   ├── provide_llm_selection_decision_support/  # F.1, the system itself: five ICOM defs have bodies (Lab 5); Technical Lead confirm/select are still stubs
-│   ├── define_application_technical_needs/  # F.2 (stub, signatures only)
-│   ├── define_budget_constraints/  # F.3 (stub, signatures only)
-│   ├── define_compliance_constraints/  # F.4 (stub, signatures only)
-│   ├── define_product_needs_and_priorities/  # F.5 (stub, signatures only)
+│   ├── define_application_technical_needs/  # F.2 (docstring only: no system requirement)
+│   ├── define_budget_constraints/  # F.3 (docstring only: no system requirement)
+│   ├── define_compliance_constraints/  # F.4 (docstring only: no system requirement)
+│   ├── define_product_needs_and_priorities/  # F.5 (docstring only: no system requirement)
 │   ├── provide_technical_decision_oversight/  # F.6 (stub, signatures only)
 │   ├── provide_requirement_interpretation/  # F.8, C.8 (stub, returns interpreted_requirements from sample_data)
 │   ├── provide_benchmark_evidence/  # F.7, C.7 (stored catalog from sample_data in the SPEC §2 figure shape; no live source yet)

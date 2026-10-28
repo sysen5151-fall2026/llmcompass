@@ -11,6 +11,10 @@ starts each decision with request_interpretation (docs/PLAN.md, "Interface
 details the tests rely on"). F.8 (LM Studio) is pending, so its responses are
 built here in the SPEC section 3 shape. Demonstration requirements (1.3.1,
 1.4.1) are checked from logged walkthroughs in docs/validation/walkthroughs.csv.
+
+1.4.1.1-1.4.1.7 come from the F.1 decomposition (IDEF0 A1, 2026-10-26). Their
+statements and criteria are derived in SPEC.md section 6, not exported, and the
+tests call each sub-function's module directly, so the repo mirrors the IDEF0.
 """
 
 import copy
@@ -20,6 +24,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import impl
 from provide_benchmark_evidence import provide_model_data
 from provide_llm_selection_decision_support import (
     present_criteria_mapping,
@@ -457,3 +462,194 @@ def test_SR_1_4_1_full_comparison_walkthrough_within_30_minutes():
     start_decision(OPSCON_TEXT, criteria)
     catalog = provide_model_data(data_request=request_benchmark_evidence(confirmed_criteria_mapping=criteria))
     assert len({c["model_id"] for c in catalog}) >= 10
+
+
+# 1.4.1.x Functional requirements of F.1's sub-functions ------------------------
+
+F1 = "provide_llm_selection_decision_support"
+
+
+def sub(function_module, attr):
+    """A sub-function's def from its own module, or fail if either doesn't exist yet."""
+    try:
+        return impl(f"{F1}.{function_module}", attr)
+    except ModuleNotFoundError:
+        pytest.fail(f"not implemented: {F1}.{function_module}")
+
+
+def split(criteria):
+    return sub("propose_criteria_mapping", "split_confirmed_mapping")(criteria)
+
+
+def evidence_for(candidates):
+    return sub("retrieve_model_data", "receive_model_data")(candidates)
+
+
+def test_SR_1_4_1_1_confirmed_mapping_split_by_designation_unknown_metric_rejected():
+    # "A confirmed mapping is split by designation: every weighted criterion goes to the weighted criteria, every hard one to the hard constraints, and the required metrics are the metrics of both, each once. A weighted criterion without a weight, or a metric not on the known metrics list, is rejected."
+    split_mapping = sub("propose_criteria_mapping", "split_confirmed_mapping")
+    criteria = confirmed_criteria() + [
+        {**proposed("ctx_hard", "context_window", ">=", 50_000, "tokens", "strong", "capability"),
+         "designation": "hard"}]
+    weighted, hard, required = split_mapping(criteria)
+    assert [c["criterion_id"] for c in weighted] == ["ctx", "price"]
+    assert [c["criterion_id"] for c in hard] == ["residency", "ctx_hard"]
+    assert sorted(required) == ["context_window", "data_residency", "input_price"]  # each once
+
+    no_weight = {k: v for k, v in criteria[0].items() if k != "weight"}
+    with pytest.raises(ValueError):
+        split_mapping([no_weight])
+    unknown = {**criteria[0], "metric": "not_a_metric"}
+    with pytest.raises(ValueError):
+        split_mapping([unknown])
+    # The known metrics list is a control: a metric off the list given is rejected.
+    with pytest.raises(ValueError):
+        split_mapping(criteria, known_metrics=frozenset({"context_window", "data_residency"}))
+
+
+def test_SR_1_4_1_2_data_request_covers_catalog_figures_flagged_stale_unsourced_rejected():
+    # "The data request covers every catalog candidate and every required metric. Every received figure keeps its source and date and is flagged stale when older than the staleness threshold (at 90 days: 91 days old is stale, 90 is not). A figure with no source or date is rejected."
+    request_model_data = sub("retrieve_model_data", "request_model_data")
+    receive_model_data = sub("retrieve_model_data", "receive_model_data")
+    required = ["context_window", "input_price", "data_residency"]
+    data_request = request_model_data(required)
+    assert data_request["models"] == "all"
+    assert sorted(data_request["metrics"]) == sorted(required)
+
+    stored = [candidate("model-1", 200_000, 3.0, days_old=91), candidate("model-2", 100_000, 1.0, days_old=90)]
+    received = receive_model_data(copy.deepcopy(stored), staleness_threshold=timedelta(days=90))
+    by_id = {c["model_id"]: c for c in received}
+    for cand in stored:
+        for field in FIGURE_FIELDS:
+            if field not in cand:
+                continue
+            got = by_id[cand["model_id"]][field]
+            assert_figure(got, (cand["model_id"], field))
+            assert got["source_id"] == cand[field]["source_id"]
+            assert got["collection_date"] == cand[field]["collection_date"]
+            assert got["stale"] is (cand["model_id"] == "model-1"), (cand["model_id"], field)
+
+    # The staleness threshold is a control: a shorter one flags the 90-day figures too.
+    shorter = receive_model_data(copy.deepcopy(stored), staleness_threshold=timedelta(days=30))
+    assert all(c["input_price"]["stale"] for c in shorter)
+
+    unsourced = copy.deepcopy(stored)
+    unsourced[0]["input_price"]["source_id"] = ""
+    with pytest.raises(ValueError):
+        receive_model_data(unsourced)
+
+
+def test_SR_1_4_1_3_top_scorer_failing_hard_constraint_excluded_with_reason():
+    # "In a fixture where the top-scoring candidate fails a hard constraint, it is not eligible. Each excluded candidate lists at least one failed constraint ID, and missing data for a hard constraint excludes with missing_data:<field>."
+    apply_hard_constraints = sub("apply_hard_constraints", "apply_hard_constraints")
+    weighted, hard, _ = split(confirmed_criteria())
+    pool = known_answer_candidates()
+    pool[0] = candidate("model-1", 200_000, 3.0, residency=("DE",))  # the top scorer, hosted outside the US
+    no_residency = candidate("model-4", 150_000, 1.0)
+    del no_residency["data_residency"]
+    pool.append(no_residency)
+
+    eligible, exclusions = apply_hard_constraints(evidence_for(pool), hard_constraints=hard)
+    assert [c["model_id"] for c in eligible] == ["model-2", "model-3"]
+    reasons = {e["model_id"]: e["failed_constraints"] for e in exclusions}
+    assert set(reasons) == {"model-1", "model-4"}
+    assert reasons["model-1"] == ["residency"]
+    assert reasons["model-4"] == ["missing_data:data_residency"]
+
+
+def test_SR_1_4_1_4_contributions_sum_to_score_in_known_order():
+    # "Each ranked candidate has one contribution per weighted criterion, its score is the sum of its contributions, and candidates are in descending score order. On the known-answer fixture the order is model-1, model-2, model-3."
+    score_and_rank = sub("score_and_rank_candidates", "score_and_rank_candidates")
+    weighted, _, _ = split(confirmed_criteria())
+    ranking = score_and_rank(evidence_for(known_answer_candidates()), weighted_criteria=weighted)
+    assert [e["model_id"] for e in ranking] == ["model-1", "model-2", "model-3"]
+    expected = {"model-1": 0.52, "model-2": 0.48, "model-3": 0.26}  # see known_answer_candidates
+    for entry in ranking:
+        assert set(entry["contributions"]) == {"ctx", "price"}, entry["model_id"]
+        assert entry["score"] == pytest.approx(sum(entry["contributions"].values()))
+        assert entry["score"] == pytest.approx(expected[entry["model_id"]])
+
+
+def test_SR_1_4_1_5_unstable_pairs_match_known_answer_under_policy():
+    # "On a fixture with a known answer, the unstable pairs exactly match those found by applying each sensitivity-policy factor (x0.9, x1.1) to each weight, one at a time. A policy with no change finds no unstable pairs."
+    score_and_rank = sub("score_and_rank_candidates", "score_and_rank_candidates")
+    analyze = sub("analyze_ranking_sensitivity", "analyze_ranking_sensitivity")
+    weighted, _, _ = split(confirmed_criteria())
+    ranking = score_and_rank(evidence_for(known_answer_candidates()), weighted_criteria=weighted)
+
+    finding = analyze(ranking, weighted_criteria=weighted, sensitivity_policy=(0.9, 1.1))
+    assert {frozenset(pair) for pair in finding["unstable_pairs"]} == KNOWN_UNSTABLE_PAIRS
+    unchanged = analyze(ranking, weighted_criteria=weighted, sensitivity_policy=(1.0,))
+    assert unchanged["unstable_pairs"] == []
+
+
+def _rationale_fixture():
+    """F.1.1-F.1.6 on the known-answer pool plus one excluded and one stale candidate."""
+    weighted, hard, _ = split(confirmed_criteria())
+    pool = known_answer_candidates() + [candidate("model-x", 300_000, 0.5, residency=("DE",)),
+                                        candidate("model-s", 120_000, 2.0, days_old=120)]
+    eligible, exclusions = sub("apply_hard_constraints", "apply_hard_constraints")(
+        evidence_for(pool), hard_constraints=hard)
+    ranking = sub("score_and_rank_candidates", "score_and_rank_candidates")(eligible, weighted_criteria=weighted)
+    finding = sub("analyze_ranking_sensitivity", "analyze_ranking_sensitivity")(
+        ranking, weighted_criteria=weighted)
+    report = sub("report_selection_rationale", "report_selection_rationale")
+    return pool, weighted, hard, report(ranking, exclusions, finding)
+
+
+def test_SR_1_4_1_6_report_shows_sourced_dated_flagged_figures_exclusions_and_pairs():
+    # "The presented ranking and sensitivity shows every figure used with its source, date and stale flag, every excluded candidate with its failed constraints, and the unstable pairs. The selection rationale carries the same ranking, exclusions, evidence and sensitivity finding."
+    pool, weighted, hard, (presented, rationale) = _rationale_fixture()
+    assert presented["excluded"] == [{"model_id": "model-x", "failed_constraints": ["residency"]}]
+    assert "model-x" not in presented["ranking"]
+    assert isinstance(presented["unstable_pairs"], list)  # shown, even when empty
+
+    by_key = {(e["model_id"], e["metric"]): e for e in presented["evidence"]}
+    stored = {c["model_id"]: c for c in pool}
+    used = {c["metric"] for c in weighted + hard}
+    for model_id in presented["ranking"]:
+        for metric in used:
+            entry = by_key[(model_id, metric)]
+            assert entry["source_id"] and entry["collection_date"], entry
+            assert entry["collection_date"] == stored[model_id][metric]["collection_date"]
+            assert entry["stale"] is (model_id == "model-s"), entry
+    for metric in {c["metric"] for c in hard}:
+        assert ("model-x", metric) in by_key  # the figure that excluded it is shown too
+
+    for section in ("ranking", "excluded", "evidence", "unstable_pairs"):
+        assert rationale[section] == presented[section], section
+
+
+@pytest.mark.parametrize("pick", [0, 1, None])
+def test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart(pick, tmp_path, monkeypatch):
+    # "A record generated from a selection rationale and a model selection has all seven sections, with the selection unchanged. The stored record retrieved by its ID matches the original, including after a restart (module reload). A selection that isn't in the ranking is rejected."
+    import importlib
+
+    monkeypatch.setenv("DECISION_RECORD_DIR", str(tmp_path))
+    criteria = confirmed_criteria()
+    rationale = {
+        "requirements": [OPSCON_TEXT],
+        "criteria_mapping": criteria,
+        "weights": {c["criterion_id"]: c["weight"] for c in criteria if c["designation"] == "weighted"},
+        "evidence": [{"model_id": "model-1", "metric": "context_window", "value": 200_000, "unit": "tokens",
+                      "source_id": "https://example.com/source", "collection_date": "2026-10-01",
+                      "stale": False}],
+        "ranking": ["model-1", "model-2", "model-3"],
+        "sensitivity": {"method": "x0.9 and x1.1 per weight", "ranking_is_stable": False,
+                        "unstable_pairs": [["model-1", "model-2"]]},
+        "excluded": [],
+    }
+    selection = None if pick is None else rationale["ranking"][pick]
+    generate = sub("generate_and_store_decision_record", "generate_and_store_decision_record")
+    record = generate(copy.deepcopy(rationale), selection)
+    for section in ("requirements", "criteria_mapping", "weights", "evidence", "ranking", "sensitivity"):
+        assert record.get(section), f"missing or empty: {section}"
+    assert "selected_model" in record and record["selected_model"] == selection  # None = UC alt flow 15a
+    assert record.get("record_id")
+
+    module = importlib.reload(importlib.import_module(f"{F1}.generate_and_store_decision_record"))
+    assert module.retrieve_decision_record(record["record_id"]) == record
+
+    with pytest.raises(ValueError):
+        generate(copy.deepcopy(rationale), "model-not-ranked")
+

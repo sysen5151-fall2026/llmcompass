@@ -1,0 +1,119 @@
+{
+  "_spec": "SPEC.md section 2 (C.7 Benchmark Data Sources); SR 1.2.1 / 5.3.1.1 catalog of >= 10. Selection rationale: docs/PLAN.md, 'F.7 live sources (increment 2)'.",
+  "_how": "One entry per catalog model. The source ids say where F.7 looks each model up; the figures themselves come from the sources at run time, never from this file. vendor_hq records the selection rationale only; it is not a SPEC section 2 field.",
+  "selected": "2026-10-23",
+  "models": [
+    {
+      "model_id": "claude-fable-5-1",
+      "vendor": "Anthropic",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "3e87c73e-a257-495e-9730-367a66229811",
+      "models_dev": { "provider": "anthropic", "model": "claude-fable-5-1" },
+      "openrouter_id": "anthropic/claude-fable-5.1"
+    },
+    {
+      "model_id": "claude-sonnet-5-5",
+      "vendor": "Anthropic",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "b171d979-5ec1-45de-b8b9-db1ee65e77ec",
+      "models_dev": { "provider": "anthropic", "model": "claude-sonnet-5-5" },
+      "openrouter_id": "anthropic/claude-sonnet-5.5"
+    },
+    {
+      "model_id": "claude-haiku-5-5",
+      "vendor": "Anthropic",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "7d064a11-6e78-4030-b535-cdf940615041",
+      "models_dev": { "provider": "anthropic", "model": "claude-haiku-5-5" },
+      "openrouter_id": "anthropic/claude-haiku-5.5"
+    },
+    {
+      "model_id": "gpt-6-astra",
+      "vendor": "OpenAI",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "2f339a97-9a0d-499a-9cb5-e0db665bfa25",
+      "models_dev": { "provider": "openai", "model": "gpt-6-astra" },
+      "openrouter_id": "openai/gpt-6-astra"
+    },
+    {
+      "model_id": "gpt-oss-120b",
+      "vendor": "OpenAI",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "f0083258-8646-45b8-8082-7aaf6c2ea82a",
+      "models_dev": { "provider": "huggingface", "model": "openai/gpt-oss-120b" },
+      "openrouter_id": "openai/gpt-oss-120b"
+    },
+    {
+      "model_id": "gemini-4-argon",
+      "vendor": "Google",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "d366dfa1-d940-4788-aa73-d298c45699b3",
+      "models_dev": { "provider": "google", "model": "gemini-4-argon" },
+      "openrouter_id": "google/gemini-4-argon"
+    },
+    {
+      "model_id": "gemma-4-26b-a4b",
+      "vendor": "Google",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "6e1b44ff-c227-496b-aef4-19b70cd18c76",
+      "models_dev": { "provider": "google", "model": "gemma-4-26b-a4b-it" },
+      "openrouter_id": "google/gemma-4-26b-a4b-it"
+    },
+    {
+      "model_id": "muse-spark-open",
+      "vendor": "Meta",
+      "vendor_hq": "US",
+      "artificial_analysis_id": "3661c8fb-caf7-4118-aa18-65b84fea8e44",
+      "models_dev": { "provider": "fireworks-ai", "model": "accounts/fireworks/models/muse-spark-open" },
+      "openrouter_id": "meta/muse-spark-open"
+    },
+    {
+      "model_id": "deepseek-v4-1-flash-1017",
+      "vendor": "DeepSeek",
+      "vendor_hq": "CN",
+      "artificial_analysis_id": "f151fd0b-2139-40cf-a3ec-995e8cedc592",
+      "models_dev": { "provider": "huggingface", "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017" },
+      "openrouter_id": "deepseek/deepseek-v4.1-flash-1017"
+    },
+    {
+      "model_id": "qwen3-8-max",
+      "vendor": "Alibaba",
+      "vendor_hq": "CN",
+      "artificial_analysis_id": "b112af07-3bd5-4647-b09f-b23204361bb2",
+      "models_dev": { "provider": "alibaba", "model": "qwen3.8-max" },
+      "openrouter_id": "qwen/qwen3.8-max-0902"
+    },
+    {
+      "model_id": "kimi-k3",
+      "vendor": "Moonshot AI",
+      "vendor_hq": "CN",
+      "artificial_analysis_id": "f7d2fc3e-1f7b-405f-818c-07952a4af78f",
+      "models_dev": { "provider": "moonshotai", "model": "kimi-k3" },
+      "openrouter_id": "moonshotai/kimi-k3"
+    },
+    {
+      "model_id": "mistral-large-4",
+      "vendor": "Mistral",
+      "vendor_hq": "FR",
+      "artificial_analysis_id": "34fc646a-0174-470e-9e62-d8df452210b3",
+      "models_dev": { "provider": "mistral", "model": "mistral-large-4" },
+      "openrouter_id": "mistralai/mistral-large-4-0"
+    },
+    {
+      "model_id": "solar-pro4",
+      "vendor": "Upstage",
+      "vendor_hq": "KR",
+      "artificial_analysis_id": "15c4cbd7-b9aa-42c8-9ce5-5abbde0e6963",
+      "models_dev": { "provider": "upstage", "model": "solar-pro4" },
+      "openrouter_id": "upstage/solar-pro4"
+    },
+    {
+      "model_id": "sarvam-105b",
+      "vendor": "Sarvam",
+      "vendor_hq": "IN",
+      "artificial_analysis_id": "45790612-02e3-4c42-b5bd-cd7ed2ea1f2f",
+      "models_dev": { "provider": "sarvam", "model": "sarvam-105b" },
+      "openrouter_id": null
+    }
+  ]
+}

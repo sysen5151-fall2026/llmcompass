@@ -237,10 +237,10 @@ F.8 -- Provide Requirement Interpretation
 | F.1 | (same) | `request_benchmark_evidence(*, confirmed_criteria_mapping: list) -> dict` | control: confirmed_criteria_mapping; out: data_request | 1.9-1.10 |
 | F.1 | (same) | `present_ranking_and_sensitivity(model_data_with_provenance: list, *, confirmed_criteria_mapping: list) -> dict` | in: model_data_with_provenance; control; out: presented_ranking_and_sensitivity | 1.11-1.16 |
 | F.1 | (same) | `record_decision(model_selection: Optional[str], *, confirmed_criteria_mapping: list) -> dict` | in: model_selection; control; out: decision_record | 1.17-1.18 |
-| F.2 | define_application_technical_needs | `define_application_technical_needs() -> str` | out: application_technical_needs | before 1.2 |
-| F.3 | define_budget_constraints | `define_budget_constraints() -> list` | out: budget_constraints | before 1.2 |
-| F.4 | define_compliance_constraints | `define_compliance_constraints() -> list` | out: compliance_constraints | before 1.2 |
-| F.5 | define_product_needs_and_priorities | `define_product_needs_and_priorities() -> dict` | out: product_priorities | before 1.2 |
+| F.2 | define_application_technical_needs | `define_application_technical_needs() -> str` (removed 2026-10-25: no SPEC requirement) | out: application_technical_needs | before 1.2 |
+| F.3 | define_budget_constraints | `define_budget_constraints() -> list` (removed 2026-10-25: no SPEC requirement) | out: budget_constraints | before 1.2 |
+| F.4 | define_compliance_constraints | `define_compliance_constraints() -> list` (removed 2026-10-25: no SPEC requirement) | out: compliance_constraints | before 1.2 |
+| F.5 | define_product_needs_and_priorities | `define_product_needs_and_priorities() -> dict` (removed 2026-10-25: no SPEC requirement) | out: product_priorities | before 1.2 |
 | F.6 | provide_technical_decision_oversight | `state_requirements(application_technical_needs: str, *, budget_constraints: list, compliance_constraints: list) -> str` | in; controls; out: stated_requirements | 1.2 |
 | F.6 | (same) | `confirm_criteria_mapping(presented_mapping: dict, product_priorities: dict, *, budget_constraints: list, compliance_constraints: list) -> list` | in x2; controls; out: confirmed_criteria_mapping | 1.7-1.9 |
 | F.6 | (same) | `choose_model(presented_ranking_and_sensitivity: dict, *, budget_constraints: list, compliance_constraints: list) -> Optional[str]` | in; controls; out: model_selection | 1.17 |
@@ -432,7 +432,7 @@ Model (unmodeled controls on F.1, as in the Chapter 4 findings):
   control, like the kiosk's Model Response Contract on A3.
 - The operator/threshold compatibility check, the XOR rule (criteria vs
   no_suitable_proxy) and the requirement_id match rule were added to validation.
-  The first and last aren't in SPEC §3's "Valid only if" list, so confirm both.
+  Resolved 2026-10-25: the team kept all three, and SPEC §3 now lists them.
 
 Data:
 - SR 1.2.1 and 1.4.1 need at least 10 sourced models in the catalog. sample_data
@@ -470,9 +470,213 @@ Code, known limits that no requirement covers:
 - Not resolved (they need Innoslate changes or later chapters):
   - F.8 and F.7 request role (input vs control)
   - budget and compliance constraints in `state_requirements`
-  - unmodeled stale and ±10% controls
-  - F.6 `decision_record` with no output (5.1.3.3 and 5.1.5.1 are still red)
+  - unmodeled stale and ±10% controls (resolved 2026-10-26: now F.1 controls,
+    see "F.1 decomposition")
+  - F.6 `decision_record` with no output. Decided 2026-10-26: 5.1.3.3 traces to
+    SR 1.4.1.7 Generate and Store Decision Record; the 5.1.5.1 and 5.1.5.2 tests
+    are strict xfail until the retrieval/re-run arrow is modeled
+    (docs/traceability.md)
   - the clipped Fig. 2 label
   - moving `confirm_mapping` and `select_model` to F.6, which would mean changing
     `test_walking_skeleton.py`'s imports (forbidden this increment); it waits
     for the UI confirm and select steps (SR 1.3.1)
+
+## F.7 live sources (increment 2)
+
+Traces to SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2, SN-TL-08 / 5.3.1.1 (SR 1.2.1,
+1.3.3, 1.4.1). Sources are in SPEC §2 (picked 2026-10-23). Only F.7
+(`backend/provide_benchmark_evidence/`) changes. `provide_model_data(*,
+data_request)` keeps its ICOM signature, so F.1, `app.py` and the tests don't see
+where the data came from.
+
+### Catalog (14 models, 10 vendors)
+
+`sample_data/model_sources.json` lists each model's Artificial Analysis id,
+models.dev entry and OpenRouter id. Adding a model means editing that file, not
+the code. Picked from the live Artificial Analysis list on 2026-10-23 for
+coverage:
+
+| Model | Vendor | HQ | Weights | $/1M in / out | Intelligence Index | Price tier |
+|---|---|---|---|---|---|---|
+| claude-fable-5-1 | Anthropic | US | closed | 10 / 50 | 53.4 | premium |
+| claude-sonnet-5-5 | Anthropic | US | closed | 2 / 10 | 56.0 | mid |
+| claude-haiku-5-5 | Anthropic | US | closed | 0.10 / 0.50 | 43.4 | budget |
+| gpt-6-astra | OpenAI | US | closed | 10 / 50 | 52.7 | premium |
+| gpt-oss-120b | OpenAI | US | open | 0.15 / 0.60 | 11.6 | budget |
+| gemini-4-argon | Google | US | closed | 2 / 10 | 52.6 | mid |
+| gemma-4-26b-a4b | Google | US | open | 0.10 / 0.34 | 16.7 | budget |
+| muse-spark-open | Meta | US | open | 1.25 / 4.25 | 38.9 | mid |
+| deepseek-v4-1-flash-1017 | DeepSeek | CN | open | 0.30 / 1.20 | 45.1 | budget |
+| qwen3-8-max | Alibaba | CN | closed | 2 / 6 | 45.4 | mid |
+| kimi-k3 | Moonshot AI | CN | open | 3 / 15 | 43.6 | mid-premium |
+| mistral-large-4 | Mistral | FR | closed | 1.36 / 4.18 | 38.4 | mid |
+| solar-pro4 | Upstage | KR | closed | 0.30 / 1.20 | 26.6 | budget |
+| sarvam-105b | Sarvam | IN | open | 0.04 / 0.17 | 8.8 | budget |
+
+The figures above are a snapshot for the selection only. At run time F.7 reads
+them from the sources.
+
+Left out: kimi-k3-1-pro (released 2026-10-23, not on models.dev yet); Cohere
+(Artificial Analysis lists $0 prices, i.e. missing); xAI and Z AI (they would
+weight the catalog further toward US or China).
+
+### Design
+
+- **Config, not code.** `BENCHMARK_SOURCE` (`file` | `api`, default `file`), the
+  source URLs and the keys come from `.env` (python-dotenv). `.env.example` is
+  committed, and `.env` is gitignored.
+- **`file` mode** is today's behaviour: the stored catalog in `sample_data/`. The
+  tests run in this mode.
+- **`api` mode**, per catalog model:
+  - Artificial Analysis (by id): `input_price`, `output_price`, `latency_p50`
+    (`median_time_to_first_token_seconds`), and `benchmarks` (each returned
+    evaluation).
+  - models.dev (provider + model): `context_window` (`limit.context`). OpenRouter
+    `context_length` is used when models.dev has no entry.
+  - Manual (`sample_data/providers.json`): `data_residency`, `data_retention`,
+    `deprecation_date`.
+- **Provenance.** Each figure's `source_id` is the URL it came from, and its
+  `collection_date` is the pull date (5.1.2.1). Prices for open-weight models are
+  hosting-provider prices, and `source_id` says so.
+- **Snapshot and fallback.** Each successful pull is saved under `data/`
+  (gitignored). If a source fails, F.7 returns the last snapshot with its dates,
+  and staleness is flagged as usual (SPEC §2 "Source unavailable", SR 1.3.3).
+  With no snapshot, it returns "no model data available".
+- **Attribution.** The UI credits artificialanalysis.ai (free-tier term).
+- **Rate limit.** Artificial Analysis allows 1,000 requests a day, and one pull
+  is one request. Refresh cadence is still open (SPEC §2).
+
+### Open items
+
+- AA-Omniscience is dropped (SPEC §2), but SCENARIO_01 uses it (SPEC §5 Q12).
+  `BENCHMARK_IDS` keeps it until that is decided, so the fixture and its tests
+  stay as they are.
+- Residency and retention are entered for Anthropic only. The other 9 vendors
+  need manual entries with sources. Until then, they're gaps (scored 0 if
+  weighted, excluded with `missing_data:<field>` if hard).
+- Artificial Analysis evaluation keys (`lcr`, `artificial_analysis_intelligence_index`)
+  differ from the stored ids (`aa_lcr_v1_1_percent`, `intelligence_index`). Map
+  them in `BENCHMARK_IDS` so the restricted vocabulary (SPEC §5 Q7) stays the same in both modes.
+
+## F.1 decomposition (IDEF0 A1, 2026-10-26)
+
+Source: the team's Innoslate diagrams of 2026-10-26 (F.1 A-0 context, F.1 A1
+decomposition, functions-requirements spider diagram). F.1 is decomposed into
+the seven functions planned in SRD Table 1. Requirement 1.4.1 is decomposed into
+1.4.1.1-1.4.1.7, one per sub-function (SPEC §6). Their statements and
+verification criteria aren't exported yet.
+
+### F.1 boundary (A-0)
+
+```
+F.1 -- Provide LLM Selection Decision Support
+  in:      stated_requirements, proposed_criteria, confirmed_criteria_mapping,
+           model_data_with_provenance, model_selection
+  control: known_metrics_list, staleness_threshold, sensitivity_policy
+  out:     interpretation_request, data_request, presented_mapping,
+           presented_ranking_and_sensitivity, decision_record
+  mechanism: C.1 LLM Compass
+```
+
+Changed from Chapter 4: confirmed_criteria_mapping moved from control to input,
+and the three controls are new. These resolve the Chapter 4 findings on the
+mapping's role and on the unmodeled stale and ±10% controls.
+
+### A1 (transcribed; arrows entering a box's top are controls)
+
+```
+F.1.1 Propose Criteria Mapping
+  in:      stated_requirements, proposed_criteria, confirmed_criteria_mapping
+  control: known_metrics_list
+  out:     interpretation_request, presented_mapping (boundary);
+           weighted_criteria (to F.1.4, F.1.5), hard_constraints (to F.1.3),
+           required_metrics (to F.1.2)
+F.1.2 Retrieve Model Data
+  in:      required_metrics, model_data_with_provenance
+  control: staleness_threshold
+  out:     data_request (boundary), candidate_evidence (to F.1.3)
+F.1.3 Apply Hard Constraints
+  in:      candidate_evidence
+  control: hard_constraints
+  out:     eligible_candidates (to F.1.4), exclusions (to F.1.6)
+F.1.4 Score and Rank Candidates
+  in:      eligible_candidates
+  control: weighted_criteria
+  out:     ranking (to F.1.5, F.1.6)
+F.1.5 Analyze Ranking Sensitivity
+  in:      ranking
+  control: weighted_criteria, sensitivity_policy
+  out:     sensitivity_finding (to F.1.6)
+F.1.6 Report Selection Rationale
+  in:      ranking, exclusions, sensitivity_finding
+  out:     presented_ranking_and_sensitivity (boundary), selection_rationale (to F.1.7)
+F.1.7 Generate and Store Decision Record
+  in:      selection_rationale, model_selection
+  out:     decision_record (boundary)
+```
+
+### Done this step (boundary only)
+
+The F.1 ICOM defs follow the new A-0 (Table F-2):
+- `confirmed_criteria_mapping` is positional (input) in `request_benchmark_evidence`,
+  `present_ranking_and_sensitivity` and `record_decision`.
+- The controls are keyword-only, with defaults set to today's policy values:
+  - `known_metrics` (`present_criteria_mapping`, `validate_interpretation`), default `KNOWN_METRICS`;
+  - `staleness_threshold` (`present_ranking_and_sensitivity`, `is_stale`, `rank`), default 90 days;
+  - `sensitivity_policy` (`present_ranking_and_sensitivity`, `unstable_pairs`), default ×0.9 / ×1.1.
+
+The tests still call with keywords, and those calls still work. The suite result
+is unchanged.
+
+### Module plan (next, one sub-function at a time)
+
+Following the repo rule "one module per IDEF0 function, named with its verb
+phrase": each sub-function becomes a module inside
+`backend/provide_llm_selection_decision_support/`. The package `__init__` keeps
+re-exporting the F.1 boundary defs and the SPEC §4 helpers, so test imports don't
+change. Signatures follow Table F-2, with one def per exchange:
+
+| Function | Module | Defs | Moves from |
+|---|---|---|---|
+| F.1.1 | propose_criteria_mapping | `request_interpretation(stated_requirements)`; `present_criteria_mapping(proposed_criteria, *, known_metrics)`; `split_confirmed_mapping(confirmed_criteria_mapping, *, known_metrics) -> (weighted_criteria, hard_constraints, required_metrics)` | same-named defs, `validate_interpretation`, `validate_criterion` |
+| F.1.2 | retrieve_model_data | `request_model_data(required_metrics) -> data_request`; `receive_model_data(model_data_with_provenance, *, staleness_threshold) -> candidate_evidence` | `request_benchmark_evidence`; figure checks and `is_stale` from `present_ranking_and_sensitivity` |
+| F.1.3 | apply_hard_constraints | `apply_hard_constraints(candidate_evidence, *, hard_constraints) -> (eligible_candidates, exclusions)` | first half of `rank` |
+| F.1.4 | score_and_rank_candidates | `score_and_rank_candidates(eligible_candidates, *, weighted_criteria) -> ranking` | second half of `rank` |
+| F.1.5 | analyze_ranking_sensitivity | `analyze_ranking_sensitivity(ranking, *, weighted_criteria, sensitivity_policy) -> sensitivity_finding` | `_flips` (re-scores from each entry's normalized values, so it needs only the ranking) |
+| F.1.6 | report_selection_rationale | `report_selection_rationale(ranking, exclusions, sensitivity_finding) -> (presented_ranking_and_sensitivity, selection_rationale)` | rest of `present_ranking_and_sensitivity` |
+| F.1.7 | generate_and_store_decision_record | `generate_and_store_decision_record(selection_rationale, model_selection) -> decision_record`; plus `store_decision_record` / `retrieve_decision_record` (SPEC §4, 5.1.3.3) | `record_decision`, `generate_decision_record` |
+
+`rank` and `unstable_pairs` (SPEC §4) stay as thin compositions of F.1.3-F.1.5.
+The F.1 boundary defs become compositions of the sub-functions.
+
+Order: F.1.7 first, because 5.1.3.3 is traced to 1.4.1.7 and its test is red.
+Then F.1.3/F.1.4 (they split `rank`), F.1.5, F.1.2, F.1.6, F.1.1. Each step keeps
+the suite at its current result or better.
+
+### Findings to take back to the model
+
+- F.1.7 needs the stated requirements and the confirmed mapping and weights for
+  the record (SR 1.2.2's sections), but it receives only `selection_rationale`
+  and `model_selection`. F.1.6 doesn't receive them either. Either
+  `selection_rationale` is defined to carry them, which needs arrows from F.1.1
+  into F.1.6 or F.1.7, or they stay as state inside F.1, as today.
+- F.1.3's eligible-candidates output has a stray loop drawn at its exit in A1.
+  It's cosmetic, but it fails "diagram content is legible".
+- The retrieval/re-run request (5.1.5.1, 5.1.5.2) is still not on A-0. Those
+  tests stay strict xfail.
+- The F.7/F.8 request roles (input vs control) aren't visible in these diagrams.
+  Check them in the regenerated Metafunction IDEF0.
+
+### Progress
+
+- 2026-10-26: SPEC §6 has 1.4.1.1-1.4.1.7, derived from the diagrams (the SRD
+  export doesn't have them yet), with one test each in
+  tests/test_system_requirements.py.
+- 2026-10-26: F.1.7 built as `generate_and_store_decision_record.py`. Records are
+  JSON files in `DECISION_RECORD_DIR` (default `data/decision_records/`,
+  gitignored). `record_decision` now calls it. SR 1.4.1.7 and the 5.1.3.3 test
+  pass.
+  - Side effect: the 5.1.5.1 not-found test passes too, so its strict xfail fails
+    the run. The team decides whether to drop that marker.
+- Next: F.1.3/F.1.4 (split `rank`), then F.1.5, F.1.2, F.1.6, F.1.1.
+

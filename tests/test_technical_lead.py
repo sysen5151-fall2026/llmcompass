@@ -29,6 +29,15 @@ def walkthrough_minutes(scenario):
     return minutes
 
 
+# 5.1.5.1 and 5.1.5.2 have no system requirement: the IDEF0 has no retrieval or
+# re-run request from F.6 yet (SRD traceability table; Innoslate fix pending).
+# Strict, so a test that starts passing fails until its marker is removed.
+NO_RETRIEVAL_ARROW = pytest.mark.xfail(
+    strict=True,
+    reason="5.1.5.1/5.1.5.2: no retrieval/re-run input on the IDEF0 yet (SRD gap)",
+)
+
+
 # SN-TL-01 -------------------------------------------------------------------
 
 def test_SN_TL_01_5_1_1_1_accepts_text_requirement():
@@ -149,12 +158,14 @@ def test_SN_TL_06_5_1_3_3_stored_record_round_trips(sample_record):
     assert retrieve(record_id) == sample_record
 
 
+@NO_RETRIEVAL_ARROW
 def test_SN_TL_06_5_1_5_1_unknown_record_is_not_found():
     retrieve = impl("provide_llm_selection_decision_support", "retrieve_decision_record")
     with pytest.raises(LookupError):
         retrieve("does-not-exist")
 
 
+@NO_RETRIEVAL_ARROW
 def test_SN_TL_06_5_1_5_2_rerun_uses_current_data(sample_record, candidates, today):
     store = impl("provide_llm_selection_decision_support", "store_decision_record")
     rerun = impl("provide_llm_selection_decision_support", "rerun_decision")
@@ -164,6 +175,7 @@ def test_SN_TL_06_5_1_5_2_rerun_uses_current_data(sample_record, candidates, tod
     assert result["ranked"][0]["model_id"] == "model-e"
 
 
+@NO_RETRIEVAL_ARROW
 def test_SN_TL_06_5_1_5_2_rerun_walkthrough_within_10_minutes():
     minutes = walkthrough_minutes("rerun")
     assert max(minutes) <= 10, minutes

@@ -183,8 +183,19 @@ of her own."
 
 Covers UC.1.10 (request model data) and UC.1.11 (model spec + benchmark data).
 
-Source: increment 1 is manual entry. Increment 2 is automated pulls from public
-leaderboards and vendor pages (sources not picked yet).
+Source: increment 1 is manual entry. Increment 2 is automated pulls, merged by
+`model_id` (sources picked 2026-10-23):
+- Artificial Analysis data API: prices, benchmark scores, latency. The free tier
+  requires attribution to artificialanalysis.ai.
+- models.dev (public, no key): context window. OpenRouter's model list is the
+  fallback when models.dev has no entry. For open-weight models with no vendor
+  entry, the figure comes from a named host, and its `source_id` says so.
+- Manual entry: fields no API publishes (data residency, data retention,
+  deprecation date).
+
+The catalog is the 14 models in `sample_data/model_sources.json` (10 vendors).
+Benchmarks are the ones the Artificial Analysis API returns. AA-Omniscience is
+dropped (2026-10-23): the API doesn't publish it.
 
 Every value is stored as a "figure" so the source stays attached to it (5.1.2.1):
 
@@ -272,10 +283,16 @@ Response:
 ```
 
 Valid only if:
+- `requirement_id` is the same as the request's
 - either `criteria` has 1+ entries, or `no_suitable_proxy` is true and `criteria`
-  is empty
+  is empty, never both
 - every `metric` exists in section 2
+- each `threshold` fits its `operator`: `in` takes a list; `>=` and `<=` take a
+  number or null; `==` takes a number, string, or null
 - `proxy_strength` is strong, moderate, or weak
+
+(The ID match, "never both", and operator/threshold rules were confirmed by the
+team on 2026-10-25.)
 
 `category` is used by 5.2.4.1 to tell capability criteria apart from cost and
 compliance ones.
@@ -341,6 +358,9 @@ Ambiguities:
 10. 5.2.1.1: OK with a 30-day month and operator-entered token counts?
 11. 5.1.3.1 wants every criterion's contribution shown, 5.2.2.1 bans metric names
     in the summary. Fine as long as they're separate views - confirm.
+12. Section 2: AA-Omniscience is dropped, but SCENARIO_01's `factual_reliability`
+    criterion (weight 0.4) and its expected output use it. Pick a replacement
+    metric or keep the stored figure for that fixture.
 
 ## 6. System requirements (SRD section 3, generated from the IDEF0)
 
@@ -366,7 +386,7 @@ the function at its other end.
 | 1.3.1 | The LLM Compass shall interface with the Technical Lead through the Requirements and recommendations. | C.1, C.6, conduit | 5.1.1.1 |
 | 1.3.2 | The LLM Compass shall interface with the Language model runtime through the Interpretation request and proposed criteria. | C.1, C.8, conduit | 5.1.1.2 |
 | 1.3.3 | The LLM Compass shall interface with the Benchmark Data Sources through the Data request and model data with provenance. | C.1, C.7, conduit | 5.1.2.1 |
-| 1.4.1 | The LLM Compass shall provide LLM selection decision support. | - | all; 5.1.2.2, 5.1.3.3, 5.1.5.1, 5.1.5.2, 5.1.6.2, 5.1.6.3, 5.2.x only through this one |
+| 1.4.1 | The LLM Compass shall provide LLM selection decision support. | - | 5.1, 5.2, 5.3 (spider diagram, 2026-10-26); 5.1.2.2, 5.1.5.1, 5.1.5.2, 5.1.6.2, 5.1.6.3, 5.2.x only through this one until 1.4.1.x are traced |
 
 Verification (SRD Table 9) and MOP with target (Table 10), all verbatim:
 
@@ -391,3 +411,49 @@ Note: 1.2.2's criterion says "six sections" but lists seven, and its MOP says 7 
 7. Its parent StR 5.1.3.2 (section 1) has six sections, without the selection. Tests
 use the seven listed. The model should be corrected, and the team should decide
 whether the selection becomes a seventh section of 5.1.3.2 (Chapter 5 finding).
+
+### Functional requirements from the F.1 decomposition (IDEF0 A1, 2026-10-26)
+
+F.1 is now decomposed into F.1.1-F.1.7, and 1.4.1 into one requirement per
+sub-function (functions-requirements spider diagram). The SRD export of
+2026-10-26 doesn't contain them yet. The team said to use the diagrams as the
+main reference, so the rows below are derived, not exported:
+- **Statement:** the Innoslate script's pattern for 1.4.1.
+- **Satisfied by:** matched by name. The spider diagram shows no satisfied-by
+  link for 1.4.1.x yet.
+- **StR trace:** from SRD Table 8 (StRs covered "1.4.1 only") and the A1 arrows.
+  The SRD names 5.1.6.2 and 5.1.2.2 as examples, and says the 5.2.x StRs are
+  expected under Function 6. 1.4.1.7 -> 5.1.3.3 is a team decision (2026-10-26).
+- **Verification criterion:** the traced StRs' acceptance criteria, applied at
+  the sub-function's own ICOMs.
+
+Replace the rows with the exported text once it exists.
+
+| ID | Statement (derived) | Satisfied by | Traces to StR |
+|---|---|---|---|
+| 1.4.1.1 | The LLM Compass shall propose criteria mapping. | F.1.1 | 5.1.1.2, 5.1.1.3, 5.1.6.1 |
+| 1.4.1.2 | The LLM Compass shall retrieve model data. | F.1.2 | 5.1.2.1, 5.1.2.2, 5.3.1.1 |
+| 1.4.1.3 | The LLM Compass shall apply hard constraints. | F.1.3 | 5.1.6.2, 5.1.6.3 |
+| 1.4.1.4 | The LLM Compass shall score and rank candidates. | F.1.4 | 5.1.3.1 |
+| 1.4.1.5 | The LLM Compass shall analyze ranking sensitivity. | F.1.5 | 5.1.4.1 |
+| 1.4.1.6 | The LLM Compass shall report selection rationale. | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.1.1-5.2.4.1 |
+| 1.4.1.7 | The LLM Compass shall generate and store decision record. | F.1.7 | 5.1.3.2, 5.1.3.3 |
+
+5.1.5.1 and 5.1.5.2 still have no system requirement: there is no retrieval or
+re-run input on the IDEF0 yet. Their tests are strict xfail
+(docs/traceability.md).
+
+| ID | Method | Verification criterion (derived) | MOP | Target |
+|---|---|---|---|---|
+| 1.4.1.1 | T | A confirmed mapping is split by designation: every weighted criterion goes to the weighted criteria, every hard one to the hard constraints, and the required metrics are the metrics of both, each once. A weighted criterion without a weight, or a metric not on the known metrics list, is rejected. | % of confirmed criteria routed by designation | 100% |
+| 1.4.1.2 | T | The data request covers every catalog candidate and every required metric. Every received figure keeps its source and date and is flagged stale when older than the staleness threshold (at 90 days: 91 days old is stale, 90 is not). A figure with no source or date is rejected. | % of received figures with a correct stale flag | 100% |
+| 1.4.1.3 | T | In a fixture where the top-scoring candidate fails a hard constraint, it is not eligible. Each excluded candidate lists at least one failed constraint ID, and missing data for a hard constraint excludes with `missing_data:<field>`. | % of failing candidates excluded with a reason | 100% |
+| 1.4.1.4 | T | Each ranked candidate has one contribution per weighted criterion, its score is the sum of its contributions, and candidates are in descending score order. On the known-answer fixture the order is model-1, model-2, model-3. | % of ranked candidates with a full contribution breakdown | 100% |
+| 1.4.1.5 | T, A | On a fixture with a known answer, the unstable pairs exactly match those found by applying each sensitivity-policy factor (x0.9, x1.1) to each weight, one at a time. A policy with no change finds no unstable pairs. | Missed or false unstable pairs | 0 |
+| 1.4.1.6 | T | The presented ranking and sensitivity shows every figure used with its source, date and stale flag, every excluded candidate with its failed constraints, and the unstable pairs. The selection rationale carries the same ranking, exclusions, evidence and sensitivity finding. The 5.2.x StRs are verified by their own tests (tests/test_product_owner.py). | % of figures shown with source, date and stale flag | 100% |
+| 1.4.1.7 | T | A record generated from a selection rationale and a model selection has all seven sections, with the selection unchanged. The stored record retrieved by its ID matches the original, including after a restart (module reload). A selection that isn't in the ranking is rejected. | % of records retrievable unchanged after a restart | 100% |
+
+F.1's boundary changed with the decomposition (IDEF0 A-0 of F.1, 2026-10-26):
+Confirmed criteria mapping is now an input, not a control. Known metrics list,
+Staleness threshold and Sensitivity policy are new controls. The 1.1.x-1.3.x
+statements above are unchanged until the regenerated SRD says otherwise.
