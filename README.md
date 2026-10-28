@@ -243,7 +243,7 @@ See the team's Toolset Justification doc for full rationale.
 ├── .github/workflows/ci.yml   # runs every test with pytest + Flask; red while any requirement is unmet
 ├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
-│   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path
+│   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path (entry points audited in docs/route-table.md)
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
 │   ├── provide_llm_selection_decision_support/  # F.1, the system itself: one module per sub-function F.1.1-F.1.7 (IDEF0 A1); the ICOM defs compose them; Technical Lead confirm/select are still stubs
 │   ├── define_application_technical_needs/  # F.2 (docstring only: no system requirement)
@@ -265,6 +265,7 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── context.md             # external assets, and which of them hold an interface
 │   ├── walking-skeleton.md    # UC.1 call path from the Innoslate sequence diagram
 │   ├── traceability.md        # function -> module, and requirement -> need -> test
+│   ├── route-table.md         # every entry point mapped to its use case (Lab Manual 6.4 audit)
 │   ├── PLAN.md
 │   ├── environment.md
 │   ├── prompt-log.md

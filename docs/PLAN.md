@@ -728,3 +728,30 @@ As built, beyond the table:
 - Next: the remaining red tests are the data gap (catalog < 10), the walkthroughs,
   the F.8 stub, the 5.2.x Product Owner functions, and the 5.1.5.1 strict-xfail decision.
 
+
+## Endpoint-to-use-case audit (Lab Manual 6.4, 2026-10-28)
+
+Record: docs/route-table.md. Model: SYSEN5151_ArchitectureDefinitionReport.pdf
+(UC.1 sequence diagram, Fig. 6; trace Tables 6 and 7, which pass the pencil test).
+
+- Entry points:
+  - 4 found: GET /, POST /, `python3 backend/app.py`, and Flask's default `/static/<filename>`.
+  - `/static` traced to no use case and was deleted (`static_folder=None`).
+  - The other 3 are all UC.1. Orphans remaining: 0.
+  CI (`.github/workflows/ci.yml`) is verification tooling, not an application entry point.
+- Team decisions:
+  - The launcher is kept, with the debugger off (`app.run()`).
+  - The `/static` route is deleted.
+  - UC.1.19 Export is planned, and needs an IDEF0 output arrow first.
+  - Decision reuse (5.1.5.1, 5.1.5.2) is planned, and needs a use case in the model first.
+- Planned, no entry point yet: UC.1.9 confirm (with 1.7, 1.8) and UC.1.17 select,
+  both for SR 1.3.1.
+- Findings for the model:
+  - UC.1.19 output arrow
+  - a reuse use case
+  - rename UC.1.16 to "Present ranking and sensitivity finding"
+- Open, outside the audit:
+  - The SR 1.1.3, SR 1.2.2 and SN-TL-06 5.1.3.3 tests store records in
+    `data/decision_records/` (no `DECISION_RECORD_DIR`).
+  - The 5.1.5.1 strict-xfail marker (XPASS) is still a pending team decision.
+  - Unmatched text still returns HTTP 500 from the F.8 stub.

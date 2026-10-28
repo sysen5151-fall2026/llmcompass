@@ -20,7 +20,8 @@ from provide_llm_selection_decision_support import (
 )
 from provide_benchmark_evidence import request_model_data
 
-app = Flask(__name__)
+# No /static/<filename> route: it traced to no use case (Lab Manual 6.4 audit, docs/route-table.md)
+app = Flask(__name__, static_folder=None)
 
 
 def run_uc1(text: str) -> dict:
@@ -56,4 +57,5 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Debugger off: it traces to no requirement (Lab Manual 6.4 audit, docs/route-table.md)
+    app.run()

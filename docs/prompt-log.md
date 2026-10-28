@@ -557,3 +557,70 @@ F.1, 2026-10-26), update the relevant documents, and log the work.
   - 5.1.5.1 strict-xfail XPASS
 
 ---
+
+## 2026-10-28 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Built from:** docs/route-table.md (this increment's audit), the Lab Manual 6.4
+Product Build "Endpoint-to-Use-Case Audit" (pp. 108-113), and
+SYSEN5151_ArchitectureDefinitionReport.pdf (UC.1 sequence diagram Fig. 6 p13; trace
+Tables 6 and 7, pp. 15-16; risk R6 p24).
+
+**Prompt:** Complete the Chapter 6 product build task using the examples in the
+manual and the Architecture Definition Report as context. Orchestrate multiple
+agents, validate and verify the output, update the necessary documents, and log it.
+The enumeration prompts are in prompts/2026-10-28-entry-point-enumeration.md.
+
+**Reviewed by:** KhaiXin30. The team decided every disposition:
+- the launcher is kept, with the debugger off
+- the `/static/<filename>` orphan is deleted
+- UC.1.19 Export is planned
+- decision reuse (5.1.5.1, 5.1.5.2) is planned, once the model has a use case for it
+
+**Output:**
+- Agents, all read-only:
+  - Agent 1 enumerated the entry points: 3, `GET /`, `POST /` and the launcher.
+  - Agent 2 extracted UC.1, its 10 sequence interactions, and the trace from the
+    report. It confirmed the 6.4.1 prerequisites are present.
+  - Agent 3 then independently verified the table. It found
+    a missed entry point (Flask's default `/static/<filename>`, from `app.url_map`),
+    UC.1.16 and UC.1.18 overstated as "Implemented", a wrong strict-xfail claim for
+    5.1.5.1, an incomplete list of the tests that store records, and two line numbers.
+    I checked each claim before correcting it.
+- `docs/route-table.md` (new):
+  - Entry points: 4 found, 1 orphan deleted, 3 remain, all UC.1. Orphans remaining: 0.
+  - CI is listed as verification tooling, not an application entry point.
+  - Each UC.1 interaction is mapped to the step that serves it, with its status.
+  - Items with no entry point are recorded as planned: UC.1.9 and UC.1.17 (SR 1.3.1),
+    UC.1.19, and decision reuse.
+  - Also: count reconciliation, other findings, and findings for the model.
+- `backend/app.py`: `Flask(__name__, static_folder=None)` removes the orphan, and
+  `app.run()` drops `debug=True`. Both are team decisions.
+- `prompts/2026-10-28-entry-point-enumeration.md` (new): the two read-only prompts.
+- `docs/PLAN.md`: new section "Endpoint-to-use-case audit (Lab Manual 6.4)" with the
+  decisions, model findings and open items.
+- `README.md`: route-table.md added to the repo tree; `app.py` line points to it.
+- `docs/traceability.md`: a pointer to route-table.md.
+- Verified:
+  - `app.url_map` holds only `/`.
+  - Flask test client: GET / is 200, POST / is 200 for all 4 sample scenarios,
+    and `/static/x` is 404.
+  - The real launcher (`python3 backend/app.py`) serves GET / with "Debug mode: off".
+    Unmatched text now gets a plain 500, not the interactive debugger page.
+  - pytest gives 93 passed, 15 failed, the same failing set as the previous commit.
+
+**Assistant assumptions:** none were promoted. The mapping and dispositions are the
+team's. I drafted the mapping from the agents' enumeration for the team to confirm.
+
+**Still open:**
+- Findings for the model:
+  - UC.1.19 needs an output arrow.
+  - A decision-reuse use case is needed for 5.1.5.1 and 5.1.5.2.
+  - UC.1.16 should be renamed "Present ranking and sensitivity finding".
+- SR 1.3.1 stays red until UC.1.9 and UC.1.17 have their own Technical Lead entry
+  points and the UI calls the F.1 ICOM defs.
+- The SR 1.1.3, SR 1.2.2 and SN-TL-06 5.1.3.3 tests write records into
+  `data/decision_records/`.
+- The 5.1.5.1 strict-xfail marker (XPASS) is still a pending team decision.
+- Unmatched text still returns HTTP 500 from the F.8 stub.
+
+---

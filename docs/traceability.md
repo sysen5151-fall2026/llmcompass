@@ -34,6 +34,7 @@ All seven have their modules (F.1.7 on 2026-10-26, the rest on 2026-10-28). F.1'
 | F.1.6 | Report Selection Rationale | 1.4.1.6 | report_selection_rationale (built 2026-10-28) |
 | F.1.7 | Generate and Store Decision Record | 1.4.1.7 | generate_and_store_decision_record (built 2026-10-26) |
 
+Entry points (routes, launcher) are mapped to use cases in docs/route-table.md.
 `backend/app.py` has no row. It isn't a function on the IDEF0: it calls the
 functions in UC.1 order, like the kiosk's `kiosk_service`.
 
