@@ -23,7 +23,16 @@ jobs:
       # none of which the tests need, so the two are pinned here instead.
       # Werkzeug 3 breaks Flask 2.2.2.
       - name: Install test dependencies
-        run: pip install pytest "Flask==2.2.2" "Werkzeug<3"
+        run: pip install pytest "Flask==2.2.2" "Werkzeug<3" pyyaml openapi-spec-validator openapi-schema-validator
+
+      # Internal interface contract (Lab Manual 7.4): the contract is valid OpenAPI,
+      # the generated stubs match it, and the F.1.x modules conform to it. Run before
+      # pytest, which stays red while requirements are unmet.
+      - name: Check internal interface contract
+        run: |
+          python -c "import yaml; from openapi_spec_validator import validate; validate(yaml.safe_load(open('contracts/api-v1.yaml')))"
+          python contracts/generate_stubs.py --check
+          python contracts/check_conformance.py
 
       # SPEC.md acceptance tests (stakeholder needs, section 1) and system
       # requirement tests (SR 1.1.1-1.4.1, section 6). Fails the check while any

@@ -39,6 +39,9 @@ Entry points (routes, launcher) are mapped to use cases in docs/route-table.md.
 functions in UC.1 order, like the kiosk's `kiosk_service`.
 
 ICOM-to-signature mapping: docs/PLAN.md, "Module decomposition from the IDEF0".
+Internal flows between F.1.1-F.1.7: contracts/api-v1.yaml (operation per exchange,
+`x-module` names the module above). `compile_decision_basis` (F.1.1) carries the
+team's flow 5.4 Decision basis to F.1.7 (ADR-0002).
 
 ## Requirements, needs and tests
 

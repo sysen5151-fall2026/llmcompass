@@ -1,6 +1,7 @@
 """Implements F.1.2 -- Retrieve Model Data. Mechanism: C.1 LLM Compass."""
 
 # SR 1.4.1.2 (SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2, SN-TL-08 / 5.3.1.1). IDEF0 A1 of F.1, 2026-10-26.
+# Sits behind contracts/api-v1.yaml: requestModelData, receiveModelData.
 
 import copy
 from datetime import date, timedelta
@@ -29,6 +30,17 @@ def _metric_figure(candidate: dict, metric: str):
     return None
 
 
+def _figure_metrics(candidate: dict) -> list:
+    # Every metric the candidate has a figure for: SPEC section 2 fields, then benchmark ids.
+    return [f for f in FIGURE_FIELDS if f in candidate] + [b["benchmark_id"] for b in candidate.get("benchmarks", [])]
+
+
+def _evidence_item(model_id: str, metric: str, fig: dict) -> dict:
+    # contracts/api-v1.yaml EvidenceItem: one figure flattened with its candidate and metric (5.1.2.1)
+    return {"model_id": model_id, "metric": metric, "value": fig["value"], "unit": fig["unit"],
+            "source_id": fig["source_id"], "collection_date": fig["collection_date"], "stale": fig.get("stale")}
+
+
 def _flag_stale(candidate: dict, metrics: list, today, staleness_threshold: timedelta) -> dict:
     # SN-TL-03 / 5.1.2.2 -- a copy of the candidate, each of these metrics' figures with its stale flag
     flagged = copy.deepcopy(candidate)
@@ -40,19 +52,22 @@ def _flag_stale(candidate: dict, metrics: list, today, staleness_threshold: time
 
 
 def request_model_data(required_metrics: list) -> dict:
-    """Function: F.1.2 -- Retrieve Model Data.
+    """Function: F.1.2 -- Retrieve Model Data. Contract operation requestModelData.
 
-    in: required_metrics. out: data_request.
+    in: required_metrics (5.1). out: data_request.
     """
     # SR 1.4.1.2, SR 1.2.1 (SN-TL-08 / 5.3.1.1) -- every candidate in the catalog, each required metric once
     return {"models": "all", "metrics": list(dict.fromkeys(required_metrics))}
 
 
 def receive_model_data(model_data_with_provenance: list, *, staleness_threshold: timedelta = STALE_AFTER) -> list:
-    """Function: F.1.2 -- Retrieve Model Data.
+    """Function: F.1.2 -- Retrieve Model Data. Contract operation receiveModelData.
 
-    in: model_data_with_provenance. control: staleness_threshold. out: candidate_evidence.
+    in: model_data_with_provenance. control: staleness_threshold. out: candidate_evidence (7.1).
     """
+    # SPEC section 2, source unavailable -- nothing stored at all: "no model data available", don't rank
+    if not model_data_with_provenance:
+        raise LookupError("no model data available")
     # SR 1.4.1.2, SR 1.1.2 (SN-TL-02 / 5.1.2.1, SPEC section 2) -- a figure that isn't a figure, or has
     # no source_id or collection_date, is rejected at entry
     for cand in model_data_with_provenance:
@@ -70,6 +85,5 @@ def receive_model_data(model_data_with_provenance: list, *, staleness_threshold:
     # SR 1.4.1.2 (SN-TL-03 / 5.1.2.2) -- every figure keeps its source and date and gets its stale flag.
     # Stale figures are still used.
     today = date.today()  # the clock belongs to mechanism C.1
-    return [_flag_stale(cand, [f for f in FIGURE_FIELDS if f in cand]
-                        + [b["benchmark_id"] for b in cand.get("benchmarks", [])], today, staleness_threshold)
+    return [_flag_stale(cand, _figure_metrics(cand), today, staleness_threshold)
             for cand in model_data_with_provenance]

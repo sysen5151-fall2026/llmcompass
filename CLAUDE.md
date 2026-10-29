@@ -5,6 +5,7 @@
 - OpsCon / overview: README.md
 - Requirements/spec: SPEC.md (cite as need ID / StR ID, e.g. SN-TL-03 / 5.1.2.2)
 - Data and model contracts: SPEC.md sections 2 and 3
+- Internal interfaces between F.1.1-F.1.7: contracts/api-v1.yaml (the authority on what crosses a boundary; change the contract first, regenerate contracts/generated/, never hand-edit stubs; divergences get an ADR in docs/adr/)
 - UC.1 call path: docs/walking-skeleton.md
 - Function-to-module map: docs/traceability.md (ICOM signatures: docs/PLAN.md)
 - Acceptance tests: tests/ (one per SPEC.md criterion; red until implemented)

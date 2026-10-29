@@ -104,7 +104,7 @@ New functions in `provide_llm_selection_decision_support` (SPEC section 4): `is_
   (`missing_data:<metric>`).
 - Weighted criteria are min-max normalized across the remaining candidates.
   `>=` means higher is better, `<=` means lower is better, and `==`/`in` score 1 or 0.
-  Missing data scores 0 and is listed in `gaps`. Score = sum of weight x normalized.
+  Missing data scores 0 and is listed in `missing_data` (`gaps` until 2026-10-28, ADR-0003). Score = sum of weight x normalized.
   Ties are broken by `model_id`.
 - Sensitivity: each weight is multiplied by 0.9 and 1.1, one at a time, with no
   renormalization. Any pair whose relative order changes is reported with the
@@ -377,7 +377,7 @@ The Chapter 4 signatures don't change. These details fix what each def returns.
     (SPEC §2: rejected at entry).
   - It returns `{"ranking": [model_id], "excluded": [{"model_id",
     "failed_constraints"}], "score_breakdown": [{"model_id", "score",
-    "contributions": {criterion_id: value}, "gaps": [metrics with no data]}], "unstable_pairs": [[a, b]],
+    "contributions": {criterion_id: value}, "missing_data": [metrics with no data]}], "unstable_pairs": [[a, b]],
     "evidence": [{"model_id", "metric", "value", "unit", "source_id",
     "collection_date", "stale"}]}`.
   - Staleness is measured against today's date: the clock belongs to mechanism C.1.
@@ -631,6 +631,9 @@ is unchanged.
 
 ### Module plan (all seven built, 2026-10-28)
 
+Since 2026-10-28 the signatures in this table are generated from contracts/api-v1.yaml
+(contracts/generated/), which is the authority where the two differ.
+
 Following the repo rule "one module per IDEF0 function, named with its verb
 phrase": each sub-function becomes a module inside
 `backend/provide_llm_selection_decision_support/`. The package `__init__` keeps
@@ -639,13 +642,13 @@ change. Signatures follow Table F-2, with one def per exchange:
 
 | Function | Module | Defs | Moves from |
 |---|---|---|---|
-| F.1.1 | propose_criteria_mapping | `request_interpretation(stated_requirements)`; `present_criteria_mapping(proposed_criteria, *, known_metrics)`; `split_confirmed_mapping(confirmed_criteria_mapping, *, known_metrics) -> (weighted_criteria, hard_constraints, required_metrics)` | same-named defs, `validate_interpretation`, `validate_criterion` |
+| F.1.1 | propose_criteria_mapping | `request_interpretation(stated_requirements)`; `present_criteria_mapping(proposed_criteria, *, known_metrics)`; `split_confirmed_mapping(confirmed_criteria_mapping, *, known_metrics=None) -> (weighted_criteria, hard_constraints, required_metrics)`; `compile_decision_basis(stated_requirements, confirmed_criteria_mapping, *, known_metrics=None) -> decision_basis` (5.4, ADR-0002) | same-named defs, `validate_interpretation`, `validate_criterion` |
 | F.1.2 | retrieve_model_data | `request_model_data(required_metrics) -> data_request`; `receive_model_data(model_data_with_provenance, *, staleness_threshold) -> candidate_evidence` | `request_benchmark_evidence`; figure checks and `is_stale` from `present_ranking_and_sensitivity` |
 | F.1.3 | apply_hard_constraints | `apply_hard_constraints(candidate_evidence, *, hard_constraints) -> (eligible_candidates, exclusions)` | first half of `rank` |
 | F.1.4 | score_and_rank_candidates | `score_and_rank_candidates(eligible_candidates, *, weighted_criteria) -> ranking` | second half of `rank` |
-| F.1.5 | analyze_ranking_sensitivity | `analyze_ranking_sensitivity(ranking, *, weighted_criteria, sensitivity_policy) -> sensitivity_finding` | `_flips` (re-scores from each entry's normalized values, so it needs only the ranking) |
+| F.1.5 | analyze_ranking_sensitivity | `analyze_ranking_sensitivity(ranking, *, weighted_criteria, sensitivity_policy) -> sensitivity_finding` | `_flips` (re-scores from each entry's contributions, so it needs only the ranking; contract A10, ADR-0003) |
 | F.1.6 | report_selection_rationale | `report_selection_rationale(ranking, exclusions, sensitivity_finding) -> (presented_ranking_and_sensitivity, selection_rationale)` | rest of `present_ranking_and_sensitivity` |
-| F.1.7 | generate_and_store_decision_record | `generate_and_store_decision_record(selection_rationale, model_selection) -> decision_record`; plus `store_decision_record` / `retrieve_decision_record` (SPEC §4, 5.1.3.3) | `record_decision`, `generate_decision_record` |
+| F.1.7 | generate_and_store_decision_record | `generate_and_store_decision_record(selection_rationale, model_selection, decision_basis=None) -> decision_record`; plus `store_decision_record` / `retrieve_decision_record` (SPEC §4, 5.1.3.3) | `record_decision`, `generate_decision_record` |
 
 `rank` and `unstable_pairs` (SPEC §4) stay as thin compositions of F.1.3-F.1.5.
 The F.1 boundary defs become compositions of the sub-functions.
@@ -756,3 +759,75 @@ Record: docs/route-table.md. Model: SYSEN5151_ArchitectureDefinitionReport.pdf
     (tests/conftest.py) now redirects them to `tmp_path`.
   - The 5.1.5.1 strict-xfail marker (XPASS) is still a pending team decision.
   - Unmatched text still returns HTTP 500 from the F.8 stub.
+
+## Internal interface contract (Lab Manual 7.4, 2026-10-28)
+
+Contract: `contracts/api-v1.yaml` (OpenAPI 3.0.3, v1.0.0). It was written from the
+flow list by an agent barred from `backend/` (prompts/2026-10-28-interface-contract.md).
+
+Prerequisites (7.4.1), from SYSEN5151_ArchitectureDefinitionReport.pdf:
+- First-level IDEF0 with carried-down ICOMs: present (Fig. 8, Table 4, p7-8, p15).
+- Internal flows: present (Table 7, p16).
+- Model consistency check: partial. There is no formal check, and findings are
+  open. The team decided to proceed and log them (below). Only one affected a flow's
+  content, the decision-record gap, and that one is resolved as flow 5.4.
+
+Internal flows (10): 5.1 Required metrics F.1.1->F.1.2; 5.2 Hard constraints
+F.1.1->F.1.3 (control); 5.3 Weighted criteria F.1.1->F.1.4, F.1.5 (control); 5.4
+Decision basis F.1.1->F.1.7 (new, team 2026-10-28); 7.1 Candidate evidence
+F.1.2->F.1.3; 7.2 Eligible candidates F.1.3->F.1.4; 7.3 Exclusions F.1.3->F.1.6; 7.4
+Ranking F.1.4->F.1.5, F.1.6; 7.5 Sensitivity finding F.1.5->F.1.6; 8.1 Selection
+rationale F.1.6->F.1.7.
+
+Operations (10): splitConfirmedMapping, compileDecisionBasis (F.1.1);
+requestModelData, receiveModelData (F.1.2); applyHardConstraints (F.1.3);
+scoreAndRankCandidates (F.1.4); analyzeRankingSensitivity (F.1.5);
+reportSelectionRationale (F.1.6); generateAndStoreDecisionRecord,
+retrieveDecisionRecord (F.1.7).
+
+Build:
+- `contracts/generate_stubs.py` generated `contracts/generated/*_stub.py` from the
+  contract. `--check` fails when a stub differs.
+- `contracts/check_conformance.py` checks each module against the contract:
+  - signature vs. stub
+  - every request and response vs. the schemas, with undeclared keys counted as drift
+  - each `x-python-raises`
+- Before the refactor it found 23 divergences in 5 groups. The modules were refactored
+  until it passed. Recorded in:
+  - ADR-0002 (decision basis)
+  - ADR-0003 (ranking carries contributions and figures)
+  - ADR-0004 (sensitivity finding and boundary shapes)
+- CI runs the validator, `--check` and the conformance check before pytest.
+
+Behaviour changes (ADR-0003, ADR-0004):
+- Presented and recorded evidence shows every figure of each ranked candidate.
+- Ties under a weight change are not flips.
+- `ranking_is_stable` is a boolean.
+- No model data at all raises LookupError.
+- `gaps` is renamed `missing_data`.
+
+Decision for the team: contract A3/A4. `decision_basis` is optional at F.1.7 because
+the SR 1.4.1.7 test passes only (rationale, selection).
+
+Verification (independent agent, then fixed):
+- The contract covers all 10 flows, the stubs match it, and the tests are unchanged.
+- Fixed after verification:
+  - F.1.7 now rejects empty requirements, mapping or weights. A record's ranking and
+    evidence may be empty for alt flow 10a (A27).
+  - Contract: Exclusion requires `evidence` and RankingEntry requires `missing_data`.
+    The A3 wording and the KnownMetricsList default were corrected.
+  - The checker gained semantic invariants and a fixture with a repeated metric and
+    a candidate that fails two constraints. It now catches 14 of 14 mutations (9 of
+    them were missed before).
+  - ADR-0004 was reworked (consequences; contract corrections separated from code
+    changes). ADR-0002 got "What would change". The rows above were updated.
+- Known gap: when the UI moves to the ICOM defs, `backend/app.py` must catch
+  `receiveModelData`'s LookupError (ADR-0004).
+
+Model fixes for the team (Innoslate):
+- Add flow 5.4 Decision basis (F.1.1 -> F.1.7).
+- Remove the stray loop on F.1.3's Eligible candidates.
+- Give F.1.6 and F.1.7 a control (IEEE 1320.1), or justify why they have none.
+- Rename UC.1.16, and model or remove UC.1.19 Export (see the 6.4 audit).
+- Run a formal model consistency check (IDEF Model Assessment Criteria) before the
+  next contract version.

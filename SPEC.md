@@ -456,6 +456,11 @@ re-run input on the IDEF0 yet. Their tests are strict xfail
 1.4.1.1's rejection of a metric not on the known metrics list is derived from that
 control entering F.1.1 in A1. The team kept it on 2026-10-28.
 
+Internal flow 5.4 Decision basis (F.1.1 -> F.1.7: stated requirements, confirmed
+mapping, weights) was added by the team on 2026-10-28 so that 1.4.1.7's record
+sections trace to an arrow (ADR-0002). The internal flows are specified in
+contracts/api-v1.yaml.
+
 F.1's boundary changed with the decomposition (IDEF0 A-0 of F.1, 2026-10-26):
 Confirmed criteria mapping is now an input, not a control. Known metrics list,
 Staleness threshold and Sensitivity policy are new controls. The 1.1.x-1.3.x

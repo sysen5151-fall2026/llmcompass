@@ -644,3 +644,99 @@ open item from the 6.4 audit) needed a fix. After the explanation, asked to fix 
   unchanged: 93 passed, 15 failed, same failing set.
 
 ---
+
+## 2026-10-28 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Built from:**
+- F.1's first-level IDEF0 (SYSEN5151_ArchitectureDefinitionReport.pdf: Fig. 8;
+  Table 4, p8; Table 7, p16).
+- The team's new flow 5.4 Decision basis.
+- SPEC.md §2, §3 and §6.
+- Lab Manual 7.4, Product Build "The Internal Interface Contract" (pp. 126-131).
+
+**Prompt:** Complete the Chapter 7 product build task, following the manual's
+examples, with the report as context. Orchestrate multiple agents, validate and
+verify the output, update the necessary documents, and log it. The contract prompt
+is prompts/2026-10-28-interface-contract.md.
+
+**Reviewed by:** KhaiXin30. The team made two decisions:
+- 7.4.1 prerequisite (c) is only partly met (no formal consistency check, open
+  findings). Proceed anyway and log the gaps.
+- Close the decision-record gap by adding internal flow 5.4 Decision basis
+  (F.1.1 -> F.1.7) to the model.
+
+**Output:**
+- Agents:
+  - The report agent (resumed) extracted every F.1.x ICOM, the 9 flows and the
+    consistency findings. Its verdict on the prerequisites: (a) present, (b)
+    present, (c) partial.
+  - The contract author was barred from `backend/`, PLAN and traceability. It wrote
+    `contracts/api-v1.yaml` from the flow list: OpenAPI 3.0.3, v1.0.0, 10 operations,
+    10 flows, 27 numbered assumptions. It passes openapi-spec-validator.
+  - An independent verifier checked the result and mutation-tested the checker.
+- Review corrections to the contract, made before any code changed: the F.1.2 input
+  is named after its arrow, and `scores` became `score_breakdown`, which the SR 1.2.5
+  acceptance test reads.
+- `contracts/generate_stubs.py` (new) generates the signature-only
+  `contracts/generated/*_stub.py` from the contract. `--check` fails on any hand-edit.
+- `contracts/check_conformance.py` (new) checks the code against the contract:
+  - signatures against the stubs
+  - every request and response against the schemas, with undeclared keys counted
+    as drift
+  - each `x-python-raises`
+  - semantic invariants
+
+  Before the refactor it found 23 divergences in 5 groups. That drift was the
+  information the manual says to expect.
+- `backend/provide_llm_selection_decision_support/` refactored to sit behind the
+  contract:
+  - F.1.1: new `compile_decision_basis`, and `known_metrics=None`.
+  - F.1.2: LookupError when there is no model data, plus shared figure helpers.
+  - F.1.3: eligible candidates pass through unchanged; evidence items carry `model_id`.
+  - F.1.4: entries carry `missing_data` and every figure; `normalized` is gone.
+  - F.1.5: re-scores from contributions; ties aren't flips; the finding gains
+    `ranking_is_stable`, `factors` and ordered pairs.
+  - F.1.6: `sensitivity` added, and `score_breakdown` in 8.1.
+  - F.1.7: takes `decision_basis` and rejects empty sections.
+  - `record_decision` sends 5.4 instead of merging F.1 state.
+- `docs/adr/0002`-`0004` (new): one per group of divergences, each naming the model
+  entities affected.
+- `.github/workflows/ci.yml`: the validator, stub `--check` and conformance check now
+  run before pytest.
+- Docs:
+  - CLAUDE.md lists the contract under source of truth.
+  - README.md tree.
+  - SPEC.md §6 note on 5.4.
+  - docs/traceability.md.
+  - docs/PLAN.md: new section, the ICOM table updated, `gaps` renamed.
+- Verification found and fixed:
+  - F.1.7 accepted empty sections.
+  - Two `required` fields and two wording errors in the contract.
+  - Nine mutations the checker missed. After the fix it catches 14 of 14.
+  - ADR-0004 claims that weren't true; ADR-0002 had no "What would change".
+  - Stale PLAN rows.
+- Verified:
+  - The contract is valid, the stubs match, and the code conforms. This was also run
+    in a clean Python 3.12 environment, as CI does.
+  - pytest: 93 passed, 15 failed, the same failing set as before; Python 3.9 matches.
+  - All 4 web scenarios return 200, and `data/decision_records/` stays empty.
+
+**Assistant assumptions:** none were promoted silently. The contract's 27
+`x-assumptions` are listed in the file for the team to review. A3/A4 (optional
+`decision_basis` at F.1.7, forced by the SR 1.4.1.7 test) is flagged as a team
+decision.
+
+**Still open:**
+- Innoslate updates:
+  - add flow 5.4
+  - the stray loop on F.1.3's output
+  - F.1.6 and F.1.7 have no control
+  - the UC.1.16 rename
+  - UC.1.19 Export
+  - a formal model consistency check
+- The team to confirm contract A3/A4, and the ADR-0003 behaviour change: the
+  evidence now shows every figure of each ranked candidate.
+- When the UI moves to the ICOM defs (SR 1.3.1), `app.py` must catch
+  `receiveModelData`'s LookupError.
+
+---

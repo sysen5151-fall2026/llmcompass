@@ -1,0 +1,1201 @@
+openapi: 3.0.3
+info:
+  title: LLM Compass internal interface contract (F.1 first-level IDEF0)
+  version: 1.0.0
+  description: >-
+    Internal interface contract for F.1 Provide LLM Selection Decision Support,
+    written from the model (Architecture Definition Report Fig. 8 p15, Table 4 p8,
+    Table 7 p16; SPEC.md sections 2, 3, 5 and 6 incl. SR 1.4.1.1-1.4.1.7), not from
+    code. One POST operation per function exchange that consumes or produces an
+    internal flow. Python mapping (Lab Manual Table F-2): operationId in
+    snake_case is the def name, x-module is the module (one per IDEF0 function),
+    requestBody properties in order are the parameters (x-icom input = positional,
+    x-icom control = keyword-only), response properties in x-return-order are the
+    return value (one output = that value, several = a tuple in that order), and
+    each error response names the Python exception raised (x-python-raises).
+x-package: provide_llm_selection_decision_support
+tags:
+  - name: F.1.1 Propose Criteria Mapping
+  - name: F.1.2 Retrieve Model Data
+  - name: F.1.3 Apply Hard Constraints
+  - name: F.1.4 Score and Rank Candidates
+  - name: F.1.5 Analyze Ranking Sensitivity
+  - name: F.1.6 Report Selection Rationale
+  - name: F.1.7 Generate and Store Decision Record
+
+x-flows:
+  - id: "5.1"
+    name: Required metrics
+    source: F.1.1 Propose Criteria Mapping
+    destinations: [F.1.2 Retrieve Model Data]
+    role_at_destination: {F.1.2: input}
+    produced_by: [splitConfirmedMapping]
+    consumed_by: [requestModelData]
+    schema: "#/components/schemas/RequiredMetrics"
+  - id: "5.2"
+    name: Hard constraints
+    source: F.1.1 Propose Criteria Mapping
+    destinations: [F.1.3 Apply Hard Constraints]
+    role_at_destination: {F.1.3: control}
+    produced_by: [splitConfirmedMapping]
+    consumed_by: [applyHardConstraints]
+    schema: "#/components/schemas/HardConstraints"
+  - id: "5.3"
+    name: Weighted criteria
+    source: F.1.1 Propose Criteria Mapping
+    destinations: [F.1.4 Score and Rank Candidates, F.1.5 Analyze Ranking Sensitivity]
+    role_at_destination: {F.1.4: control, F.1.5: control}
+    produced_by: [splitConfirmedMapping]
+    consumed_by: [scoreAndRankCandidates, analyzeRankingSensitivity]
+    schema: "#/components/schemas/WeightedCriteria"
+  - id: "5.4"
+    name: Decision basis
+    source: F.1.1 Propose Criteria Mapping
+    destinations: [F.1.7 Generate and Store Decision Record]
+    role_at_destination: {F.1.7: input}
+    produced_by: [compileDecisionBasis]
+    consumed_by: [generateAndStoreDecisionRecord]
+    schema: "#/components/schemas/DecisionBasis"
+    note: Added by the team on 2026-10-28; not yet on report Fig. 8 / Table 7.
+  - id: "7.1"
+    name: Candidate evidence
+    source: F.1.2 Retrieve Model Data
+    destinations: [F.1.3 Apply Hard Constraints]
+    role_at_destination: {F.1.3: input}
+    produced_by: [receiveModelData]
+    consumed_by: [applyHardConstraints]
+    schema: "#/components/schemas/CandidateEvidence"
+  - id: "7.2"
+    name: Eligible candidates
+    source: F.1.3 Apply Hard Constraints
+    destinations: [F.1.4 Score and Rank Candidates]
+    role_at_destination: {F.1.4: input}
+    produced_by: [applyHardConstraints]
+    consumed_by: [scoreAndRankCandidates]
+    schema: "#/components/schemas/EligibleCandidates"
+  - id: "7.3"
+    name: Exclusions
+    source: F.1.3 Apply Hard Constraints
+    destinations: [F.1.6 Report Selection Rationale]
+    role_at_destination: {F.1.6: input}
+    produced_by: [applyHardConstraints]
+    consumed_by: [reportSelectionRationale]
+    schema: "#/components/schemas/Exclusions"
+  - id: "7.4"
+    name: Ranking
+    source: F.1.4 Score and Rank Candidates
+    destinations: [F.1.5 Analyze Ranking Sensitivity, F.1.6 Report Selection Rationale]
+    role_at_destination: {F.1.5: input, F.1.6: input}
+    produced_by: [scoreAndRankCandidates]
+    consumed_by: [analyzeRankingSensitivity, reportSelectionRationale]
+    schema: "#/components/schemas/Ranking"
+  - id: "7.5"
+    name: Sensitivity finding
+    source: F.1.5 Analyze Ranking Sensitivity
+    destinations: [F.1.6 Report Selection Rationale]
+    role_at_destination: {F.1.6: input}
+    produced_by: [analyzeRankingSensitivity]
+    consumed_by: [reportSelectionRationale]
+    schema: "#/components/schemas/SensitivityFinding"
+  - id: "8.1"
+    name: Selection rationale
+    source: F.1.6 Report Selection Rationale
+    destinations: [F.1.7 Generate and Store Decision Record]
+    role_at_destination: {F.1.7: input}
+    produced_by: [reportSelectionRationale]
+    consumed_by: [generateAndStoreDecisionRecord]
+    schema: "#/components/schemas/SelectionRationale"
+
+x-assumptions:
+  - "A1. Return order of splitConfirmedMapping is (weighted_criteria, hard_constraints, required_metrics), i.e. 5.3, 5.2, 5.1, because the SR 1.4.1.1 test unpacks it in that order."
+  - "A2. 5.4 Decision basis is produced by a separate F.1.1 operation (compileDecisionBasis) from the stated requirements and the confirmed criteria mapping; weights are read from the weighted criteria of that mapping."
+  - "A3. F.1.7 parameter order is (selection_rationale, model_selection, decision_basis), not the IDEF0 order (report Table 4 lists F.1.7's inputs as Model selection, Selection rationale; 5.4 is new), because the SR 1.4.1.7 test passes (rationale, selection) positionally; decision_basis is an optional positional input defaulting to None. CONFLICT TO CONFIRM with the team."
+  - "A4. When decision_basis is None, F.1.7 takes the requirements, criteria_mapping and weights sections from same-named keys of the selection rationale (the SR 1.4.1.7 fixture carries them there); when given, decision_basis wins."
+  - "A5. Staleness is judged against the current date at receipt (no 'today' flow on the IDEF0); a figure is stale when its age in days is strictly greater than the threshold (SR 1.4.1.2: 91 stale, 90 not). The threshold is an integer number of days on the wire and datetime.timedelta in Python."
+  - "A6. Stale figures stay in the evidence and are used in the ranking; they are flagged, not excluded (SPEC 5 Q9 open; SR 1.3.3 test uses stale stored figures)."
+  - "A7. Sensitivity policy is a list of multiplicative factors applied to one weight at a time with no renormalisation (SPEC 5 Q5, tests assume relative); default [0.9, 1.1]; [1.0] means no change."
+  - "A8. A pair is unstable when, under some single-weight change, the lower-ranked candidate's score becomes strictly greater than the higher-ranked one's; all pairs are checked, not only adjacent ones; ties do not count as flips."
+  - "A9. Each unstable pair is listed as [higher_ranked_id, lower_ranked_id] and pairs are listed in ranking order (by the higher-ranked member, then the lower-ranked member); no duplicates."
+  - "A10. F.1.5 needs only the ranking's per-criterion contributions to re-score (contribution scales linearly with its weight), so 7.4 carries contributions and 7.1 evidence is not an F.1.5 input."
+  - "A11. Each 7.4 ranking entry carries the eligible candidate's figures as evidence items so F.1.6 can show every figure used (weighted and hard metrics); each 7.3 exclusion carries the figures of the hard-constraint metrics it has, so the figure that excluded it is shown."
+  - "A12. failed_constraints lists one entry per failed hard constraint in mapping order: the criterion_id when the figure fails the operator/threshold, or missing_data:<metric> when the figure is absent (SPEC 2, pending team sign-off)."
+  - "A13. Scoring method is not fixed by the model beyond: contribution per weighted criterion is dimensionless, deterministic, 0 when the figure is missing (SPEC 2), and score = sum of contributions. For weighted criteria, operator >= means higher is better and <= means lower is better."
+  - "A14. The ranking and selection rationale list ranked candidates as model_id strings in descending score order; scores and contributions travel alongside in 'score_breakdown' (SR 1.4.1.6 test iterates model ids; SR 1.2.5 needs contributions shown; the name is the one the SR 1.2.5 acceptance test reads, see A26)."
+  - "A15. Presented and rationale 'excluded' entries carry only model_id and failed_constraints; the excluding figures are in 'evidence' (SR 1.4.1.6 test compares excluded entries exactly)."
+  - "A16. Benchmark scores are stored as figures ({benchmark_id, score: Figure}) so their source and date travel with them (SPEC 2 'every value is stored as a figure'); evidence 'metric' is a SPEC 2 field name or a benchmark_id."
+  - "A17. Candidate schema requires only model_id; SPEC 2 'required' fields (vendor, model_name, input_price, output_price, context_window) are listed in x-source-required as an obligation on the source, while a missing figure is handled by the SPEC 2 missing-value rules (score 0 / missing_data exclusion), not rejected at F.1.2."
+  - "A18. Empty model data (nothing stored at all) is rejected by receiveModelData with LookupError / 404 'no model data available', so nothing is ranked (SPEC 2 'Source unavailable')."
+  - "A19. Stated requirements in the decision basis and record are either the plain text as stated or {requirement_id, text} (the SR 1.4.1.7 fixture uses plain text)."
+  - "A20. Weights are non-negative numbers keyed by criterion_id and need not sum to 1 (no renormalisation, SPEC 5 Q5)."
+  - "A21. record_id is an opaque non-empty string assigned by F.1.7; the record is persisted so retrieveDecisionRecord returns it unchanged after a restart (SR 1.4.1.7). retrieveDecisionRecord is included although it carries no internal flow, because SR 1.4.1.7 verifies it."
+  - "A22. selected_model null means the Technical Lead made no selection (UC.1 alternate flow 15a); a non-null selection must be one of the ranked model_ids, else ValueError / 422."
+  - "A23. The selection rationale's unstable_pairs duplicates sensitivity.unstable_pairs for parity with the presented view; F.1.7 reads the sensitivity section."
+  - "A24. F.1.1's boundary-only exchanges (interpretation request, presented mapping) and F.1.6's 5.2.x views carry no internal flow and are out of scope of this contract."
+  - "A25. Required metrics are listed once each, in order of first appearance in the confirmed mapping."
+  - "A27. (Verification, 2026-10-28) A decision record's ranking and evidence may be empty when every candidate is excluded (UC.1 alternate flow 10a); its requirements, criteria_mapping and weights may not (SR 1.2.2), and F.1.7 rejects an empty one with ValueError / 422. RankingEntry always carries missing_data (SPEC 2 'the gap is shown'; empty list when none) and Exclusion always carries evidence (A11)."
+  - "A26. (Review, 2026-10-28) The presented, rationale and record key for scores and contributions is 'score_breakdown', not 'scores': the SR 1.2.5 acceptance test (SPEC-derived, tests/test_system_requirements.py) reads presented['score_breakdown']. F.1.2's input is named model_data_with_provenance, the IDEF0 arrow name."
+
+paths:
+  /internal/propose-criteria-mapping/split-confirmed-mapping:
+    post:
+      operationId: splitConfirmedMapping
+      summary: F.1.1 -> F.1.2, F.1.3, F.1.4, F.1.5 (implements SR 1.4.1.1)
+      description: >-
+        Splits the confirmed criteria mapping by designation into the weighted
+        criteria (5.3), the hard constraints (5.2) and the required metrics (5.1)
+        (report Table 4 p8). Rejects a weighted criterion without a weight and a
+        metric not on the known metrics list. Traces to 5.1.1.2, 5.1.1.3, 5.1.6.1.
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1 Propose Criteria Mapping
+      x-module: propose_criteria_mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmed_criteria_mapping]
+              properties:
+                confirmed_criteria_mapping:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Confirmed criteria mapping"
+                  $ref: "#/components/schemas/ConfirmedCriteriaMapping"
+                known_metrics:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Known metrics list"
+                  $ref: "#/components/schemas/KnownMetricsList"
+      responses:
+        "200":
+          description: The mapping split by designation.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [weighted_criteria, hard_constraints, required_metrics]
+                x-return-order: [weighted_criteria, hard_constraints, required_metrics]
+                properties:
+                  weighted_criteria:
+                    x-idef0-flow: "5.3 Weighted criteria"
+                    $ref: "#/components/schemas/WeightedCriteria"
+                  hard_constraints:
+                    x-idef0-flow: "5.2 Hard constraints"
+                    $ref: "#/components/schemas/HardConstraints"
+                  required_metrics:
+                    x-idef0-flow: "5.1 Required metrics"
+                    $ref: "#/components/schemas/RequiredMetrics"
+        "422":
+          description: >-
+            A weighted criterion has no weight, a criterion has no valid
+            designation, or a criterion's metric is not on the known metrics list
+            (SR 1.1.1, SR 1.4.1.1).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/propose-criteria-mapping/compile-decision-basis:
+    post:
+      operationId: compileDecisionBasis
+      summary: F.1.1 -> F.1.7 (implements SR 1.4.1.1; feeds SR 1.4.1.7)
+      description: >-
+        Produces 5.4 Decision basis: the stated requirements, the confirmed
+        criteria mapping and the weights that F.1.7 needs for the record's
+        requirements, mapping and weights sections (team decision 2026-10-28;
+        SR 1.2.2, 5.1.3.2).
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1 Propose Criteria Mapping
+      x-module: propose_criteria_mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stated_requirements, confirmed_criteria_mapping]
+              properties:
+                stated_requirements:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Stated requirements"
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: "#/components/schemas/StatedRequirement"
+                confirmed_criteria_mapping:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Confirmed criteria mapping"
+                  $ref: "#/components/schemas/ConfirmedCriteriaMapping"
+                known_metrics:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Known metrics list"
+                  $ref: "#/components/schemas/KnownMetricsList"
+      responses:
+        "200":
+          description: The decision basis for the record.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decision_basis]
+                x-return-order: [decision_basis]
+                properties:
+                  decision_basis:
+                    x-idef0-flow: "5.4 Decision basis"
+                    $ref: "#/components/schemas/DecisionBasis"
+        "422":
+          description: >-
+            Empty stated requirements, a weighted criterion without a weight, or a
+            metric not on the known metrics list (SR 1.1.5, SR 1.4.1.1).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/retrieve-model-data/request-model-data:
+    post:
+      operationId: requestModelData
+      summary: F.1.1 -> F.1.2 (implements SR 1.4.1.2)
+      description: >-
+        Consumes 5.1 Required metrics and issues the data request to the Benchmark
+        Data Sources for every catalog candidate and every required metric
+        (SR 1.2.1, SR 1.4.1.2; 5.3.1.1).
+      tags: [F.1.2 Retrieve Model Data]
+      x-idef0-function: F.1.2 Retrieve Model Data
+      x-module: retrieve_model_data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [required_metrics]
+              properties:
+                required_metrics:
+                  x-icom: input
+                  x-idef0-flow: "5.1 Required metrics"
+                  $ref: "#/components/schemas/RequiredMetrics"
+      responses:
+        "200":
+          description: The data request sent to the Benchmark Data Sources.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data_request]
+                x-return-order: [data_request]
+                properties:
+                  data_request:
+                    x-idef0-flow: "boundary: Data request"
+                    $ref: "#/components/schemas/DataRequest"
+
+  /internal/retrieve-model-data/receive-model-data:
+    post:
+      operationId: receiveModelData
+      summary: F.1.2 -> F.1.3 (implements SR 1.4.1.2)
+      description: >-
+        Receives model data with provenance, keeps each figure's source and
+        collection date, flags figures older than the staleness threshold, and
+        passes them on as 7.1 Candidate evidence (report pp4-5; SPEC 2;
+        5.1.2.1, 5.1.2.2).
+      tags: [F.1.2 Retrieve Model Data]
+      x-idef0-function: F.1.2 Retrieve Model Data
+      x-module: retrieve_model_data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [model_data_with_provenance]
+              properties:
+                model_data_with_provenance:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Model data with provenance"
+                  type: array
+                  description: Candidates as delivered by the Benchmark Data Sources (SPEC 2); stale may be absent.
+                  items:
+                    $ref: "#/components/schemas/Candidate"
+                staleness_threshold:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Staleness threshold"
+                  $ref: "#/components/schemas/StalenessThreshold"
+      responses:
+        "200":
+          description: Candidate evidence with every figure's stale flag set.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [candidate_evidence]
+                x-return-order: [candidate_evidence]
+                properties:
+                  candidate_evidence:
+                    x-idef0-flow: "7.1 Candidate evidence"
+                    $ref: "#/components/schemas/CandidateEvidence"
+        "404":
+          description: No model data available at all; nothing is ranked (SPEC 2 Source unavailable).
+          x-python-raises: LookupError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: A figure has no source_id or no collection_date (SPEC 2; SR 1.1.2, SR 1.4.1.2).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/apply-hard-constraints:
+    post:
+      operationId: applyHardConstraints
+      summary: F.1.3 -> F.1.4, F.1.6 (implements SR 1.4.1.3)
+      description: >-
+        Removes every candidate that fails a hard constraint and records which
+        constraint removed it (report p4; SPEC 2 missing values; 5.1.6.2, 5.1.6.3).
+      tags: [F.1.3 Apply Hard Constraints]
+      x-idef0-function: F.1.3 Apply Hard Constraints
+      x-module: apply_hard_constraints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [candidate_evidence, hard_constraints]
+              properties:
+                candidate_evidence:
+                  x-icom: input
+                  x-idef0-flow: "7.1 Candidate evidence"
+                  $ref: "#/components/schemas/CandidateEvidence"
+                hard_constraints:
+                  x-icom: control
+                  x-idef0-flow: "5.2 Hard constraints"
+                  $ref: "#/components/schemas/HardConstraints"
+      responses:
+        "200":
+          description: Eligible candidates and exclusions; every input candidate is in exactly one of them.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eligible_candidates, exclusions]
+                x-return-order: [eligible_candidates, exclusions]
+                properties:
+                  eligible_candidates:
+                    x-idef0-flow: "7.2 Eligible candidates"
+                    $ref: "#/components/schemas/EligibleCandidates"
+                  exclusions:
+                    x-idef0-flow: "7.3 Exclusions"
+                    $ref: "#/components/schemas/Exclusions"
+
+  /internal/score-and-rank-candidates:
+    post:
+      operationId: scoreAndRankCandidates
+      summary: F.1.4 -> F.1.5, F.1.6 (implements SR 1.4.1.4)
+      description: >-
+        Scores the eligible candidates against the weighted criteria and ranks
+        them, showing how much each criterion contributed (report p4, p20;
+        5.1.3.1).
+      tags: [F.1.4 Score and Rank Candidates]
+      x-idef0-function: F.1.4 Score and Rank Candidates
+      x-module: score_and_rank_candidates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eligible_candidates, weighted_criteria]
+              properties:
+                eligible_candidates:
+                  x-icom: input
+                  x-idef0-flow: "7.2 Eligible candidates"
+                  $ref: "#/components/schemas/EligibleCandidates"
+                weighted_criteria:
+                  x-icom: control
+                  x-idef0-flow: "5.3 Weighted criteria"
+                  $ref: "#/components/schemas/WeightedCriteria"
+      responses:
+        "200":
+          description: The ranking, in descending score order.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ranking]
+                x-return-order: [ranking]
+                properties:
+                  ranking:
+                    x-idef0-flow: "7.4 Ranking"
+                    $ref: "#/components/schemas/Ranking"
+
+  /internal/analyze-ranking-sensitivity:
+    post:
+      operationId: analyzeRankingSensitivity
+      summary: F.1.5 -> F.1.6 (implements SR 1.4.1.5)
+      description: >-
+        Finds the candidate pairs whose order flips when any single weight is
+        changed by each sensitivity-policy factor, one weight at a time (report
+        p4; SPEC 5 Q5; 5.1.4.1).
+      tags: [F.1.5 Analyze Ranking Sensitivity]
+      x-idef0-function: F.1.5 Analyze Ranking Sensitivity
+      x-module: analyze_ranking_sensitivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ranking, weighted_criteria]
+              properties:
+                ranking:
+                  x-icom: input
+                  x-idef0-flow: "7.4 Ranking"
+                  $ref: "#/components/schemas/Ranking"
+                weighted_criteria:
+                  x-icom: control
+                  x-idef0-flow: "5.3 Weighted criteria"
+                  $ref: "#/components/schemas/WeightedCriteria"
+                sensitivity_policy:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Sensitivity policy"
+                  $ref: "#/components/schemas/SensitivityPolicy"
+      responses:
+        "200":
+          description: The sensitivity finding.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sensitivity_finding]
+                x-return-order: [sensitivity_finding]
+                properties:
+                  sensitivity_finding:
+                    x-idef0-flow: "7.5 Sensitivity finding"
+                    $ref: "#/components/schemas/SensitivityFinding"
+
+  /internal/report-selection-rationale:
+    post:
+      operationId: reportSelectionRationale
+      summary: F.1.6 -> F.1.7 (implements SR 1.4.1.6)
+      description: >-
+        Combines the ranking, exclusions and sensitivity finding into the result
+        shown to the Technical Lead and the selection rationale passed to F.1.7
+        (report Table 4 p8, p9; 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3).
+      tags: [F.1.6 Report Selection Rationale]
+      x-idef0-function: F.1.6 Report Selection Rationale
+      x-module: report_selection_rationale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ranking, exclusions, sensitivity_finding]
+              properties:
+                ranking:
+                  x-icom: input
+                  x-idef0-flow: "7.4 Ranking"
+                  $ref: "#/components/schemas/Ranking"
+                exclusions:
+                  x-icom: input
+                  x-idef0-flow: "7.3 Exclusions"
+                  $ref: "#/components/schemas/Exclusions"
+                sensitivity_finding:
+                  x-icom: input
+                  x-idef0-flow: "7.5 Sensitivity finding"
+                  $ref: "#/components/schemas/SensitivityFinding"
+      responses:
+        "200":
+          description: >-
+            The presented result and the selection rationale; ranking, excluded,
+            evidence and unstable_pairs are identical in both (SR 1.4.1.6).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [presented_ranking_and_sensitivity, selection_rationale]
+                x-return-order: [presented_ranking_and_sensitivity, selection_rationale]
+                properties:
+                  presented_ranking_and_sensitivity:
+                    x-idef0-flow: "boundary: Presented ranking and sensitivity"
+                    $ref: "#/components/schemas/PresentedRankingAndSensitivity"
+                  selection_rationale:
+                    x-idef0-flow: "8.1 Selection rationale"
+                    description: F.1.6 always emits score_breakdown and unstable_pairs (A23).
+                    allOf:
+                      - $ref: "#/components/schemas/SelectionRationale"
+                      - type: object
+                        required: [score_breakdown, unstable_pairs]
+
+  /internal/generate-and-store-decision-record:
+    post:
+      operationId: generateAndStoreDecisionRecord
+      summary: F.1.6, F.1.1 -> F.1.7 (implements SR 1.4.1.7)
+      description: >-
+        Combines the Technical Lead's selection with the rationale and the
+        decision basis into a seven-section decision record and stores it so it
+        can be retrieved after a restart (report Table 4 p8; SR 1.2.2, SR 1.1.3;
+        5.1.3.2, 5.1.3.3).
+      tags: [F.1.7 Generate and Store Decision Record]
+      x-idef0-function: F.1.7 Generate and Store Decision Record
+      x-module: generate_and_store_decision_record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [selection_rationale, model_selection]
+              properties:
+                selection_rationale:
+                  x-icom: input
+                  x-idef0-flow: "8.1 Selection rationale"
+                  $ref: "#/components/schemas/SelectionRationale"
+                model_selection:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Model selection"
+                  type: string
+                  nullable: true
+                  description: The model_id the Technical Lead selected, or null for no selection (UC.1 alt flow 15a).
+                decision_basis:
+                  x-icom: input
+                  x-idef0-flow: "5.4 Decision basis"
+                  x-default: null
+                  description: Optional positional input (A3, A4).
+                  allOf:
+                    - $ref: "#/components/schemas/DecisionBasis"
+      responses:
+        "200":
+          description: The stored decision record.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decision_record]
+                x-return-order: [decision_record]
+                properties:
+                  decision_record:
+                    x-idef0-flow: "boundary: Decision record"
+                    $ref: "#/components/schemas/DecisionRecord"
+        "422":
+          description: >-
+            The model selection is not one of the ranked candidates, or the
+            requirements, mapping or weights section would be empty (SR 1.4.1.7,
+            SR 1.2.2).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/generate-and-store-decision-record/retrieve:
+    post:
+      operationId: retrieveDecisionRecord
+      summary: F.1.7 -> boundary (implements SR 1.4.1.7)
+      description: >-
+        Returns a stored decision record unchanged by its record_id, including
+        after a restart (SR 1.4.1.7; 5.1.3.3). Carries no internal flow (A21).
+      tags: [F.1.7 Generate and Store Decision Record]
+      x-idef0-function: F.1.7 Generate and Store Decision Record
+      x-module: generate_and_store_decision_record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [record_id]
+              properties:
+                record_id:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Decision record (identifier)"
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          description: The stored record, equal to the one generateAndStoreDecisionRecord returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [decision_record]
+                x-return-order: [decision_record]
+                properties:
+                  decision_record:
+                    x-idef0-flow: "boundary: Decision record"
+                    $ref: "#/components/schemas/DecisionRecord"
+        "404":
+          description: No record is stored under this record_id.
+          x-python-raises: LookupError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Error:
+      type: object
+      description: Error body for every error response; detail names the offending criterion, figure or id.
+      required: [error]
+      properties:
+        error:
+          type: string
+        detail:
+          type: string
+
+    Figure:
+      type: object
+      description: >-
+        One stored value with its provenance (SPEC 2 figure; 5.1.2.1). stale is
+        set by F.1.2 and is always present from 7.1 onward (5.1.2.2).
+      required: [value, unit, source_id, collection_date]
+      properties:
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: array
+              items:
+                type: string
+        unit:
+          type: string
+          description: Unit of value, e.g. "USD per 1M input tokens", "tokens", "seconds", "days".
+        source_id:
+          type: string
+          minLength: 1
+          description: URL or citation; required, non-empty (SPEC 2).
+        collection_date:
+          type: string
+          format: date
+          description: YYYY-MM-DD; required (SPEC 2).
+        stale:
+          type: boolean
+          description: True when the figure is older than the staleness threshold (A5).
+
+    BenchmarkScore:
+      type: object
+      description: One benchmark result (SPEC 2 benchmarks; A16). Score unit is given per benchmark in score.unit.
+      required: [benchmark_id, score]
+      properties:
+        benchmark_id:
+          type: string
+        score:
+          $ref: "#/components/schemas/Figure"
+
+    Candidate:
+      type: object
+      description: >-
+        A candidate model with its figures (SPEC 2 candidate model fields).
+        Fields marked required by SPEC 2 are listed in x-source-required (A17).
+      required: [model_id]
+      x-source-required: [model_id, vendor, model_name, input_price, output_price, context_window]
+      properties:
+        model_id:
+          type: string
+          minLength: 1
+        vendor:
+          type: string
+        model_name:
+          type: string
+        input_price:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: USD per 1M input tokens
+        output_price:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: USD per 1M output tokens
+        context_window:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: tokens
+        latency_p50:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: seconds
+        data_residency:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: country codes (ISO 3166-1 alpha-2), value is a list of strings
+        data_retention:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: days
+        deprecation_date:
+          allOf: [{$ref: "#/components/schemas/Figure"}]
+          x-unit: date (YYYY-MM-DD)
+        benchmarks:
+          type: array
+          items:
+            $ref: "#/components/schemas/BenchmarkScore"
+
+    EvidenceItem:
+      type: object
+      description: >-
+        One figure flattened with its candidate and metric, as shown to the
+        Technical Lead and carried into the record (report p5; SR 1.4.1.6, SR 1.2.2).
+      required: [model_id, metric, value, unit, source_id, collection_date, stale]
+      properties:
+        model_id:
+          type: string
+        metric:
+          type: string
+          description: SPEC 2 field name or benchmark_id.
+        value:
+          oneOf:
+            - type: number
+            - type: string
+            - type: array
+              items:
+                type: string
+        unit:
+          type: string
+        source_id:
+          type: string
+          minLength: 1
+        collection_date:
+          type: string
+          format: date
+        stale:
+          type: boolean
+
+    StatedRequirement:
+      description: A stated requirement, as plain text or with its ID (SR 1.1.5; A19).
+      oneOf:
+        - type: string
+          minLength: 1
+        - type: object
+          required: [requirement_id, text]
+          properties:
+            requirement_id:
+              type: string
+            text:
+              type: string
+              minLength: 1
+
+    Criterion:
+      type: object
+      description: >-
+        A confirmed criterion: SPEC 3 model-contract criterion plus the Technical
+        Lead's designation and, for weighted criteria, the weight (SR 1.1.1;
+        5.1.6.1). threshold must fit operator (SPEC 3): in takes a list, >= and <=
+        a number or null, == a number, string or null.
+      required: [criterion_id, metric, operator, designation]
+      properties:
+        criterion_id:
+          type: string
+          minLength: 1
+        requirement_id:
+          type: string
+          description: The stated requirement this criterion stands for (SR 1.2.4).
+        metric:
+          type: string
+          description: SPEC 2 field name or known benchmark_id; must be on the known metrics list.
+        operator:
+          type: string
+          enum: [">=", "<=", "==", "in"]
+        threshold:
+          nullable: true
+          oneOf:
+            - type: number
+            - type: string
+            - type: array
+              items: {}
+        unit:
+          type: string
+        proxy_strength:
+          type: string
+          enum: [strong, moderate, weak]
+        category:
+          type: string
+          enum: [capability, cost, compliance, other]
+        rationale:
+          type: string
+        designation:
+          type: string
+          enum: [hard, weighted]
+        weight:
+          type: number
+          minimum: 0
+          description: Dimensionless; required when designation is weighted (A20).
+
+    ConfirmedCriteriaMapping:
+      type: array
+      description: The criteria the Technical Lead confirmed (boundary input to F.1.1; SR 1.1.1).
+      items:
+        $ref: "#/components/schemas/Criterion"
+
+    KnownMetricsList:
+      type: array
+      uniqueItems: true
+      description: >-
+        The rule against which proposed criteria are checked for validity (report
+        p16 Table 6). Python type frozenset[str].
+      x-python-type: frozenset[str]
+      x-default: null
+      x-configured-value: SPEC 2 candidate field names plus every known benchmark_id (SPEC 5 Q7); null means this configured list
+      items:
+        type: string
+
+    StalenessThreshold:
+      type: integer
+      minimum: 0
+      default: 90
+      x-unit: days
+      x-python-type: datetime.timedelta
+      x-default: timedelta(days=90)
+      description: The rule that decides which figures are flagged as stale; 90 days provisional (5.1.2.2; A5).
+
+    SensitivityPolicy:
+      type: array
+      minItems: 1
+      default: [0.9, 1.1]
+      x-python-type: tuple[float, ...]
+      x-default: (0.9, 1.1)
+      description: >-
+        The rule that defines the weight variation used to test the ranking:
+        multiplicative factors applied to one weight at a time, no
+        renormalisation; +/-10% provisional (5.1.4.1; SPEC 5 Q5; A7).
+      items:
+        type: number
+        exclusiveMinimum: true
+        minimum: 0
+
+    RequiredMetrics:
+      type: array
+      uniqueItems: true
+      description: >-
+        Flow 5.1: the metrics of all hard and weighted criteria, each once
+        (report Table 4 p8; SR 1.4.1.1; A25).
+      items:
+        type: string
+
+    HardConstraints:
+      type: array
+      description: "Flow 5.2: the confirmed criteria designated hard, in mapping order (report Table 4 p8; SR 1.4.1.1)."
+      items:
+        allOf:
+          - $ref: "#/components/schemas/Criterion"
+          - type: object
+            properties:
+              designation:
+                type: string
+                enum: [hard]
+
+    WeightedCriteria:
+      type: array
+      description: "Flow 5.3: the confirmed criteria designated weighted, each with a weight, in mapping order (report Table 4 p8; SR 1.4.1.1)."
+      items:
+        allOf:
+          - $ref: "#/components/schemas/Criterion"
+          - type: object
+            required: [weight]
+            properties:
+              designation:
+                type: string
+                enum: [weighted]
+
+    DataRequest:
+      type: object
+      description: >-
+        Boundary output of F.1.2 to the Benchmark Data Sources: every catalog
+        candidate and every required metric (SR 1.2.1, SR 1.4.1.2).
+      required: [models, metrics]
+      properties:
+        models:
+          description: '"all" for the whole catalog, or a list of model_ids.'
+          oneOf:
+            - type: string
+              enum: [all]
+            - type: array
+              items:
+                type: string
+        metrics:
+          $ref: "#/components/schemas/RequiredMetrics"
+
+    CandidateEvidence:
+      type: array
+      description: >-
+        Flow 7.1: every candidate with its figures; source and collection date are
+        attached to each figure and stale figures are flagged (report pp4-5;
+        SPEC 2; 5.1.2.1, 5.1.2.2).
+      items:
+        $ref: "#/components/schemas/Candidate"
+
+    EligibleCandidates:
+      type: array
+      description: >-
+        Flow 7.2: the candidates from 7.1 that pass every hard constraint,
+        unchanged and in input order (report Table 7 p16; SR 1.4.1.3).
+      items:
+        $ref: "#/components/schemas/Candidate"
+
+    Exclusion:
+      type: object
+      description: >-
+        One excluded candidate and the constraints that removed it (report p4
+        'record which constraint removed it'; SPEC 2 missing values; 5.1.6.3; A12).
+      required: [model_id, failed_constraints, evidence]
+      properties:
+        model_id:
+          type: string
+        failed_constraints:
+          type: array
+          minItems: 1
+          description: criterion_id of each failed hard constraint, or missing_data:<metric>.
+          items:
+            type: string
+        evidence:
+          type: array
+          description: The candidate's figures for the hard-constraint metrics it has (A11).
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+
+    Exclusions:
+      type: array
+      description: "Flow 7.3: one entry per excluded candidate, in input order (report Table 7 p16)."
+      items:
+        $ref: "#/components/schemas/Exclusion"
+
+    ExcludedSummary:
+      type: object
+      description: An exclusion as shown and recorded (SR 1.4.1.6; A15).
+      required: [model_id, failed_constraints]
+      additionalProperties: false
+      properties:
+        model_id:
+          type: string
+        failed_constraints:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    RankingEntry:
+      type: object
+      description: >-
+        One ranked candidate: score, one contribution per weighted criterion, and
+        the figures behind it (report p4, p20; SR 1.2.5, SR 1.4.1.4; A11, A13).
+      required: [model_id, score, contributions, missing_data, evidence]
+      properties:
+        model_id:
+          type: string
+        score:
+          type: number
+          description: Dimensionless; equals the sum of contributions.
+        contributions:
+          type: object
+          description: criterion_id -> dimensionless contribution, exactly one key per weighted criterion.
+          additionalProperties:
+            type: number
+        missing_data:
+          type: array
+          description: Metrics of weighted criteria with no figure; each contributed 0 (SPEC 2).
+          items:
+            type: string
+        evidence:
+          type: array
+          description: Every figure of the eligible candidate.
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+
+    Ranking:
+      type: array
+      description: "Flow 7.4: eligible candidates in descending score order (report Table 7 p16; SR 1.4.1.4)."
+      items:
+        $ref: "#/components/schemas/RankingEntry"
+
+    ScoreSummary:
+      type: object
+      description: Score and contributions of a ranked candidate as shown and recorded (SR 1.2.5; A14).
+      required: [model_id, score, contributions]
+      properties:
+        model_id:
+          type: string
+        score:
+          type: number
+        contributions:
+          type: object
+          additionalProperties:
+            type: number
+        missing_data:
+          type: array
+          items:
+            type: string
+
+    UnstablePair:
+      type: array
+      description: "[higher_ranked_model_id, lower_ranked_model_id] (A9)."
+      minItems: 2
+      maxItems: 2
+      items:
+        type: string
+
+    SensitivityFinding:
+      type: object
+      description: >-
+        Flow 7.5: the candidate pairs whose order flips when any single weight
+        changes by a policy factor (report p4; SR 1.4.1.5; 5.1.4.1; A7-A9).
+      required: [method, ranking_is_stable, unstable_pairs]
+      properties:
+        method:
+          type: string
+          description: Human-readable description of the variation applied, e.g. "x0.9 and x1.1 per weight".
+        factors:
+          type: array
+          description: The sensitivity-policy factors applied.
+          items:
+            type: number
+        ranking_is_stable:
+          type: boolean
+          description: True when unstable_pairs is empty.
+        unstable_pairs:
+          type: array
+          description: In ranking order; empty list when the ranking is stable.
+          items:
+            $ref: "#/components/schemas/UnstablePair"
+
+    PresentedRankingAndSensitivity:
+      type: object
+      description: >-
+        Boundary output of F.1.6 to the Technical Lead: ranking, contributions,
+        every figure used with source, date and stale flag, every exclusion and
+        the unstable pairs (SR 1.2.5, SR 1.3.3, SR 1.4.1.6).
+      required: [ranking, score_breakdown, excluded, evidence, unstable_pairs, sensitivity]
+      properties:
+        ranking:
+          type: array
+          description: model_ids in descending score order.
+          items:
+            type: string
+        score_breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreSummary"
+        excluded:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExcludedSummary"
+        evidence:
+          type: array
+          description: Every figure of every ranked candidate and the hard-constraint figures of every excluded one.
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+        unstable_pairs:
+          type: array
+          description: Shown even when empty.
+          items:
+            $ref: "#/components/schemas/UnstablePair"
+        sensitivity:
+          $ref: "#/components/schemas/SensitivityFinding"
+
+    SelectionRationale:
+      type: object
+      description: >-
+        Flow 8.1: carries the ranking, its evidence, the exclusions and the
+        sensitivity finding into the decision record (report p9; SR 1.4.1.6;
+        SN-TL-07 / 5.1.6.3). May also carry requirements, criteria_mapping and
+        weights (A4).
+      required: [ranking, excluded, evidence, sensitivity]
+      properties:
+        ranking:
+          type: array
+          items:
+            type: string
+        score_breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreSummary"
+        excluded:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExcludedSummary"
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+        unstable_pairs:
+          type: array
+          items:
+            $ref: "#/components/schemas/UnstablePair"
+        sensitivity:
+          $ref: "#/components/schemas/SensitivityFinding"
+        requirements:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatedRequirement"
+        criteria_mapping:
+          $ref: "#/components/schemas/ConfirmedCriteriaMapping"
+        weights:
+          $ref: "#/components/schemas/Weights"
+
+    Weights:
+      type: object
+      description: criterion_id -> weight of each weighted criterion; dimensionless (A20).
+      additionalProperties:
+        type: number
+        minimum: 0
+
+    DecisionBasis:
+      type: object
+      description: >-
+        Flow 5.4 (team, 2026-10-28): the stated requirements, the confirmed
+        criteria mapping and the weights F.1.7 needs for the record's
+        requirements, mapping and weights sections (SR 1.2.2; 5.1.3.2).
+      required: [requirements, criteria_mapping, weights]
+      properties:
+        requirements:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/StatedRequirement"
+        criteria_mapping:
+          $ref: "#/components/schemas/ConfirmedCriteriaMapping"
+        weights:
+          $ref: "#/components/schemas/Weights"
+
+    DecisionRecord:
+      type: object
+      description: >-
+        Boundary output of F.1.7: seven sections (requirements, mapping, weights,
+        evidence, ranking, sensitivity, selection; SR 1.2.2), plus exclusions
+        (SN-TL-07 / 5.1.6.3) and record_id (SR 1.4.1.7; 5.1.3.2, 5.1.3.3). Every
+        evidence item has a source and date.
+      required: [record_id, requirements, criteria_mapping, weights, evidence, ranking, sensitivity, selected_model, excluded]
+      properties:
+        record_id:
+          type: string
+          minLength: 1
+        requirements:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/StatedRequirement"
+        criteria_mapping:
+          allOf: [{$ref: "#/components/schemas/ConfirmedCriteriaMapping"}]
+          minItems: 1
+        weights:
+          $ref: "#/components/schemas/Weights"
+        evidence:
+          type: array
+          description: May be empty when every candidate is excluded (UC.1 alt flow 10a; A27).
+          items:
+            $ref: "#/components/schemas/EvidenceItem"
+        ranking:
+          type: array
+          description: May be empty when every candidate is excluded (UC.1 alt flow 10a; A27).
+          items:
+            type: string
+        score_breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreSummary"
+        sensitivity:
+          $ref: "#/components/schemas/SensitivityFinding"
+        selected_model:
+          type: string
+          nullable: true
+          description: The Technical Lead's selection, unchanged (SR 1.1.3); null for no selection (A22).
+        excluded:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExcludedSummary"

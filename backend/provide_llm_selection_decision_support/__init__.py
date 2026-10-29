@@ -27,6 +27,7 @@ from .propose_criteria_mapping import (  # noqa: F401 -- F.1 boundary and SPEC s
     _require,
     present_criteria_mapping,
     request_interpretation,
+    compile_decision_basis,
     split_confirmed_mapping,
     validate_criterion,
     validate_interpretation,
@@ -39,6 +40,7 @@ from .generate_and_store_decision_record import (  # noqa: F401 -- SPEC section 
 )
 from .retrieve_model_data import (  # noqa: F401 -- SPEC section 4 re-export (is_stale)
     STALE_AFTER,
+    _figure_metrics,
     _flag_stale,
     is_stale,
     receive_model_data,
@@ -59,8 +61,9 @@ def rank(candidates: list, criteria: list, today, *, staleness_threshold: timede
     # SPEC section 4 composition of F.1.3 then F.1.4 (IDEF0 A1, 2026-10-26).
     hard = [c for c in criteria if c["designation"] == "hard"]
     weighted = [c for c in criteria if c["designation"] == "weighted"]
-    metrics = list(dict.fromkeys(c["metric"] for c in criteria))
-    candidate_evidence = [_flag_stale(cand, metrics, today, staleness_threshold) for cand in candidates]
+    # F.1.2's stale flag on every figure, against the given day (F.1.4 carries every figure)
+    candidate_evidence = [_flag_stale(cand, _figure_metrics(cand), today, staleness_threshold)
+                          for cand in candidates]
 
     eligible, excluded = apply_hard_constraints(candidate_evidence, hard_constraints=hard)  # F.1.3
     ranked = score_and_rank_candidates(eligible, weighted_criteria=weighted)  # F.1.4
@@ -130,7 +133,7 @@ def present_sensitivity_finding(model_data: dict, confirmed: dict, requirements:
         # SN-TL-04 / 5.1.3.1 -- one row per ranked model, one column per weighted criterion
         "score_breakdown": [{"rank": i + 1, "model": names[e["model_id"]], "score": round(e["score"], 3),
                              **{cid: round(v, 3) for cid, v in e["contributions"].items()},
-                             "missing_data": e["gaps"]}
+                             "missing_data": e["missing_data"]}
                             for i, e in enumerate(result["ranked"])],
         "evidence": evidence,
         "excluded": excluded,
@@ -232,17 +235,10 @@ def record_decision(model_selection: Optional[str], confirmed_criteria_mapping: 
     """
     # UC.1.17-1.18 (SR 1.1.3, SR 1.2.2, SN-TL-09 / 5.1.3.2, SN-TL-07 / 5.1.6.3)
     _require("selection_rationale", "present_ranking_and_sensitivity")
-    split_confirmed_mapping(confirmed_criteria_mapping)  # F.1.1 -- SR 1.1.1 (SN-TL-07 / 5.1.6.1)
     # SR 1.2.2 -- the record's mapping and weights are the ones the ranking used
-    criteria = _decision["confirmed_criteria_mapping"]
-    if confirmed_criteria_mapping != criteria:
+    if confirmed_criteria_mapping != _decision["confirmed_criteria_mapping"]:
         raise ValueError("The criteria mapping differs from the one the ranking used.")
-    # The record's requirements, mapping and weights are state inside F.1: no A1 arrow
-    # brings them to F.1.7 yet (docs/PLAN.md "F.1 decomposition", findings).
-    selection_rationale = {
-        **_decision["selection_rationale"],  # F.1.6
-        "requirements": [_decision["text"]],
-        "criteria_mapping": criteria,
-        "weights": {c["criterion_id"]: c["weight"] for c in criteria if c["designation"] == "weighted"},
-    }
-    return generate_and_store_decision_record(selection_rationale, model_selection)  # F.1.7
+    # Flow 5.4 Decision basis, F.1.1 -> F.1.7 (ADR-0002). Validates the mapping too (SR 1.1.1).
+    decision_basis = compile_decision_basis([_decision["text"]], confirmed_criteria_mapping)  # F.1.1
+    return generate_and_store_decision_record(_decision["selection_rationale"], model_selection,
+                                              decision_basis)  # F.1.7

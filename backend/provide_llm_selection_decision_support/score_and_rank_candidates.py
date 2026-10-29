@@ -1,9 +1,10 @@
 """Implements F.1.4 -- Score and Rank Candidates. Mechanism: C.1 LLM Compass."""
 
 # SR 1.4.1.4 (SN-TL-04 / 5.1.3.1). IDEF0 A1 of F.1, 2026-10-26.
+# Sits behind contracts/api-v1.yaml: scoreAndRankCandidates.
 
 from .apply_hard_constraints import _meets
-from .retrieve_model_data import _metric_figure
+from .retrieve_model_data import _evidence_item, _figure_metrics, _metric_figure
 
 
 def _normalized(values: dict, operator: str, threshold) -> dict:
@@ -26,9 +27,9 @@ def _normalized(values: dict, operator: str, threshold) -> dict:
 
 
 def score_and_rank_candidates(eligible_candidates: list, *, weighted_criteria: list) -> list:
-    """Function: F.1.4 -- Score and Rank Candidates.
+    """Function: F.1.4 -- Score and Rank Candidates. Contract operation scoreAndRankCandidates.
 
-    in: eligible_candidates. control: weighted_criteria. out: ranking.
+    in: eligible_candidates (7.2). control: weighted_criteria (5.3). out: ranking (7.4).
     """
     norm = {}
     for c in weighted_criteria:
@@ -43,19 +44,12 @@ def score_and_rank_candidates(eligible_candidates: list, *, weighted_criteria: l
         mid = cand["model_id"]
         # SR 1.4.1.4 (SN-TL-04 / 5.1.3.1) -- one contribution per weighted criterion; the score is their sum
         contributions = {c["criterion_id"]: c["weight"] * norm[c["criterion_id"]][mid] for c in weighted_criteria}
-        # SN-TL-02 / 5.1.2.1 -- the figures it was judged on: F.1.3's hard-constraint evidence, then these.
-        # A gap scores 0 and is reported, never filled in silently (SPEC section 2, missing values).
-        evidence, gaps = list(cand.get("evidence", [])), []
-        for c in weighted_criteria:
-            fig = _metric_figure(cand, c["metric"])
-            if fig is None:
-                gaps.append(c["metric"])
-            else:
-                evidence.append({**fig, "metric": c["metric"]})
+        # A gap scores 0 and is reported, never filled in silently (SPEC section 2, missing values)
+        missing = [c["metric"] for c in weighted_criteria if _metric_figure(cand, c["metric"]) is None]
+        # SN-TL-02 / 5.1.2.1 -- every figure of the candidate travels with it to F.1.6 (contract A11; ADR-0003)
+        evidence = [_evidence_item(mid, m, _metric_figure(cand, m)) for m in _figure_metrics(cand)]
         ranking.append({"model_id": mid, "score": sum(contributions.values()), "contributions": contributions,
-                        # F.1.5 re-scores from these (docs/PLAN.md "F.1 decomposition")
-                        "normalized": {cid: norm[cid][mid] for cid in norm},
-                        "evidence": evidence, "gaps": gaps})
+                        "missing_data": missing, "evidence": evidence})
 
     ranking.sort(key=lambda e: (-e["score"], e["model_id"]))
     return ranking

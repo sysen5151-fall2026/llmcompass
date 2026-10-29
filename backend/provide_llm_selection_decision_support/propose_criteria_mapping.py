@@ -1,8 +1,11 @@
 """Implements F.1.1 -- Propose Criteria Mapping. Mechanism: C.1 LLM Compass."""
 
 # SR 1.4.1.1 (SN-TL-01 / 5.1.1.2, 5.1.1.3, SN-TL-07 / 5.1.6.1). IDEF0 A1 of F.1, 2026-10-26.
+# Sits behind contracts/api-v1.yaml: splitConfirmedMapping, compileDecisionBasis.
 
+import copy
 import uuid
+from typing import Optional
 
 from provide_benchmark_evidence import BENCHMARK_IDS
 
@@ -121,11 +124,14 @@ def present_criteria_mapping(proposed_criteria: dict, *, known_metrics: frozense
             "criteria": criteria}
 
 
-def split_confirmed_mapping(confirmed_criteria_mapping: list, *, known_metrics: frozenset = KNOWN_METRICS) -> tuple:
-    """Function: F.1.1 -- Propose Criteria Mapping.
+def split_confirmed_mapping(confirmed_criteria_mapping: list, *,
+                            known_metrics: Optional[frozenset] = None) -> tuple:
+    """Function: F.1.1 -- Propose Criteria Mapping. Contract operation splitConfirmedMapping.
 
-    in: confirmed_criteria_mapping. control: known_metrics. out: weighted_criteria, hard_constraints, required_metrics.
+    in: confirmed_criteria_mapping. control: known_metrics (None = KNOWN_METRICS).
+    out: weighted_criteria (5.3), hard_constraints (5.2), required_metrics (5.1).
     """
+    known_metrics = KNOWN_METRICS if known_metrics is None else known_metrics
     # SR 1.4.1.1 (SN-TL-07 / 5.1.6.1) -- a weighted criterion without a weight is rejected (validate_criterion),
     # and so is a metric off the known metrics list (derived from that control on F.1.1; kept 2026-10-28)
     for c in confirmed_criteria_mapping:
@@ -136,3 +142,20 @@ def split_confirmed_mapping(confirmed_criteria_mapping: list, *, known_metrics: 
     hard = [c for c in confirmed_criteria_mapping if c["designation"] == "hard"]  # to F.1.3
     required_metrics = list(dict.fromkeys(c["metric"] for c in confirmed_criteria_mapping))  # to F.1.2, each once
     return weighted, hard, required_metrics
+
+
+def compile_decision_basis(stated_requirements: list, confirmed_criteria_mapping: list, *,
+                           known_metrics: Optional[frozenset] = None) -> dict:
+    """Function: F.1.1 -- Propose Criteria Mapping. Contract operation compileDecisionBasis.
+
+    in: stated_requirements, confirmed_criteria_mapping. control: known_metrics (None = KNOWN_METRICS).
+    out: decision_basis (5.4).
+    """
+    # SR 1.2.2 (SN-TL-09 / 5.1.3.2) -- flow 5.4 Decision basis (team, 2026-10-28; ADR-0002): the
+    # requirements, mapping and weights sections F.1.7 needs for the record
+    if not stated_requirements:
+        raise ValueError("The decision basis needs at least one stated requirement.")
+    weighted, _, _ = split_confirmed_mapping(confirmed_criteria_mapping, known_metrics=known_metrics)
+    return {"requirements": list(stated_requirements),
+            "criteria_mapping": copy.deepcopy(confirmed_criteria_mapping),
+            "weights": {c["criterion_id"]: c["weight"] for c in weighted}}

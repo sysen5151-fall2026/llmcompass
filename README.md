@@ -258,6 +258,11 @@ See the team's Toolset Justification doc for full rationale.
 ├── hello.txt                  # initial pipeline smoke test
 ├── CLAUDE.md                  # project rules for the coding assistant
 ├── SPEC.md                    # needs, acceptance criteria, data + model contracts, system requirements (§6)
+├── contracts/                 # internal interface contract (Lab Manual 7.4)
+│   ├── api-v1.yaml            # OpenAPI 3.0.3: the 10 internal flows between F.1.1-F.1.7 (the authority)
+│   ├── generated/             # signature-only stubs generated from the contract, never hand-edited
+│   ├── generate_stubs.py      # regenerates the stubs; --check fails if they differ (CI)
+│   └── check_conformance.py   # checks the F.1.x modules against the contract (CI)
 ├── tests/                     # one test per acceptance criterion; test_system_requirements.py has one per system requirement (SR 1.1.1-1.4.1)
 ├── prompts/                   # generation prompts
 ├── pytest.ini
@@ -270,7 +275,7 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── environment.md
 │   ├── prompt-log.md
 │   ├── validation/walkthroughs.csv  # timed runs for the operator-effort requirements
-│   └── adr/0001-initial-toolchain.md
+│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced
 └── README.md
 ```
 
