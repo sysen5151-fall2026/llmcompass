@@ -191,7 +191,11 @@ Source: increment 1 is manual entry. Increment 2 is automated pulls, merged by
   fallback when models.dev has no entry. For open-weight models with no vendor
   entry, the figure comes from a named host, and its `source_id` says so.
 - Manual entry: fields no API publishes (data residency, data retention,
-  deprecation date).
+  deprecation date), in `sample_data/manual_entries.json`, one sourced figure or a
+  recorded gap per model. Residency and retention describe the vendor's first-party
+  API; an open-weight model with no first-party API is a gap (team, 2026-10-28).
+- Benchmark ids map to source fields in `sample_data/benchmark_map.json` (data, not
+  code; team, 2026-10-28), so the vocabulary stays stable if a source renames a key.
 
 The catalog is the 14 models in `sample_data/model_sources.json` (10 vendors).
 Benchmarks are the ones the Artificial Analysis API returns. AA-Omniscience is
@@ -233,7 +237,9 @@ monthly_cost_usd = requests_per_day * 30
 ```
 
 Refresh: increment 1 updates when the operator enters or edits data. Increment 2
-cadence not decided yet. Stale flag applies either way.
+pulls on demand (team, 2026-10-28): the sources are queried only when the operator
+asks for fresh data. Between pulls, ranking uses the last stored snapshot, each figure
+with its date. Stale flag applies either way.
 
 Missing values:
 - Missing data for a weighted criterion: candidate scores 0 on it and the gap is

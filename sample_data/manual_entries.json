@@ -1,0 +1,292 @@
+{
+  "_about": "Manual-entry fields no API publishes (SPEC section 2): data_residency, data_retention, deprecation_date, per catalog model. Each is a SPEC section 2 figure (value, unit, source_id, collection_date), or a gap with the reason and the page checked. A gap is never filled in: it scores 0 if weighted and excludes with missing_data:<field> if hard.",
+  "_rule": "Residency and retention describe the vendor's first-party API; an open-weight model with no first-party API is a gap (team, 2026-10-28). deprecation_date is the announced earliest retirement date.",
+  "researched": "2026-10-28",
+  "models": {
+    "claude-fable-5-1": {
+      "host": "Anthropic API",
+      "data_residency": {
+        "value": [
+          "US"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+        "collection_date": "2026-10-05"
+      },
+      "data_retention": {
+        "value": 30,
+        "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+        "collection_date": "2026-10-05"
+      },
+      "deprecation_date": {
+        "value": "2027-09-01",
+        "unit": "date (retirement not sooner than)",
+        "source_id": "https://platform.claude.com/docs/en/models/overview",
+        "collection_date": "2026-10-28"
+      }
+    },
+    "claude-sonnet-5-5": {
+      "host": "Anthropic API",
+      "data_residency": {
+        "value": [
+          "US"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+        "collection_date": "2026-10-05"
+      },
+      "data_retention": {
+        "value": 30,
+        "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+        "collection_date": "2026-10-05"
+      },
+      "deprecation_date": {
+        "value": "2027-09-28",
+        "unit": "date (retirement not sooner than)",
+        "source_id": "https://platform.claude.com/docs/en/models/overview",
+        "collection_date": "2026-10-28"
+      }
+    },
+    "claude-haiku-5-5": {
+      "host": "Anthropic API",
+      "data_residency": {
+        "value": [
+          "US"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+        "collection_date": "2026-10-05"
+      },
+      "data_retention": {
+        "value": 30,
+        "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+        "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+        "collection_date": "2026-10-05"
+      },
+      "deprecation_date": {
+        "value": "2027-10-07",
+        "unit": "date (retirement not sooner than)",
+        "source_id": "https://platform.claude.com/docs/en/models/overview",
+        "collection_date": "2026-10-28"
+      }
+    },
+    "gpt-6-astra": {
+      "host": "OpenAI API",
+      "data_residency": {
+        "gap": "No default storage region is stated; regional data residency is configured per project and needs sales approval.",
+        "checked": "https://developers.openai.com/api/docs/guides/your-data",
+        "checked_date": "2026-10-28"
+      },
+      "data_retention": {
+        "value": 30,
+        "unit": "days (default retention of API inputs and outputs); abuse-monitoring logs 'up to 30 days'",
+        "source_id": "https://developers.openai.com/api/docs/guides/your-data",
+        "collection_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No shutdown date announced.",
+        "checked": "https://developers.openai.com/api/docs/deprecations",
+        "checked_date": "2026-10-28"
+      }
+    },
+    "gpt-oss-120b": {
+      "host": null,
+      "data_residency": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": "https://developers.openai.com/api/docs/deprecations",
+        "checked_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      },
+      "deprecation_date": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      }
+    },
+    "gemini-4-argon": {
+      "host": "Gemini Developer API",
+      "data_residency": {
+        "gap": "No residency commitment: data 'may be stored transiently or cached in any country in which Google or its agents maintain facilities'.",
+        "checked": "https://ai.google.dev/gemini-api/terms",
+        "checked_date": "2026-10-28"
+      },
+      "data_retention": {
+        "value": 55,
+        "unit": "days (default retention of API inputs and outputs); paid-tier abuse monitoring, 55 days",
+        "source_id": "https://ai.google.dev/gemini-api/docs/usage-policies",
+        "collection_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No shutdown date announced.",
+        "checked": "https://ai.google.dev/gemini-api/docs/deprecations",
+        "checked_date": "2026-10-28"
+      }
+    },
+    "gemma-4-26b-a4b": {
+      "host": null,
+      "data_residency": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": "https://ai.google.dev/gemini-api/docs/deprecations",
+        "checked_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      },
+      "deprecation_date": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      }
+    },
+    "muse-spark-open": {
+      "host": null,
+      "data_residency": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28). Meta's Model API (public preview, US) serves Muse Spark 1.1; no official Meta page confirming Muse Spark Open on it was found.",
+        "checked": null,
+        "checked_date": null
+      },
+      "data_retention": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      },
+      "deprecation_date": {
+        "gap": "Open-weight model; no first-party API offering from the vendor was found, so data handling depends on the host (team rule, 2026-10-28).",
+        "checked": null,
+        "checked_date": null
+      }
+    },
+    "deepseek-v4-1-flash-1017": {
+      "host": "DeepSeek Open Platform API",
+      "data_residency": {
+        "value": [
+          "CN"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+        "source_id": "https://chat.deepseek.com/downloads/DeepSeek%20Open%20Platform%20Privacy%20Policy.html",
+        "collection_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "No fixed period: retained as long as necessary for the service and legal obligations.",
+        "checked": "https://chat.deepseek.com/downloads/DeepSeek%20Open%20Platform%20Privacy%20Policy.html",
+        "checked_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date announced; the 2026-10-17 change log moved V4.1 Flash to this snapshot.",
+        "checked": "https://api-docs.deepseek.com/updates/",
+        "checked_date": "2026-10-30"
+      }
+    },
+    "qwen3-8-max": {
+      "host": "Alibaba Cloud Model Studio (Singapore region)",
+      "data_residency": {
+        "value": [
+          "SG"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API); 'Your static data always remains in the selected region'",
+        "source_id": "https://www.alibabacloud.com/help/en/model-studio/regions",
+        "collection_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "No retention period stated for API inputs and outputs.",
+        "checked": "https://www.alibabacloud.com/help/en/model-studio/regions",
+        "checked_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date announced; listed as current, endpoint moved to snapshot qwen3.8-max-0902. Mainline models get 3 months' sunset notice.",
+        "checked": "https://www.alibabacloud.com/help/en/model-studio/model-depreciation",
+        "checked_date": "2026-10-30"
+      }
+    },
+    "kimi-k3": {
+      "host": "Kimi API Platform (international)",
+      "data_residency": {
+        "value": [
+          "SG"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+        "source_id": "https://platform.kimi.ai/docs/agreement/userprivacy",
+        "collection_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "No fixed period: input is retained while the account is active.",
+        "checked": "https://platform.kimi.ai/docs/agreement/userprivacy",
+        "checked_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date announced; listed as active ('previous-generation flagship'), not in the deprecated section.",
+        "checked": "https://platform.kimi.ai/docs/models",
+        "checked_date": "2026-10-30"
+      }
+    },
+    "mistral-large-4": {
+      "host": "Mistral API (La Plateforme)",
+      "data_residency": {
+        "value": [
+          "EU"
+        ],
+        "unit": "ISO 3166-1 alpha-2 exceptionally reserved code EU (default: hosted in the European Union; member states not published)",
+        "source_id": "https://help.mistral.ai/en/articles/347629-where-do-you-store-my-data-or-my-organization-s-data",
+        "collection_date": "2026-10-28"
+      },
+      "data_retention": {
+        "value": 30,
+        "unit": "days (default retention of API inputs and outputs); abuse monitoring, 30 rolling days",
+        "source_id": "https://legal.mistral.ai/terms/privacy-policy/",
+        "collection_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date listed; not in the deprecated and retired models table.",
+        "checked": "https://docs.mistral.ai/getting-started/models/",
+        "checked_date": "2026-10-28"
+      }
+    },
+    "solar-pro4": {
+      "host": "Upstage Console API",
+      "data_residency": {
+        "gap": "Primary storage region for Console API data is not stated.",
+        "checked": "https://www.upstage.ai/privacy-policy/updated-sep-21-2026",
+        "checked_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "Conflicting statements: model pages say API input is not stored; the privacy policy lists API logging retention under separate consent.",
+        "checked": "https://www.upstage.ai/privacy-policy/updated-sep-21-2026",
+        "checked_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date announced; solar-pro4-260806 is listed without a deprecated label.",
+        "checked": "https://console.upstage.ai/docs/models/history",
+        "checked_date": "2026-10-30"
+      }
+    },
+    "sarvam-105b": {
+      "host": "Sarvam API",
+      "data_residency": {
+        "value": [
+          "IN"
+        ],
+        "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API); 'process and store information in India' (may transfer)",
+        "source_id": "https://www.sarvam.ai/terms-of-service",
+        "collection_date": "2026-10-28"
+      },
+      "data_retention": {
+        "gap": "Retention is configured per workspace; the default for the LLM API is not stated.",
+        "checked": "https://docs.sarvam.ai/api-reference/introduction",
+        "checked_date": "2026-10-28"
+      },
+      "deprecation_date": {
+        "gap": "No retirement date announced; listed as Active.",
+        "checked": "https://docs.sarvam.ai/api/getting-started/models",
+        "checked_date": "2026-10-30"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "_about": "Which source field feeds each benchmark_id (SPEC section 2; SPEC 5 Q7 keeps the vocabulary stable). Edit this file, not the code, to add or remap a benchmark. 'stored' is the path in sample_data/benchmark.json; 'artificial_analysis_api' is the path in GET /api/v2/data/llms/models (checked 2026-10-28) times 'scale', or null when the API doesn't publish it.",
+  "_missing": "API values listed in a field's 'missing_values' mean 'not measured' and become gaps: the benchmark is left out, never stored as a score (team, 2026-10-30). Seen on 2026-10-28: 0 speeds and latencies (Kimi K3, Solar Pro 4), LCR 0.0 (Sarvam 105B), null intelligence index (5 models).",
+  "benchmarks": {
+    "intelligence_index": {
+      "unit": "index",
+      "stored": ["quality", "intelligence_index"],
+      "artificial_analysis_api": {"field": "evaluations.artificial_analysis_intelligence_index", "scale": 1, "missing_values": [null, 0]}
+    },
+    "aa_omniscience_index": {
+      "unit": "index (-100 to 100)",
+      "stored": ["quality", "aa_omniscience_index"],
+      "artificial_analysis_api": null,
+      "note": "Not published by the API (SPEC section 2). Kept for SCENARIO_01 until SPEC 5 Q12 is decided; values come from the Artificial Analysis web pages."
+    },
+    "aa_lcr_v1_1_percent": {
+      "unit": "%",
+      "stored": ["quality", "aa_lcr_v1_1_percent"],
+      "artificial_analysis_api": {"field": "evaluations.lcr", "scale": 100, "missing_values": [null, 0]}
+    },
+    "time_to_first_answer_token_seconds": {
+      "unit": "seconds",
+      "stored": ["performance", "time_to_first_answer_token_seconds"],
+      "artificial_analysis_api": {"field": "median_time_to_first_answer_token", "scale": 1, "missing_values": [null, 0]}
+    },
+    "output_speed_tokens_per_second": {
+      "unit": "tokens per second",
+      "stored": ["performance", "output_speed_tokens_per_second"],
+      "artificial_analysis_api": {"field": "median_output_tokens_per_second", "scale": 1, "missing_values": [null, 0]}
+    }
+  }
+}

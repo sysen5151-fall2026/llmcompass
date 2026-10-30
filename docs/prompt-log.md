@@ -740,3 +740,84 @@ decision.
   `receiveModelData`'s LookupError.
 
 ---
+
+## 2026-10-28 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Prompt:** Asked how the catalog is designed (stored file vs live pull), then
+decided:
+- the refresh is on demand
+- the benchmark keys are reconciled through a mapping held as a data file
+- open-weight models use the vendor's first-party API, with a gap where there is none
+- replace Claude Haiku 4.5 with the latest Haiku, recomputing the expected outputs and
+  showing the diff before committing
+
+Also asked me to fill in the manual entries. The team's Artificial Analysis API key
+in `.env` was used for one pull. The key was never printed or written.
+
+**Output:**
+- `SPEC.md` §2, `docs/PLAN.md`: on-demand refresh, the mapping file and manual-entries
+  file, and decisions, progress and open items.
+- `sample_data/benchmark_map.json` (new): benchmark_id -> stored path and API field
+  (with scale), verified against a live API pull.
+  `backend/provide_benchmark_evidence/__init__.py` builds `BENCHMARK_IDS` from it, with
+  no change in behaviour.
+- `sample_data/model_spec.json`: Haiku 4.5 (retirement not before 2026-10-15)
+  replaced by Claude Haiku 5.5:
+  - $0.10 / $0.50 per MTok for prompts up to 100k tokens
+  - 1M context window
+  - retirement not before 2027-10-07
+  - sources: Anthropic models overview and pricing pages
+- `sample_data/benchmark.json`: all three Claude models refreshed from one API pull
+  (index v5.0) so scores aren't mixed across index versions. Omniscience comes from
+  the web pages; the API has no Omniscience.
+- `sample_data/expected_outputs.json`: the order is unchanged in all scenarios. The
+  name is updated, and the SCENARIO_01/03 narrative and evidence are corrected to the
+  new data. Shown to the team before commit.
+- `sample_data/manual_entries.json` (new): 14 models, 17 sourced figures, 25 gaps,
+  each with its reason and the page checked. F.7 reads residency, retention and
+  deprecation from it.
+- Verified:
+  - pytest gives 93 passed, 15 failed, the same failing set.
+  - Contract conformance passes.
+  - All 4 web scenarios return 200.
+
+**Assistant assumptions:**
+- `deprecation_date` holds Anthropic's "retirement not sooner than" date.
+- Mistral's residency is the ISO-reserved code "EU", because no member states are
+  published.
+
+**Still open:**
+- Api mode must treat 0 or null as a gap.
+- "EU" vs SCENARIO_04's member-state list.
+- 5 vendors' deprecation dates not checked.
+- The catalog is still 3 models in file mode, so SR 1.2.1 and 1.4.1 stay red until api
+  mode is built.
+
+---
+
+## 2026-10-30 — KhaiXin30 — Claude Code (Opus 5.5)
+
+**Prompt:** Add "EU" to the EU-only threshold, treat the API's 0 or null values as
+gaps, check the remaining deprecation dates, and build the on-demand pull if it is part
+of the product build.
+
+**Output:**
+- `sample_data/scenario_criteria.json`: SCENARIO_04's `eu_only_data` threshold adds
+  "EU" (the ISO-reserved code), so a vendor that publishes only "hosted in the EU"
+  passes.
+- `sample_data/benchmark_map.json`: `_missing` rule, and `missing_values: [null, 0]` on
+  every API-fed benchmark. These mean "not measured" and become gaps. The pull applies
+  the rule.
+- `sample_data/manual_entries.json`: deprecation checked for DeepSeek, Qwen, Kimi,
+  Solar and Sarvam on 2026-10-30. None has a retirement date announced; each gap cites
+  the vendor's change log or models page. No field is "not checked" any more.
+- `docs/PLAN.md`: the three items are marked resolved, and the on-demand pull is placed
+  in Lab Manual 8.5.
+- Not built: the on-demand pull. It belongs to Lab Manual 8.5 "Data and Model Adapters"
+  (pp. 148-149), whose model prerequisites (8.5.1) are missing. The Architecture
+  Definition Report defers the physical architecture: the mechanism is "not yet
+  connected" (p7), and the NFRs are to be allocated in it (p8). The manual says not to
+  start until they exist.
+- Verified: pytest gives 93 passed, 15 failed, the same failing set.
+
+---

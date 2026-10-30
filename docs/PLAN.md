@@ -545,19 +545,48 @@ weight the catalog further toward US or China).
   With no snapshot, it returns "no model data available".
 - **Attribution.** The UI credits artificialanalysis.ai (free-tier term).
 - **Rate limit.** Artificial Analysis allows 1,000 requests a day, and one pull
-  is one request. Refresh cadence is still open (SPEC §2).
+  is one request. Refresh cadence: on demand (team, 2026-10-28; SPEC §2). The
+  operator asks for a pull; otherwise F.7 serves the last snapshot.
+
+### Decisions and progress (2026-10-28)
+
+- Refresh: on demand (SPEC §2).
+- Key mapping: `sample_data/benchmark_map.json`; `BENCHMARK_IDS` is built from it. API keys
+  were checked against a live pull: `artificial_analysis_intelligence_index`, `lcr` (x100 to
+  %), `median_time_to_first_answer_token`, `median_output_tokens_per_second`. The API has no
+  Omniscience.
+- Haiku: Claude Haiku 4.5 (retirement not before 2026-10-15) replaced by Claude Haiku 5.5
+  (`claude-haiku-5-5`). All three stored Claude models were refreshed from one Artificial
+  Analysis API pull (index v5.0, 2026-10-28), because mixing v4.3.2 and v5.0 scores would rank
+  across versions. AA-Omniscience comes from the web pages.
+- `sample_data/expected_outputs.json`: the order is unchanged in every scenario. The name is
+  updated, and the SCENARIO_01/03 narrative is corrected to the new data: Fable now has the
+  fastest time to first answer token, and Haiku matches Sonnet on AA-LCR.
+- Manual entries: `sample_data/manual_entries.json`, 14 models, 17 sourced figures, 25 gaps
+  with reasons. F.7 reads residency, retention and deprecation from it.
 
 ### Open items
 
+- Resolved 2026-10-30 (team):
+  - API values of 0 or null are "not measured" gaps. `benchmark_map.json` lists
+    `missing_values` per field, for the pull to apply.
+  - SCENARIO_04's EU-only threshold now includes "EU".
+  - Deprecation was checked for DeepSeek, Qwen, Kimi, Solar and Sarvam: none has a
+    retirement date announced (sources in `manual_entries.json`).
+- The on-demand pull is Lab Manual 8.5, Product Build "Data and Model Adapters". Its
+  build steps are:
+  - `docs/deployment.md`
+  - a schema from the data contract
+  - the data-access component (the pull)
+  - the model adapter (replacing the F.8 stub)
+
+  It waits for 8.5.1's model prerequisites. The report defers the physical
+  architecture: the mechanism is "not yet connected" (p7) and the NFRs are "allocated to
+  subsystems in the physical architecture" (p8). So first-level subsystems, asset
+  diagrams and NFR allocation are not in Innoslate yet.
 - AA-Omniscience is dropped (SPEC §2), but SCENARIO_01 uses it (SPEC §5 Q12).
   `BENCHMARK_IDS` keeps it until that is decided, so the fixture and its tests
   stay as they are.
-- Residency and retention are entered for Anthropic only. The other 9 vendors
-  need manual entries with sources. Until then, they're gaps (scored 0 if
-  weighted, excluded with `missing_data:<field>` if hard).
-- Artificial Analysis evaluation keys (`lcr`, `artificial_analysis_intelligence_index`)
-  differ from the stored ids (`aa_lcr_v1_1_percent`, `intelligence_index`). Map
-  them in `BENCHMARK_IDS` so the restricted vocabulary (SPEC §5 Q7) stays the same in both modes.
 
 ## F.1 decomposition (IDEF0 A1, 2026-10-26)
 

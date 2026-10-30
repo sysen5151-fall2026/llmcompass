@@ -28,22 +28,22 @@
           "reason": "Sonnet provides strong long-context reasoning but has lower factual-reliability evidence than Fable."
         },
         {
-          "model_name": "Claude Haiku 4.5",
+          "model_name": "Claude Haiku 5.5",
           "assessment": "lower fit",
-          "reason": "Haiku is cheaper and faster but is substantially weaker on factual reliability and long-context reasoning."
+          "reason": "Haiku is the cheapest and matches Sonnet on long-context reasoning, but is substantially weaker on factual reliability than Sonnet and Fable."
         }
       ],
 
       "ranking": [
         "Claude Fable 5.1",
         "Claude Sonnet 5.5",
-        "Claude Haiku 4.5"
+        "Claude Haiku 5.5"
       ],
 
       "tradeoffs": [
         "Fable provides the strongest evidence for factual reliability and long-context reasoning but is substantially more expensive than Sonnet and Haiku.",
         "Sonnet offers slightly lower performance on the highest-priority criteria but at a much lower cost than Fable.",
-        "Haiku provides the lowest cost and faster response but sacrifices substantial reasoning capability."
+        "Haiku provides the lowest cost and the fastest output speed but sacrifices substantial factual reliability and overall reasoning capability."
       ]
     },
 
@@ -117,7 +117,7 @@
           "reason": "Fable provides stronger factual-reliability and long-context evidence but has a slightly lower overall Intelligence Index and substantially higher token pricing."
         },
         {
-          "model_name": "Claude Haiku 4.5",
+          "model_name": "Claude Haiku 5.5",
           "assessment": "lower-cost alternative",
           "reason": "Haiku is substantially cheaper but has much lower overall benchmark capability."
         }
@@ -126,7 +126,7 @@
       "ranking": [
         "Claude Sonnet 5.5",
         "Claude Fable 5.1",
-        "Claude Haiku 4.5"
+        "Claude Haiku 5.5"
       ],
 
       "tradeoffs": [
@@ -204,9 +204,9 @@
     "comparison_result": {
       "candidate_assessment": [
         {
-          "model_name": "Claude Haiku 4.5",
+          "model_name": "Claude Haiku 5.5",
           "assessment": "strongest fit",
-          "reason": "Haiku provides the lowest cost and the fastest measured time to first answer token among the evaluated candidates."
+          "reason": "Haiku provides the lowest cost and the fastest output speed among the evaluated candidates, with a faster time to first answer token than Sonnet."
         },
         {
           "model_name": "Claude Sonnet 5.5",
@@ -216,20 +216,20 @@
         {
           "model_name": "Claude Fable 5.1",
           "assessment": "lower fit",
-          "reason": "Fable provides stronger factual and long-context reasoning but is substantially more expensive and slower for this cost-sensitive application."
+          "reason": "Fable provides stronger factual and long-context reasoning and the fastest time to first answer token, but is substantially more expensive for this cost-sensitive application."
         }
       ],
 
       "ranking": [
-        "Claude Haiku 4.5",
+        "Claude Haiku 5.5",
         "Claude Sonnet 5.5",
         "Claude Fable 5.1"
       ],
 
       "tradeoffs": [
-        "Haiku provides the lowest cost and fastest measured response but has substantially lower overall reasoning capability.",
+        "Haiku provides the lowest cost and the fastest output speed but has substantially lower overall reasoning capability.",
         "Sonnet costs more but provides significantly stronger overall capability.",
-        "Fable provides stronger factual and long-context reasoning but does not align well with the application's cost and responsiveness priorities."
+        "Fable provides stronger factual and long-context reasoning and the fastest time to first answer token but does not align well with the application's cost priority."
       ]
     },
 
@@ -237,7 +237,7 @@
       "status": "recommendation_available",
 
       "recommended_model": {
-        "model_name": "Claude Haiku 4.5",
+        "model_name": "Claude Haiku 5.5",
         "provider": "Anthropic"
       },
 
@@ -247,23 +247,23 @@
         {
           "criterion": "benchmark cost",
           "metric": "cost per Artificial Analysis Intelligence Index task",
-          "value": 0.28,
+          "value": 0.41,
           "unit": "USD",
-          "source_id": "aa_haiku_4_5_reasoning",
+          "source_id": "aa_haiku_5_5_page",
           "source_name": "Artificial Analysis"
         },
         {
           "criterion": "responsiveness",
           "metric": "time to first answer token",
-          "value": 18.85,
+          "value": 227.19,
           "unit": "seconds",
-          "source_id": "aa_haiku_4_5_reasoning",
+          "source_id": "aa_api_claude-haiku-5-5",
           "source_name": "Artificial Analysis"
         },
         {
           "criterion": "input cost",
           "metric": "input price per 1M tokens",
-          "value": 1.0,
+          "value": 0.1,
           "unit": "USD",
           "source_id": "anthropic_models",
           "source_name": "Anthropic"
@@ -271,7 +271,7 @@
         {
           "criterion": "output cost",
           "metric": "output price per 1M tokens",
-          "value": 5.0,
+          "value": 0.5,
           "unit": "USD",
           "source_id": "anthropic_models",
           "source_name": "Anthropic"
@@ -280,16 +280,16 @@
     },
 
     "decision_record": {
-      "summary": "Claude Haiku 4.5 is recommended because the application prioritizes low cost and fast response over advanced reasoning capability. Haiku provides the lowest cost and the fastest measured time to first answer token among the evaluated candidates.",
+      "summary": "Claude Haiku 5.5 is recommended because the application prioritizes low cost and fast response over advanced reasoning capability. Haiku provides the lowest cost and the fastest output speed among the evaluated candidates; Fable answers sooner but costs far more.",
 
       "limitations_and_risks": [
         "Haiku has substantially lower overall reasoning capability than Sonnet and Fable.",
-        "Haiku also has lower factual-reliability and long-context reasoning benchmark scores.",
-        "Selecting Haiku primarily for cost and responsiveness may reduce performance on complex or reasoning-intensive customer requests.",
+        "Haiku also has a lower factual-reliability score than Sonnet and Fable, and a long-context reasoning score equal to Sonnet's and below Fable's.",
+        "Selecting Haiku primarily for cost may reduce performance on complex or reasoning-intensive customer requests.",
         "Latency measurements are time-sensitive benchmark observations and may change with workload and provider infrastructure."
       ],
 
-      "next_action": "Test Claude Haiku 4.5 using representative customer requests to confirm that its lower reasoning capability is sufficient for the intended workload."
+      "next_action": "Test Claude Haiku 5.5 using representative customer requests to confirm that its lower reasoning capability is sufficient for the intended workload."
     }
   },
 
@@ -319,7 +319,7 @@
           "reason": "The evaluated Anthropic API provider information does not demonstrate EU-only data storage and processing."
         },
         {
-          "model_name": "Claude Haiku 4.5",
+          "model_name": "Claude Haiku 5.5",
           "assessment": "not_demonstrated_compliant",
           "reason": "The evaluated Anthropic API provider information does not demonstrate EU-only data storage and processing."
         }
