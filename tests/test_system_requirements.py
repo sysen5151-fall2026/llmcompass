@@ -653,3 +653,436 @@ def test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart(p
     with pytest.raises(ValueError):
         generate(copy.deepcopy(rationale), "model-not-ranked")
 
+
+
+# 1.1.6-1.1.8 Input requirements for the three F.1 controls -----------------------
+# (Architecture Definition Report, 2026-10-28; SPEC.md section 6.) The controls
+# enter at F.1's boundary: staleness_threshold and sensitivity_policy on
+# present_ranking_and_sensitivity, known_metrics on present_criteria_mapping
+# (contracts/api-v1.yaml StalenessThreshold, SensitivityPolicy, KnownMetricsList).
+
+def rank_fixture_with(candidates, criteria, **controls):
+    """rank_fixture, with F.1's controls passed through to present_ranking_and_sensitivity."""
+    start_decision(OPSCON_TEXT, criteria)
+    request_benchmark_evidence(confirmed_criteria_mapping=criteria)
+    return present_ranking_and_sensitivity(candidates, confirmed_criteria_mapping=criteria, **controls)
+
+
+def test_SR_1_1_6_staleness_threshold_90_days_flags_only_older_figures():
+    # "With the threshold set to 90 days, every fixture figure older than 90 days is flagged and no newer figure is."
+    criteria = confirmed_criteria()
+    ages = {"model-1": 91, "model-2": 90, "model-3": 89}
+    pool = [candidate("model-1", 200_000, 3.0, days_old=ages["model-1"]),
+            candidate("model-2", 100_000, 1.0, days_old=ages["model-2"]),
+            candidate("model-3", 150_000, 3.0, days_old=ages["model-3"])]
+    result = rank_fixture_with(pool, criteria, staleness_threshold=timedelta(days=90))
+    shown = {(e["model_id"], e["metric"]) for e in result["evidence"]}
+    for model_id in ages:
+        for metric in {c["metric"] for c in criteria}:
+            assert (model_id, metric) in shown, (model_id, metric)
+    for entry in result["evidence"]:
+        assert entry["stale"] is (ages[entry["model_id"]] > 90), entry
+
+
+def test_SR_1_1_7_sensitivity_policy_value_changes_variation_default_is_10_percent():
+    # "Changing the policy value changes the variation applied, and the default run uses ±10%."
+    criteria = confirmed_criteria()
+
+    def pairs(**controls):
+        result = rank_fixture_with(known_answer_candidates(), criteria, **controls)
+        return {frozenset(pair) for pair in result["unstable_pairs"]}
+
+    # Default run: the +/-10% known answer (see KNOWN_UNSTABLE_PAIRS).
+    assert pairs() == KNOWN_UNSTABLE_PAIRS
+    assert pairs(sensitivity_policy=(0.9, 1.1)) == KNOWN_UNSTABLE_PAIRS
+    # +/-5%: ctx x0.95 -> model-1 0.494 > 0.480; price x1.05 -> model-2 0.504 < 0.520. No flips.
+    assert pairs(sensitivity_policy=(0.95, 1.05)) == set()
+    # +/-50%: ctx x0.5 -> model-1 0.26 < model-2 0.48; price x0.5 -> model-2 0.24 < model-3 0.26;
+    # price x1.5 -> model-2 0.72 > model-1 0.52.
+    assert pairs(sensitivity_policy=(0.5, 1.5)) == {frozenset({"model-1", "model-2"}),
+                                                    frozenset({"model-2", "model-3"})}
+    # No change applied: nothing flips.
+    assert pairs(sensitivity_policy=(1.0,)) == set()
+
+
+def test_SR_1_1_8_criterion_off_known_metrics_list_rejected_on_list_accepted():
+    # "A proposed criterion naming a metric not on the list is rejected; one on the list is accepted."
+    ctx = proposed("ctx", "context_window", ">=", 100_000, "tokens", "moderate", "capability")
+    on_list = frozenset({"context_window", "input_price"})
+    off_list = frozenset({"input_price", "data_residency"})
+
+    rid = request_interpretation(REFERENCE_REQUIREMENTS[0])["requirement_id"]
+    accepted = present_criteria_mapping(response(rid, [copy.deepcopy(ctx)]), known_metrics=on_list)
+    assert accepted["status"] == "proposed"
+    assert [c["metric"] for c in accepted["criteria"]] == ["context_window"]
+
+    rid = request_interpretation(REFERENCE_REQUIREMENTS[0])["requirement_id"]
+    rejected = present_criteria_mapping(response(rid, [copy.deepcopy(ctx)]), known_metrics=off_list)
+    assert rejected["status"] != "proposed"
+    assert rejected["status"] == "retry"  # an invalid response (SPEC section 3)
+
+    # The default list (SPEC section 2 fields plus catalog benchmark ids) rejects an unknown metric.
+    rid = request_interpretation(REFERENCE_REQUIREMENTS[0])["requirement_id"]
+    unknown = present_criteria_mapping(response(rid, [{**ctx, "metric": "summarization_vibes"}]))
+    assert unknown["status"] == "retry"
+
+
+# 2.x System-wide (non-functional) requirements ----------------------------------
+# (Design Definition: Form, 2026-11; SPEC.md section 6.) The C.8 and C.7 adapter
+# interfaces are in docs/PLAN.md "Data and model adapters (Lab Manual 8.5)",
+# "Interface details the tests rely on". No test reaches the network: the language
+# model runtime is a stdlib http.server on 127.0.0.1, and the benchmark APIs are
+# blocked.
+#
+# 2.1.6 (business legibility) has no test: its restricted term list is "to be
+# defined" (Form report section 2.1.1.2), so it can't be verified yet.
+
+import json
+import socket
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Optional
+
+F8 = "provide_requirement_interpretation"
+F7 = "provide_benchmark_evidence"
+SAMPLE_DATA = Path(__file__).resolve().parent.parent / "sample_data"
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def adapter(module, attr):
+    """An adapter def (docs/PLAN.md 8.5), or fail if it doesn't exist yet."""
+    return impl(module, attr)
+
+
+@contextmanager
+def runtime_stub(content: Optional[str], delay: float = 0.0):
+    """A local OpenAI-compatible runtime: POST /v1/chat/completions -> `content`.
+
+    Yields (base_url, requests), where requests collects each request body received.
+    """
+    received = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length)
+            try:
+                body = json.loads(raw or b"null")
+            except ValueError:
+                body = raw.decode("utf-8", "replace")
+            received.append({"path": self.path, "body": body})
+            if delay:
+                time.sleep(delay)
+            if self.path.rstrip("/").endswith("/chat/completions"):
+                payload = json.dumps({"choices": [{"message": {"role": "assistant",
+                                                               "content": content}}]}).encode()
+                self.send_response(200)
+            else:
+                payload = b'{"error": "not found"}'
+                self.send_response(404)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            try:
+                self.wfile.write(payload)
+            except OSError:
+                pass  # the client gave up (timeout)
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server.daemon_threads = True
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}/v1", received
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def block_network(monkeypatch):
+    """Fail any outbound connection except to 127.0.0.1; return the list of attempts."""
+    attempts = []
+    real_connect = socket.socket.connect
+
+    def guarded(sock, address):
+        host = address[0] if isinstance(address, tuple) else address
+        if host in ("127.0.0.1", "::1", "localhost"):
+            return real_connect(sock, address)
+        attempts.append(address)
+        raise OSError(f"network blocked in tests: {address}")
+
+    def no_dns(host, *args, **kwargs):
+        if host in ("127.0.0.1", "::1", "localhost"):
+            return real_getaddrinfo(host, *args, **kwargs)
+        attempts.append((host,) + tuple(args[:1]))
+        raise socket.gaierror(f"network blocked in tests: {host}")
+
+    real_getaddrinfo = socket.getaddrinfo
+    monkeypatch.setattr(socket.socket, "connect", guarded)
+    monkeypatch.setattr(socket, "getaddrinfo", no_dns)
+    return attempts
+
+
+def scenario_criteria():
+    """The four sample scenarios' confirmed mappings, as SPEC section 3 criteria."""
+    with (SAMPLE_DATA / "scenario_criteria.json").open() as f:
+        scenarios = json.load(f)
+    return {name: [{"proxy_strength": "moderate", "rationale": "sample scenario", **c} for c in criteria]
+            for name, criteria in scenarios.items()}
+
+
+def run_scenario(criteria):
+    """UC.1 on the stored catalog (F.7 file mode) with `criteria` as the confirmed mapping."""
+    start_decision(OPSCON_TEXT, criteria)
+    data_request = request_benchmark_evidence(confirmed_criteria_mapping=criteria)
+    catalog = provide_model_data(data_request=data_request)
+    return present_ranking_and_sensitivity(catalog, confirmed_criteria_mapping=criteria)
+
+
+def assert_candidate_conforms(cand):
+    """SPEC section 2: required fields present, every figure sourced and dated."""
+    for field, required in CANDIDATE_FIELDS.items():
+        if required:
+            assert field in cand, f"{cand.get('model_id')}: missing {field}"
+    for field in ("model_id", "vendor", "model_name"):
+        assert isinstance(cand[field], str) and cand[field]
+    for field in FIGURE_FIELDS:
+        if field in cand:
+            assert_figure(cand[field], f"{cand['model_id']}.{field}")
+    for bench in cand.get("benchmarks", []):
+        assert isinstance(bench["benchmark_id"], str) and bench["benchmark_id"]
+        assert_figure(bench["score"], f"{cand['model_id']}.{bench['benchmark_id']}")
+
+
+def test_SR_2_1_1_full_comparison_walkthroughs_within_30_minutes():
+    # "Operator minutes per comparison of 10 candidates: ≤ 30 (D: timed walkthrough of each sample scenario)"
+    minutes = walkthrough_minutes("full_comparison")
+    assert max(minutes) <= 30, minutes
+    # The walkthrough runs on the stored catalog: it has at least 10 candidates.
+    criteria = confirmed_criteria()
+    start_decision(OPSCON_TEXT, criteria)
+    catalog = provide_model_data(data_request=request_benchmark_evidence(confirmed_criteria_mapping=criteria))
+    assert len({c["model_id"] for c in catalog}) >= 10
+
+
+def test_SR_2_1_2_rerun_walkthroughs_within_10_minutes():
+    # "Operator minutes per re-evaluation: ≤ 10 (provisional) (D: timed re-run from a stored record)"
+    minutes = walkthrough_minutes("rerun")
+    assert max(minutes) <= 10, minutes
+
+
+@pytest.mark.parametrize("scenario", sorted(scenario_criteria()))
+def test_SR_2_1_3_five_runs_with_unchanged_inputs_give_identical_ranking(scenario, monkeypatch):
+    # "Proportion of repeated runs with an identical ranking: 100% (T: five runs per scenario with unchanged inputs)"
+    monkeypatch.setenv("BENCHMARK_SOURCE", "file")
+    criteria = scenario_criteria()[scenario]
+    rankings = [run_scenario(copy.deepcopy(criteria))["ranking"] for _ in range(5)]
+    for run, ranking in enumerate(rankings[1:], start=2):
+        assert ranking == rankings[0], f"{scenario}: run {run} differs"
+
+
+def test_SR_2_1_4_records_stored_in_sqlite_and_retrievable_after_session_ends(tmp_path, monkeypatch):
+    # "Retention period of stored records: ≥ 6 months (provisional) (I: storage configuration; T: retrieval after the session ends)"
+    import importlib
+
+    record_dir = tmp_path / "records"
+    monkeypatch.setenv("DECISION_RECORD_DIR", str(record_dir))
+    criteria = confirmed_criteria()
+    result = rank_fixture(known_answer_candidates(), criteria)
+    record = record_decision(result["ranking"][0], confirmed_criteria_mapping=criteria)
+    store = sub("generate_and_store_decision_record", "store_decision_record")
+    record_id = store(copy.deepcopy(record))
+
+    # I: the storage configuration is the SQLite store (docs/PLAN.md 8.5, ADR-0005).
+    assert (record_dir / "decision_records.sqlite3").is_file(), "records not stored in SQLite"
+    # I: nothing deletes or expires a record.
+    module = importlib.import_module(f"{F1}.generate_and_store_decision_record")
+    removers = [n for n in dir(module) if any(w in n.lower() for w in ("delete", "purge", "expire", "prune"))]
+    assert removers == [], removers
+
+    # T: the session ends (module reload); the record is still retrievable unchanged.
+    module = importlib.reload(module)
+    assert module.retrieve_decision_record(record_id) == record
+
+
+@pytest.mark.parametrize("scenario", sorted(scenario_criteria()))
+def test_SR_2_1_5_displayed_and_exported_figures_carry_source_and_date(scenario, monkeypatch):
+    # "Proportion of displayed and exported figures with source and date: 100% (I: ranking view and exported record per scenario)"
+    monkeypatch.setenv("BENCHMARK_SOURCE", "file")
+    criteria = scenario_criteria()[scenario]
+    result = run_scenario(copy.deepcopy(criteria))
+    assert result["evidence"], f"{scenario}: no figures displayed"
+    for entry in result["evidence"]:  # the ranking view
+        assert entry.get("source_id") and entry.get("collection_date"), entry
+        date.fromisoformat(entry["collection_date"])
+    if not any(c["designation"] == "weighted" for c in criteria):
+        # A hard-only scenario (SCENARIO_04) has no weights section, so no complete
+        # record can be generated (SR 1.2.2) and there is no exported record to inspect.
+        return
+    selection = result["ranking"][0] if result["ranking"] else None  # None: UC alt flow 15a
+    record = record_decision(selection, confirmed_criteria_mapping=criteria)
+    for entry in record["evidence"]:  # the exported record
+        assert entry.get("source_id") and entry.get("collection_date"), entry
+        date.fromisoformat(entry["collection_date"])
+
+
+def test_SR_2_2_1_interpretation_requests_sent_to_local_runtime(monkeypatch):
+    # "Interpretation requests sent to a locally hosted runtime: 100% (I: runtime configuration points to a local endpoint)"
+    runtime_config = adapter(F8, "runtime_config")
+    propose_criteria = adapter(F8, "propose_criteria")
+
+    # I: with nothing configured, the runtime is local.
+    monkeypatch.delenv("LLM_RUNTIME_URL", raising=False)
+    config = runtime_config()
+    assert urllib.parse.urlsplit(config["base_url"]).hostname in LOCAL_HOSTS, config
+
+    # A configured non-local endpoint is refused before anything is sent.
+    attempts = block_network(monkeypatch)
+    monkeypatch.setenv("LLM_RUNTIME_URL", "http://203.0.113.10:1234/v1")
+    with pytest.raises(ValueError):
+        propose_criteria(interpretation_request={"requirement_id": "R-1", "text": REFERENCE_REQUIREMENTS[0]})
+    assert attempts == [], attempts
+
+    # Every request goes to the configured local runtime.
+    rid = "R-1"
+    reply = json.dumps(response(rid, copy.deepcopy(REFERENCE_PROPOSALS[0])))
+    with runtime_stub(reply) as (base_url, received):
+        monkeypatch.setenv("LLM_RUNTIME_URL", base_url)
+        assert urllib.parse.urlsplit(runtime_config()["base_url"]).hostname in LOCAL_HOSTS
+        for text in REFERENCE_REQUIREMENTS:
+            propose_criteria(interpretation_request={"requirement_id": rid, "text": text})
+    assert len(received) == len(REFERENCE_REQUIREMENTS), received
+    assert attempts == [], attempts
+
+
+@pytest.mark.parametrize("reply", ["valid", "no_proxy", "not_json", "json_array", "unreachable", "timeout"])
+def test_SR_2_3_1_runtime_requests_and_responses_conform_to_model_contract(reply, monkeypatch):
+    # "Requests and responses conforming to the model contract: 100% (T: contract validation, as for SR 1.3.2)"
+    propose_criteria = adapter(F8, "propose_criteria")
+    submit_requirements = adapter(F8, "submit_requirements")
+    runtime_config = adapter(F8, "runtime_config")
+    validate_interpretation = sub("propose_criteria_mapping", "validate_interpretation")
+    block_network(monkeypatch)
+
+    text = REFERENCE_REQUIREMENTS[0]
+    request = request_interpretation(text)  # the SPEC section 3 request, from F.1
+    assert set(request) == {"requirement_id", "text"} and request["text"] == text
+    rid = request["requirement_id"]
+    contract = {
+        "valid": response(rid, copy.deepcopy(REFERENCE_PROPOSALS[0])),
+        "no_proxy": response(rid, [], no_suitable_proxy=True),
+    }
+    content = {"not_json": "Sure! Here are some criteria: context window.",
+               "json_array": json.dumps([1, 2, 3])}.get(reply) or json.dumps(contract.get(reply, {}))
+
+    if reply == "unreachable":
+        with socket.socket() as s:  # a local port with nothing listening
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+        monkeypatch.setenv("LLM_RUNTIME_URL", f"http://127.0.0.1:{port}/v1")
+        assert propose_criteria(interpretation_request=copy.deepcopy(request)) is None
+    else:
+        delay = 2.0 if reply == "timeout" else 0.0
+        with runtime_stub(content, delay=delay) as (base_url, received):
+            monkeypatch.setenv("LLM_RUNTIME_URL", base_url)
+            if reply == "timeout":
+                # A short timeout for the test: the runtime answers after 2 s.
+                module = __import__(F8)
+                real_config = runtime_config
+                monkeypatch.setattr(module, "runtime_config",
+                                    lambda: {**real_config(), "timeout_s": 0.5})
+            started = time.monotonic()
+            got = propose_criteria(interpretation_request=copy.deepcopy(request))
+            elapsed = time.monotonic() - started
+            # The request carried the requirement's unaltered text to the runtime.
+            assert received, "no request reached the runtime"
+            assert text in json.dumps(received[0]["body"], ensure_ascii=False)
+        if reply in contract:
+            assert got == contract[reply]
+            assert validate_interpretation(got) is True
+            with runtime_stub(content) as (base_url, _):
+                monkeypatch.setenv("LLM_RUNTIME_URL", base_url)
+                assert submit_requirements(copy.deepcopy(request)) == contract[reply]  # 5.1.1.2
+            assert present_criteria_mapping(got)["status"] == "proposed"
+            return
+        assert got is None, got
+        if reply == "timeout":
+            assert elapsed < 2.0, f"waited {elapsed:.1f} s past a 0.5 s timeout"
+
+    # Not a conforming response (or a timeout): handled as invalid, retried once, then flagged.
+    fallback = submit_requirements(copy.deepcopy(request)) if reply == "unreachable" else None
+    if fallback is not None:
+        assert fallback["requirement_id"] == rid and fallback["criteria"] == []
+        assert validate_interpretation(fallback) is False
+    assert present_criteria_mapping(None)["status"] == "retry"
+    assert present_criteria_mapping(None)["status"] == "interpretation_failed"
+
+
+def test_SR_2_3_2_data_exchanges_conform_to_data_contract(tmp_path, monkeypatch):
+    # "Data exchanges conforming to the data contract: 100% (T: contract validation, as for SR 1.3.3)"
+    refresh_model_data = adapter(F7, "refresh_model_data")
+    block_network(monkeypatch)
+    monkeypatch.setenv("BENCHMARK_SNAPSHOT_DB", str(tmp_path / "benchmark_snapshots.sqlite3"))
+    criteria = confirmed_criteria()
+    start_decision(OPSCON_TEXT, criteria)
+    data_request = request_benchmark_evidence(confirmed_criteria_mapping=criteria)
+
+    # File mode (the stored catalog): every candidate conforms to SPEC section 2.
+    monkeypatch.setenv("BENCHMARK_SOURCE", "file")
+    catalog = provide_model_data(data_request=copy.deepcopy(data_request))
+    assert catalog, "no model data available"
+    for cand in catalog:
+        assert_candidate_conforms(cand)
+
+    # API mode with no snapshot stored: no model data available, nothing made up.
+    monkeypatch.setenv("BENCHMARK_SOURCE", "api")
+    assert provide_model_data(data_request=copy.deepcopy(data_request)) == []
+
+    # Sources unavailable: the pull reports it, and the last snapshot (none) stays served.
+    pulled = refresh_model_data()
+    assert set(pulled) >= {"status", "pulled_at", "candidates", "gaps"}, pulled
+    assert pulled["status"] == "source_unavailable", pulled
+    assert provide_model_data(data_request=copy.deepcopy(data_request)) == []
+
+
+def test_SR_2_4_1_no_paid_external_calls_per_comparison(monkeypatch):
+    # "Paid per-query charges per comparison: 0 (I: configuration and run logs show no paid external calls)"
+    runtime_config = adapter(F8, "runtime_config")
+    propose_criteria = adapter(F8, "propose_criteria")
+    attempts = block_network(monkeypatch)
+
+    # I: the configured runtime is the local one, not a paid hosted API.
+    monkeypatch.delenv("LLM_RUNTIME_URL", raising=False)
+    assert urllib.parse.urlsplit(runtime_config()["base_url"]).hostname in LOCAL_HOSTS
+
+    # A paid hosted endpoint is refused before any call is made.
+    for paid in ("https://api.openai.com/v1", "https://api.anthropic.com/v1",
+                 "https://openrouter.ai/api/v1"):
+        monkeypatch.setenv("LLM_RUNTIME_URL", paid)
+        with pytest.raises(ValueError):
+            propose_criteria(interpretation_request={"requirement_id": "R-1", "text": OPSCON_TEXT})
+    assert attempts == [], attempts
+
+    # A whole comparison (interpretation on the local runtime, stored catalog, ranking,
+    # record) makes no external call.
+    monkeypatch.setenv("BENCHMARK_SOURCE", "file")
+    criteria = confirmed_criteria()
+    request = request_interpretation(OPSCON_TEXT)
+    proposal = [{k: v for k, v in c.items() if k not in ("designation", "weight")} for c in criteria]
+    with runtime_stub(json.dumps(response(request["requirement_id"], proposal))) as (base_url, _):
+        monkeypatch.setenv("LLM_RUNTIME_URL", base_url)
+        reply = propose_criteria(interpretation_request=request)
+    assert present_criteria_mapping(reply)["status"] == "proposed"
+    data_request = request_benchmark_evidence(confirmed_criteria_mapping=criteria)
+    catalog = provide_model_data(data_request=data_request)
+    result = present_ranking_and_sensitivity(catalog, confirmed_criteria_mapping=criteria)
+    record_decision(result["ranking"][0] if result["ranking"] else None, confirmed_criteria_mapping=criteria)
+    assert attempts == [], attempts

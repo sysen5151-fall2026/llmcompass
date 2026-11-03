@@ -821,3 +821,109 @@ of the product build.
 - Verified: pytest gives 93 passed, 15 failed, the same failing set.
 
 ---
+
+## 2026-11-03 — Allyanna Panganiban — Claude Code (Opus 5.5)
+
+**Built from:**
+- form_architecture_definition.pdf (Design Definition: Form): first-level assets
+  C.1.1-C.1.7 (Table 1), asset diagrams and I² (Figs. 9-12, Tables 5-6), system-wide
+  requirements SR 2.1.1-2.4.1 (Fig. 8, Table 4), and the runtime Pugh chart (Table 8).
+- report_architecture_definition.pdf: SR 1.1.6-1.1.8.
+- SPEC.md §2 and §3.
+- Lab Manual 8.5, Product Build "Data and Model Adapters" (pp. 148-149).
+
+**Prompt:** Asked where the Chapter 8 and 9 builds are in the manual, for a catch-up
+on Chapters 3-7 and the Milestone 2 demo (IDEF0 with mechanisms; one function's
+second-level IDEF0 and hierarchies; a product demo of that function), and for a plan
+that mirrors Khai's Ch 5-7 builds. Then asked to execute the Chapter 8 build, steps 1-9,
+in auto mode. Decisions given:
+- LM Studio (now the Bionic app) with Qwen2.5 7B Instruct
+- the F.8 timeout is about 3x the slowest measured call, max_tokens comes from the
+  measured reply size, and both are provisional
+- SR 2.1.6 and the 5.1.5.1 XPASS stay open
+- a failed live Artificial Analysis pull keeps the snapshot fallback
+
+The prompts are in prompts/2026-11-03-data-and-model-adapters.md.
+
+**Reviewed by:** Allyanna Panganiban. The team decisions were: SQLite with an ADR
+instead of Supabase, LM Studio local, and the AA key from Khai.
+
+**Output:**
+- Setup: Qwen2.5 7B Instruct (GGUF Q4_K_S) downloaded into Bionic/LM Studio with the
+  `lms` CLI, and the server started on 127.0.0.1:1234.
+- `SPEC.md`:
+  - §6: SR 1.1.6-1.1.8 and the system-wide SR 2.1.1-2.4.1, verbatim where the reports
+    show the text. 2.1.6 is cut off and 2.2.1-2.4.1 aren't exported, so those are
+    marked.
+  - §3 "Adapter": the endpoint, model, prompt template, parameters (temperature 0,
+    seed 5151), the strict json_schema `response_format`, and the failure path.
+  - The measurements for the 4 scenarios (slowest 36.3 s, largest reply 165 tokens)
+    give a timeout of 110 s and max_tokens 512, both provisional.
+- `tests/test_system_requirements.py`: a test writer that saw only SPEC and the PLAN
+  interface appended 12 tests (23 cases), with 0 lines removed.
+- `docs/deployment.md` (new, 8a): what runs where, what talks to what, and which data
+  leaves the machine.
+- `docs/adr/0005-sqlite-for-local-storage.md` (new, 8b).
+- `backend/provide_llm_selection_decision_support/generate_and_store_decision_record.py`
+  and `decision_record_schema.sql` (new): decision records moved from JSON files to
+  SQLite behind the same defs.
+- `backend/provide_benchmark_evidence/` (8c):
+  - api mode serves the latest snapshot, or `[]` when there is none.
+  - New `refresh_model_data()`: the on-demand pull from Artificial Analysis,
+    models.dev and OpenRouter, with `missing_values` treated as gaps, required fields
+    enforced, and the last snapshot kept when a source is unavailable or a pull has
+    no usable candidate.
+  - `snapshot_schema.sql`: CHECKs reject a figure missing its source or with an
+    invalid date.
+  - `__main__.py`: `python3 -m provide_benchmark_evidence refresh`.
+  - `sample_data/source_fields.json`: the field paths.
+- `backend/provide_requirement_interpretation/` (8d):
+  - `propose_criteria` calls LM Studio. It refuses non-local hosts and returns None on
+    a timeout, an unreachable runtime, or a non-JSON or malformed reply.
+  - `submit_requirements` is the SPEC §4 live call.
+  - The UI path is moved to `scenario_interpretation` (STUB).
+  - `prompt_template.txt` (new).
+- `backend/app.py`: imports `scenario_interpretation`. The UI is unchanged.
+- `tests/test_data_access_component.py` (new): a pull against local fake sources,
+  missing values becoming gaps, the OpenRouter fallback, both fallback paths, the
+  schema CHECKs, an unsourced manual entry, and the runtime HTTP-error and
+  malformed-reply cases.
+- Docs: `docs/PLAN.md` (8.5 interface, progress, open items), `docs/traceability.md`
+  (SR 1.1.6-2.4.1 rows), `docs/route-table.md` (refresh entry point), `README.md`
+  tree, `.env.example` (LLM and snapshot variables).
+- Agents:
+  - one test writer
+  - one independent verifier, which found 2 medium and 4 low defects: an empty pull
+    replaced the snapshot, the data-side failure paths were untested, a wrong schema
+    comment, connections not closed on error, the PLAN test count, and the
+    deployment.md wording. All are fixed.
+- Verified:
+  - pytest gives 129 passed, 13 failed (was 93 / 15). No test that passed before
+    fails. The 4 5.1.1.2 reference-set tests now pass against live Qwen.
+  - The contract conformance and stub checks pass.
+  - The live SCENARIO_04 call validates.
+  - models.dev and OpenRouter field paths were checked live (14/14, 13/14).
+
+**Assistant assumptions:**
+- The adapter gives the runtime the allowed metrics (the SPEC §2 fields plus the
+  `benchmark_map.json` ids). The SPEC §3 request carries only the ID and the text.
+- The AA price and latency paths (`pricing.price_1m_*`,
+  `median_time_to_first_token_seconds`) follow the API docs.
+- A pull with no usable candidate counts as source unavailable.
+
+**Still open:**
+- The live AA pull hasn't run: `.env` has no key. The AA field paths are unverified,
+  and SR 1.2.1 and 2.1.1 stay red in file mode (3 models).
+- CI has no LM Studio, so the 4 reference-set tests stay red there.
+- The UI doesn't call the F.1 ICOM defs (SR 1.3.1, UC.1.9). That's the Milestone 2
+  work.
+- SR 2.1.6 term list and 5.1.5.1 XPASS (not resolved, per the team).
+- For the team or Innoslate:
+  - export the 2.1.6 and 2.2.1-2.4.1 statements
+  - SR 1.3.2's MOP target
+  - Form report Table 7's storage row changes to SQLite
+  - the timed walkthroughs (2.1.1, 2.1.2, 1.3.1, 1.4.1)
+  - SCENARIO_04's record has no weights section
+  - whether a model missing from one AA response is carried over
+
+---

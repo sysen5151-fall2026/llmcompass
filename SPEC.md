@@ -304,11 +304,44 @@ team on 2026-10-25.)
 compliance ones.
 
 If the response is bad (not JSON, wrong schema, unknown metric, or timeout - limit
-TBD), retry once. If it fails again, mark the requirement `interpretation_failed`
+below), retry once. If it fails again, mark the requirement `interpretation_failed`
 and let the Technical Lead enter criteria by hand. Don't drop the requirement and
 don't make up criteria.
 
 All proposed criteria need Technical Lead confirmation (UC.1.9) before ranking.
+
+### Adapter (Lab Manual 8.5, 2026-11-03)
+
+`backend/provide_requirement_interpretation/` (C.8 adapter), specified before it was
+generated:
+
+| Item | Value |
+|---|---|
+| Runtime | LM Studio (Bionic app), OpenAI-compatible `POST {LLM_RUNTIME_URL}/chat/completions` |
+| Model | Qwen2.5 7B Instruct, GGUF Q4_K_S (`LLM_MODEL=qwen2.5-7b-instruct`) |
+| Endpoint | `LLM_RUNTIME_URL`, default `http://127.0.0.1:1234/v1`. Any host other than `localhost`, `127.0.0.1` or `::1` raises ValueError before anything is sent (SR 2.2.1, SR 2.4.1). |
+| Prompt template | `prompt_template.txt`: the allowed metrics (the section 2 fields plus `benchmark_map.json` ids, with units), the response rules above, and the request's `requirement_id` and `text` unaltered |
+| Parameters | `temperature` 0 and `seed` 5151 (repeatable, SR 2.1.3); `stream` false |
+| Response schema | The response above, sent as `response_format` `json_schema` (strict), so the runtime constrains its output to that shape |
+| Timeout | **110 s (provisional).** About 3x the slowest measured call. |
+| Token limit | **`max_tokens` 512 (provisional).** About 3x the largest measured reply. |
+| Not the required schema | Timeout, unreachable runtime, non-JSON or a non-object reply: returns `None`. A JSON object is returned as is, and F.1.1 `validate_interpretation` applies the validity rules above. Either way F.1.1 retries once, then marks `interpretation_failed` (SR 1.3.2, SR 1.1.4). |
+
+Measurements (2026-11-03, MacBook, LM Studio, the 4 sample scenarios in
+`sample_data/user_inputs.json`, two rounds each):
+
+| Scenario | Round 1 (s, cold) | Round 2 (s) | Completion tokens | Prompt tokens | Valid |
+|---|---|---|---|---|---|
+| SCENARIO_01 | 27.3 | 15.0 | 93 | 492 | yes |
+| SCENARIO_02 | 36.3 | 25.8 | 159 | 498 | yes |
+| SCENARIO_03 | 33.4 | 26.7 | 165 | 489 | yes |
+| SCENARIO_04 | 17.8 | 15.5 | 95 | 491 | yes |
+
+The slowest call was 36.3 s, so the timeout is 110 s. The largest reply was 165
+tokens, so `max_tokens` is 512. Both are provisional until the Week 12 runtime trade
+study (Form report §2.3.1). They are also the first values for SR 1.3.2's MOP
+("interpretation response time per requirement", target to be set after the local
+runtime is benchmarked), which the team still has to set as a target.
 
 ## 4. Test interface (provisional)
 
@@ -471,3 +504,67 @@ F.1's boundary changed with the decomposition (IDEF0 A-0 of F.1, 2026-10-26):
 Confirmed criteria mapping is now an input, not a control. Known metrics list,
 Staleness threshold and Sensitivity policy are new controls. The 1.1.x-1.3.x
 statements above are unchanged until the regenerated SRD says otherwise.
+
+### Input requirements for the three F.1 controls (Architecture Definition Report, 2026-10-28)
+
+Verbatim from report_architecture_definition.pdf (requirements table, pp. 18-19). These
+come from the three controls added to the Metafunction IDEF0 (Known metrics list,
+Staleness threshold, Sensitivity policy). Each is satisfied by F.1.
+
+| ID | Statement | Traces to StR | Rationale |
+|---|---|---|---|
+| 1.1.6 | The LLM Compass shall accept Staleness threshold from the Technical Lead. | 5.1.2.2 | Stale figures can only be flagged against a defined age limit; 90 days is the current provisional value. |
+| 1.1.7 | The LLM Compass shall accept Sensitivity policy from the Technical Lead. | 5.1.4.1 | Unstable rankings can only be identified against a defined weight variation; ±10% is the current provisional value. |
+| 1.1.8 | The LLM Compass shall accept Known metrics list from the Benchmark Data Sources. | 5.1.1.2 | Proposed criteria can only be checked for validity against metrics the data sources actually report. |
+
+| ID | Method | Verification criterion | MOP | Target |
+|---|---|---|---|---|
+| 1.1.6 | T | With the threshold set to 90 days, every fixture figure older than 90 days is flagged and no newer figure is. | % of figures older than the supplied threshold that are flagged | 100% |
+| 1.1.7 | T | Changing the policy value changes the variation applied, and the default run uses ±10%. | Sensitivity analysis uses the supplied variation | 100% of runs |
+| 1.1.8 | T | A proposed criterion naming a metric not on the list is rejected; one on the list is accepted. | % of proposed criteria checked against the list | 100% |
+
+### System-wide (non-functional) requirements (Design Definition: Form, 2026-11)
+
+From form_architecture_definition.pdf §2.1.1.2: Figure 8 (Innoslate requirements
+document) and Table 4. Each leaf requirement is satisfied by C.1 LLM Compass and traced
+to the StR shown. Statements for 2.1.1-2.1.5 are verbatim from Figure 8. Figure 8 cuts
+off 2.1.6 and doesn't show 2.2.1-2.4.1, so those rows give the requirement name and
+Table 4's MOS instead, marked *(statement not exported)*. Replace them with the
+exported text once it exists.
+
+| ID | Name | Statement | Traces to StR |
+|---|---|---|---|
+| 2.1.1 | Comparison effort | The LLM Compass shall allow an operator to complete a comparison of at least 10 candidate models within 30 minutes of operator effort. | 5.3.1.1 |
+| 2.1.2 | Re-evaluation effort | The LLM Compass shall allow an operator to produce an updated ranking from a stored decision record within 10 minutes of operator effort. | 5.1.5.2 |
+| 2.1.3 | Result consistency | The LLM Compass shall produce an identical ranking when re-run with the same confirmed criteria mapping, weights and evidence. | 5.1.3.2 |
+| 2.1.4 | Record retention | The LLM Compass shall retain each stored decision record for at least six months. | 5.1.3.3 |
+| 2.1.5 | Evidence attribution | The LLM Compass shall attach a source identifier and collection date to every figure it displays or exports. | 5.1.2.1 |
+| 2.1.6 | Business legibility | The LLM Compass shall present business-facing output without benchmark names or technical [cut off in Figure 8] | 5.2.2.1 |
+| 2.2.1 | Local interpretation | *(statement not exported)* MOS: interpretation requests sent to a locally hosted runtime. | 5.1.1.2 |
+| 2.3.1 | Model contract | *(statement not exported)* MOS: requests and responses conforming to the model contract. | 5.1.1.2 |
+| 2.3.2 | Data contract | *(statement not exported)* MOS: data exchanges conforming to the data contract. | 5.1.2.1 |
+| 2.4.1 | Query cost | *(statement not exported)* MOS: paid per-query charges per comparison. | 5.2.1.1 |
+
+Verification and MOS with target, verbatim from Table 4 (D = demonstration, T = test,
+I = inspection):
+
+| ID | MOS | Target | Verification | Elements most influenced |
+|---|---|---|---|---|
+| 2.1.1 | Operator minutes per comparison of 10 candidates | ≤ 30 | D: timed walkthrough of each sample scenario | Whole system; mainly C.1.1 (review steps) and C.1.2 (automated retrieval) |
+| 2.1.2 | Operator minutes per re-evaluation | ≤ 10 (provisional) | D: timed re-run from a stored record | C.1.7 Decision Recorder and the ranking chain C.1.3 to C.1.5 |
+| 2.1.3 | Proportion of repeated runs with an identical ranking | 100% | T: five runs per scenario with unchanged inputs | C.1.3 to C.1.5, which must compute deterministically |
+| 2.1.4 | Retention period of stored records | ≥ 6 months (provisional) | I: storage configuration; T: retrieval after the session ends | C.1.7 Decision Recorder |
+| 2.1.5 | Proportion of displayed and exported figures with source and date | 100% | I: ranking view and exported record per scenario | C.1.2, C.1.6 and C.1.7 |
+| 2.1.6 | Restricted terms in business-facing output | 0 | T: trade-off summaries checked against the restricted term list (to be defined) | C.1.6 Rationale Reporter |
+| 2.2.1 | Interpretation requests sent to a locally hosted runtime | 100% | I: runtime configuration points to a local endpoint | C.1.1.1 Interpretation Client |
+| 2.3.1 | Requests and responses conforming to the model contract | 100% | T: contract validation, as for SR 1.3.2 | C.1.1.1 Interpretation Client and C.1.1.2 Criteria Validator |
+| 2.3.2 | Data exchanges conforming to the data contract | 100% | T: contract validation, as for SR 1.3.3 | C.1.2 Evidence Retriever |
+| 2.4.1 | Paid per-query charges per comparison | 0 | I: configuration and run logs show no paid external calls | C.1.1.1 Interpretation Client |
+
+Notes:
+- 2.1.6 can't be verified yet: the restricted term list is "to be defined" (Form report
+  §2.1.1.2). It stays open; no list is invented here.
+- 2.1.1 and 2.1.2 are checked from timed walkthroughs in docs/validation/walkthroughs.csv,
+  as in section 4 (`full_comparison` and `rerun`).
+- The physical architecture these allocate to (C.1.1-C.1.7, C.1.1.1-C.1.1.4) is in the
+  Form report Tables 1 and 3. The deployment view is docs/deployment.md.

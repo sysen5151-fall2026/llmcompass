@@ -1,0 +1,25 @@
+{
+  "_about": "Which source field feeds each SPEC section 2 candidate field in api mode (Lab Manual 8.5, data access component). Data, not code, like benchmark_map.json. Paths are dotted paths into one record of each source's response. The Artificial Analysis price and latency paths follow its v2 API documentation; check them against the first live pull and correct them here if the API differs.",
+  "artificial_analysis": {
+    "records": "data",
+    "match": "id",
+    "name": "name",
+    "fields": {
+      "input_price": {"path": "pricing.price_1m_input_tokens", "unit": "USD per 1M input tokens", "missing_values": [null, 0]},
+      "output_price": {"path": "pricing.price_1m_output_tokens", "unit": "USD per 1M output tokens", "missing_values": [null, 0]},
+      "latency_p50": {"path": "median_time_to_first_token_seconds", "unit": "seconds", "missing_values": [null, 0]}
+    }
+  },
+  "models_dev": {
+    "fields": {
+      "context_window": {"path": "limit.context", "unit": "tokens", "missing_values": [null, 0]}
+    }
+  },
+  "openrouter": {
+    "records": "data",
+    "match": "id",
+    "fields": {
+      "context_window": {"path": "context_length", "unit": "tokens", "missing_values": [null, 0]}
+    }
+  }
+}

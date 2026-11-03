@@ -5,7 +5,9 @@
 
 import json
 import os
+import sqlite3
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -14,35 +16,59 @@ RECORD_SECTIONS = ("requirements", "criteria_mapping", "weights", "evidence", "r
 DECISION_BASIS_SECTIONS = ("requirements", "criteria_mapping", "weights")  # flow 5.4 (ADR-0002)
 
 # Where records persist, so they survive a restart (5.1.3.3). Storage belongs to
-# mechanism C.1, so it is configuration, not an IDEF0 arrow.
+# mechanism C.1 (C.1.7 Decision Recorder), so it is configuration, not an IDEF0 arrow.
+# SQLite, one file per directory (ADR-0005); the schema is decision_record_schema.sql.
 DEFAULT_RECORD_DIR = Path(__file__).resolve().parents[2] / "data" / "decision_records"
+SCHEMA = Path(__file__).with_name("decision_record_schema.sql")
+DB_NAME = "decision_records.sqlite3"
 
 
 def _record_dir() -> Path:
     return Path(os.environ.get("DECISION_RECORD_DIR") or DEFAULT_RECORD_DIR)
 
 
-def _record_path(record_id: str) -> Path:
+def _connect() -> sqlite3.Connection:
+    # Lab Manual 8.5 -- schema from the record contract (SPEC section 1 / 5.1.3.2), ADR-0005
+    directory = _record_dir()
+    directory.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(directory / DB_NAME)
+    conn.executescript(SCHEMA.read_text())
+    return conn
+
+
+def _check_id(record_id) -> str:
     if not isinstance(record_id, str) or not record_id or Path(record_id).name != record_id:
         raise LookupError(f"no decision record {record_id!r}")
-    return _record_dir() / f"{record_id}.json"
+    return record_id
 
 
 def store_decision_record(record: dict) -> str:
-    # SPEC section 4; SR 1.4.1.7, SN-TL-06 / 5.1.3.3 -- kept as JSON, retrievable after the session ends
-    record_id = record.get("record_id") or f"REC-{uuid.uuid4().hex}"
-    path = _record_path(record_id)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record))
+    # SPEC section 4; SR 1.4.1.7, SN-TL-06 / 5.1.3.3 -- retrievable after the session ends.
+    # SR 2.1.4 -- stored with its time; nothing in the product deletes a record.
+    record_id = _check_id(record.get("record_id") or f"REC-{uuid.uuid4().hex}")
+    stored_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    conn = _connect()
+    try:
+        with conn:  # same behaviour as the JSON store: storing a record under an existing ID updates it
+            conn.execute("INSERT OR REPLACE INTO decision_records VALUES (?, ?, ?, ?)",
+                         (record_id, stored_at, record.get("selected_model"), json.dumps(record)))
+    finally:
+        conn.close()
     return record_id
 
 
 def retrieve_decision_record(record_id: str) -> dict:
     # SPEC section 4; SR 1.4.1.7, SN-TL-06 / 5.1.3.3 -- an unknown ID is not found
-    path = _record_path(record_id)
-    if not path.exists():
+    _check_id(record_id)
+    conn = _connect()
+    try:
+        row = conn.execute("SELECT record_json FROM decision_records WHERE record_id = ?",
+                           (record_id,)).fetchone()
+    finally:
+        conn.close()
+    if row is None:
         raise LookupError(f"no decision record {record_id!r}")
-    return json.loads(path.read_text())
+    return json.loads(row[0])
 
 
 def generate_and_store_decision_record(selection_rationale: dict, model_selection: Optional[str],

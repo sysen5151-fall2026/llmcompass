@@ -62,8 +62,8 @@ shown in the second column. "Status" is the state of the test in this build (202
 | SR 1.2.4 | F.1 `present_criteria_mapping`; F.6 | 5.1.1.3 | SN-TL-01 | test_SR_1_2_4_presented_criterion_shows_requirement_and_strength | pass |
 | SR 1.2.5 | F.1 `present_ranking_and_sensitivity`; F.6 | 5.1.3.1, 5.1.4.1 | SN-TL-04, SN-TL-05, SN-PO-05 | test_SR_1_2_5_contributions_and_unstable_pairs_match_known_answer | pass |
 | SR 1.3.1 | F.1 web interface (C.1-C.6 conduit) | 5.1.1.1 | SN-TL-01 | test_SR_1_3_1_uc1_walkthrough_through_interface_logged | fail: no full_comparison walkthrough logged; web confirm/select steps pending |
-| SR 1.3.2 | F.1 <-> F.8 conduit | 5.1.1.2 | SN-TL-01 | test_SR_1_3_2_model_contract_conformance_and_timeout_as_invalid | pass (F.1 side; F.8 body pending) |
-| SR 1.3.3 | F.1 <-> F.7 conduit; F.7 `provide_model_data` | 5.1.2.1 | SN-TL-02 | test_SR_1_3_3_data_contract_and_stored_figures_shown_dated_and_flagged | pass |
+| SR 1.3.2 | F.1 <-> F.8 conduit; F.8 `propose_criteria` (LM Studio adapter, Lab Manual 8.5) | 5.1.1.2 | SN-TL-01 | test_SR_1_3_2_model_contract_conformance_and_timeout_as_invalid | pass |
+| SR 1.3.3 | F.1 <-> F.7 conduit; F.7 `provide_model_data`, `refresh_model_data` (snapshot fallback) | 5.1.2.1 | SN-TL-02 | test_SR_1_3_3_data_contract_and_stored_figures_shown_dated_and_flagged; tests/test_data_access_component.py | pass |
 | SR 1.4.1 | F.1 (whole) | all | all | test_SR_1_4_1_full_comparison_walkthrough_within_30_minutes | fail: no walkthrough logged; catalog < 10 |
 
 Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC §6).
@@ -77,6 +77,25 @@ Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC �
 | SR 1.4.1.5 | F.1.5 | 5.1.4.1 | test_SR_1_4_1_5_unstable_pairs_match_known_answer_under_policy | pass |
 | SR 1.4.1.6 | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.x | test_SR_1_4_1_6_report_shows_sourced_dated_flagged_figures_exclusions_and_pairs | pass |
 | SR 1.4.1.7 | F.1.7 | 5.1.3.2, 5.1.3.3 | test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart | pass |
+
+Control input requirements and system-wide requirements (Lab Manual 8.5, 2026-11-03; SPEC §6).
+Each is satisfied by C.1; the "Element" column is the Form report Table 4 allocation.
+
+| Requirement | Element / def | StR | Test | Status |
+|---|---|---|---|---|
+| SR 1.1.6 | F.1 `staleness_threshold` control | 5.1.2.2 | test_SR_1_1_6_staleness_threshold_90_days_flags_only_older_figures | pass |
+| SR 1.1.7 | F.1 `sensitivity_policy` control | 5.1.4.1 | test_SR_1_1_7_sensitivity_policy_value_changes_variation_default_is_10_percent | pass |
+| SR 1.1.8 | F.1 `known_metrics` control | 5.1.1.2 | test_SR_1_1_8_criterion_off_known_metrics_list_rejected_on_list_accepted | pass |
+| SR 2.1.1 | whole system; C.1.1, C.1.2 | 5.3.1.1 | test_SR_2_1_1_full_comparison_walkthroughs_within_30_minutes | fail: no walkthrough logged; catalog < 10 in file mode |
+| SR 2.1.2 | C.1.7, C.1.3-C.1.5 | 5.1.5.2 | test_SR_2_1_2_rerun_walkthroughs_within_10_minutes | fail: no rerun walkthrough logged |
+| SR 2.1.3 | C.1.3-C.1.5 | 5.1.3.2 | test_SR_2_1_3_five_runs_with_unchanged_inputs_give_identical_ranking | pass |
+| SR 2.1.4 | C.1.7 (SQLite, ADR-0005) | 5.1.3.3 | test_SR_2_1_4_records_stored_in_sqlite_and_retrievable_after_session_ends | pass (six months not simulated) |
+| SR 2.1.5 | C.1.2, C.1.6, C.1.7 | 5.1.2.1 | test_SR_2_1_5_displayed_and_exported_figures_carry_source_and_date | pass |
+| SR 2.1.6 | C.1.6 | 5.2.2.1 | none | not verifiable: restricted term list to be defined |
+| SR 2.2.1 | C.1.1.1 / F.8 adapter `runtime_config` | 5.1.1.2 | test_SR_2_2_1_interpretation_requests_sent_to_local_runtime | pass |
+| SR 2.3.1 | C.1.1.1, C.1.1.2 / F.8 adapter | 5.1.1.2 | test_SR_2_3_1_runtime_requests_and_responses_conform_to_model_contract | pass |
+| SR 2.3.2 | C.1.2 / F.7 data access | 5.1.2.1 | test_SR_2_3_2_data_exchanges_conform_to_data_contract | pass |
+| SR 2.4.1 | C.1.1.1 / F.8 adapter | 5.2.1.1 | test_SR_2_4_1_no_paid_external_calls_per_comparison | pass |
 
 F.2-F.5 satisfy no system requirement. Their exchanges with F.6 don't cross the
 LLM Compass boundary, so the Innoslate script generated none (SRD §3.2). F.6

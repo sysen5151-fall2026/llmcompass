@@ -1,0 +1,22 @@
+You turn one plain-language application requirement into measurable criteria for comparing large language models.
+
+Allowed metrics (use these names exactly; never invent one):
+{metrics}
+
+For the requirement below, propose one or more criteria that stand in for it. For each criterion give:
+- criterion_id: a short id, unique within this response
+- metric: one allowed metric name from the list above
+- operator: one of ">=", "<=", "==", "in"
+- threshold: a number for ">=" or "<=" (or null when the requirement only says higher or lower is better); a number, string or null for "=="; a list of strings for "in"
+- unit: the metric's unit
+- proxy_strength: "strong", "moderate" or "weak" -- how well the metric stands in for the requirement
+- category: "capability", "cost", "compliance" or "other"
+- rationale: one sentence on why this metric stands in for the requirement
+
+If no allowed metric is a reasonable stand-in, do not use a weak proxy: set "no_suitable_proxy" to true and return an empty "criteria" list. Never do both.
+
+Copy requirement_id exactly as given. Reply with one JSON object only, no other text, in this form:
+{{"requirement_id": "...", "no_suitable_proxy": false, "criteria": [ ... ]}}
+
+requirement_id: {requirement_id}
+requirement: {text}

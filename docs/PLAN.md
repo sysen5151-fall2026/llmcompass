@@ -860,3 +860,120 @@ Model fixes for the team (Innoslate):
 - Rename UC.1.16, and model or remove UC.1.19 Export (see the 6.4 audit).
 - Run a formal model consistency check (IDEF Model Assessment Criteria) before the
   next contract version.
+
+## Data and model adapters (Lab Manual 8.5, 2026-11-03)
+
+Built from the Design Definition: Form report (form_architecture_definition.pdf):
+first-level assets C.1.1-C.1.7 (Table 1), asset diagrams and I² (Figs. 9-12, Tables
+5-6), system-wide requirements SR 2.1.1-2.4.1 (Fig. 8, Table 4), and the runtime
+trade (Table 8: LM Studio kept as the provisional baseline). 8.5.1 prerequisites:
+- (a) subsystems mapped to subfunctions: present (Table 1, Fig. 2).
+- (b) asset diagrams: present (Figs. 9-11).
+- (c) interface definitions for the data source and the model: present (conduits in
+  Table 5; their contents are SPEC §2 and §3).
+- (d) non-functional requirements: present (SPEC §6, system-wide).
+
+Deployment view: docs/deployment.md. Storage: SQLite (ADR-0005).
+
+### Interface details the tests rely on
+
+C.8 adapter, `backend/provide_requirement_interpretation/` (F.8):
+- `propose_criteria(*, interpretation_request: dict) -> Optional[dict]`. The request
+  is SPEC §3 `{"requirement_id", "text"}`. Returns the parsed SPEC §3 response, or
+  `None` when the runtime times out, can't be reached, or returns something that
+  isn't a JSON object. Schema rules (ID match, "never both", known metrics,
+  operator/threshold) are checked by F.1.1 (`validate_interpretation`), not here.
+  F.1.1 then retries once and marks `interpretation_failed` (SR 1.3.2, SR 1.1.4).
+- `submit_requirements(request: dict) -> dict`: SPEC §4. Same request, same response
+  (5.1.1.2). It returns `{"requirement_id", "no_suitable_proxy": false, "criteria": []}`
+  when `propose_criteria` returns None, which the validator rejects.
+- `runtime_config() -> dict` with keys `base_url`, `model`, `timeout_s`,
+  `max_tokens`, `temperature`, `seed`, read from the environment (`LLM_RUNTIME_URL`,
+  `LLM_MODEL`) with the defaults in SPEC §3.
+- `propose_criteria` raises `ValueError` before sending anything if `base_url`'s host
+  isn't `localhost`, `127.0.0.1` or `::1` (SR 2.2.1, SR 2.4.1).
+
+C.7 data access, `backend/provide_benchmark_evidence/` (F.7):
+- `provide_model_data(*, data_request)` is unchanged. `BENCHMARK_SOURCE=file`
+  (default, tests) serves the stored catalog in sample_data/. `api` serves the
+  latest stored snapshot, or `[]` when there is none ("no model data available",
+  SPEC §2).
+- `refresh_model_data() -> dict`: the on-demand pull (SPEC §2). It queries the
+  sources once each, builds one SPEC §2 candidate per `model_sources.json` model,
+  drops any figure with no `source_id` or `collection_date` (recorded as a gap; the
+  schema's CHECKs also refuse one), and stores a snapshot. A pull with no usable
+  candidate is `source_unavailable` and doesn't replace the last snapshot. Returns `{"status": "ok" | "source_unavailable", "pulled_at",
+  "candidates": int, "gaps": [...]}`. On `source_unavailable` the last snapshot
+  stays the one served (SR 1.3.3).
+- Snapshots are stored in SQLite at `BENCHMARK_SNAPSHOT_DB` (default
+  `data/benchmark_snapshots.sqlite3`).
+
+C.1.7 storage, `generate_and_store_decision_record.py` (F.1.7):
+- `store_decision_record` and `retrieve_decision_record` are unchanged. Records are
+  stored in SQLite at `$DECISION_RECORD_DIR/decision_records.sqlite3`. Nothing
+  deletes a record (SR 2.1.4).
+
+### Progress (2026-11-03)
+
+- SPEC §6: SR 1.1.6-1.1.8 (report) and SR 2.1.1-2.4.1 (Form report Fig. 8, Table 4)
+  added. 2.1.6 is cut off and 2.2.1-2.4.1 aren't exported, so those statements are
+  marked *(statement not exported)*.
+- Tests first: a test writer that saw only SPEC and this interface appended 12 tests
+  (23 cases) to tests/test_system_requirements.py, with 0 lines removed. Because the
+  adapters were written at the same time, red-first holds only for the 2.2.1/2.3.1/2.4.1
+  tests' first run.
+- 8a: docs/deployment.md.
+- 8b: SQLite (ADR-0005). F.1.7 records are in `decision_records.sqlite3`
+  (decision_record_schema.sql), and F.7 snapshots in `benchmark_snapshots.sqlite3`
+  (snapshot_schema.sql). The figure table's CHECK rejects a missing source or an
+  invalid date. A test found that `date(x) = x` lets an invalid date through (NULL), so
+  it became `IS`.
+- 8c: F.7 api mode, `refresh_model_data()` and `python3 -m provide_benchmark_evidence
+  refresh`. The field paths are in sample_data/source_fields.json. models.dev
+  `limit.context` (14/14) and OpenRouter `context_length` (13/14) were checked live.
+  tests/test_data_access_component.py runs a full pull against local fake sources.
+- 8d: F.8 adapter for LM Studio (Bionic), Qwen2.5 7B Instruct, specified in SPEC §3
+  "Adapter". It was measured on the 4 scenarios (slowest 36.3 s, largest reply 165
+  tokens), giving a timeout of 110 s and `max_tokens` 512, both provisional. All 8
+  measured replies were valid.
+- Stubs replaced one at a time, with the suite run after each:
+  - The record store, then F.7, then F.8.
+  - `submit_requirements` is now the SPEC §4 live call, and the 4 5.1.1.2
+    reference-set tests pass against LM Studio.
+  - The walking-skeleton UI keeps the stored interpretation through
+    `scenario_interpretation` (STUB), because its confirm step is still a stub
+    (SR 1.3.1).
+- Suite: 122 passed, 13 failed (was 93 / 15). No test that passed before fails.
+
+### Open items (8.5)
+
+- Couldn't finish here:
+  - **Live Artificial Analysis pull.** `.env` has no key, so `refresh_model_data`
+    returns `source_unavailable` and the snapshot fallback stays.
+  - The AA price and latency paths in `source_fields.json` follow the API docs and
+    are not yet checked against a real response.
+  - SR 1.2.1 and 2.1.1 stay red in file mode (3 models) until a pull is stored and
+    the app runs with `BENCHMARK_SOURCE=api`.
+- CI has no LM Studio, so the 4 5.1.1.2 reference-set tests pass locally but stay red
+  in CI. The team should decide whether to mark them live-runtime tests or keep them
+  red.
+- The UI doesn't call the F.1 ICOM defs yet (SR 1.3.1, UC.1.9 confirm step). That is
+  the Milestone 2 demo work after Ch 9.
+- Not resolved, per the team: the SR 2.1.6 restricted term list, and the 5.1.5.1
+  strict-xfail XPASS.
+- Team call (SPEC §2 is silent): a model missing from one Artificial Analysis response
+  is left out of that pull rather than carried over from the last snapshot.
+- Old JSON decision records under data/decision_records/ (from before ADR-0005) aren't
+  read by the SQLite store. None exist on this machine, and other team machines may
+  need a one-off import.
+- Needs a team member or Innoslate:
+  - export the SR 2.1.6 and 2.2.1-2.4.1 statements
+  - set SR 1.3.2's MOP target from the measurements
+  - Form report Table 7's storage row changes to SQLite (ADR-0005)
+  - the timed walkthroughs (SR 2.1.1, 2.1.2, 1.3.1, 1.4.1)
+  - what record a hard-constraint-only scenario (SCENARIO_04) produces. SR 1.2.2's
+    "weights" section is empty there, and `record_decision` refuses it.
+- Finding for the model: the SPEC §3 request carries only `requirement_id` and
+  `text`, so the adapter gives the runtime the allowed metrics from
+  `benchmark_map.json` and the SPEC §2 fields. The known metrics list reaches C.8
+  without an IDEF0 arrow.

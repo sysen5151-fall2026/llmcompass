@@ -27,6 +27,10 @@ GET  /static/<filename> -- ORPHAN, deleted. Flask registers it by default. There
   case. The read-only enumeration missed it. The independent verification found it
   in app.url_map. Removed with Flask(__name__, static_folder=None); the page's CSS
   is inline.
+python3 -m provide_benchmark_evidence refresh (from backend/) -- UC.1.10/UC.1.11
+  (SR 1.2.1, SR 1.3.3). Added 2026-11-03 (Lab Manual 8.5): the operator's on-demand
+  pull (SPEC §2 "Refresh"). backend/provide_benchmark_evidence/__main__.py. It stores
+  a snapshot; the app serves it when BENCHMARK_SOURCE=api.
 ```
 
 Found: 4 entry points. 1 was an orphan and was deleted, so 3 remain, all tracing to

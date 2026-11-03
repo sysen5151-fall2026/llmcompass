@@ -9,7 +9,8 @@ import json
 
 from flask import Flask, render_template, request
 
-from provide_requirement_interpretation import submit_requirements
+# STUB path: the UI still shows the stored interpretation (SR 1.3.1 open; docs/route-table.md)
+from provide_requirement_interpretation import scenario_interpretation
 from provide_llm_selection_decision_support import (
     receive_requirements,
     present_mapping_for_review,
@@ -26,7 +27,7 @@ app = Flask(__name__, static_folder=None)
 
 def run_uc1(text: str) -> dict:
     requirements = receive_requirements(text)                                       # 1  UC.1.2
-    interpretation = submit_requirements(requirements)                              # 2, 3  UC.1.3, UC.1.4
+    interpretation = scenario_interpretation(requirements)                          # 2, 3  UC.1.3, UC.1.4
     mapping = present_mapping_for_review(interpretation)                            # 4  UC.1.6
     confirmed = confirm_mapping(mapping)                                            # 5  UC.1.9
     model_data = request_model_data(confirmed)                                      # 6, 7  UC.1.10, UC.1.11

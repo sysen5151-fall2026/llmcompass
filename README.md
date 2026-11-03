@@ -251,8 +251,8 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── define_compliance_constraints/  # F.4 (docstring only: no system requirement)
 │   ├── define_product_needs_and_priorities/  # F.5 (docstring only: no system requirement)
 │   ├── provide_technical_decision_oversight/  # F.6 (stub, signatures only)
-│   ├── provide_requirement_interpretation/  # F.8, C.8 (stub, returns interpreted_requirements from sample_data)
-│   ├── provide_benchmark_evidence/  # F.7, C.7 (stored catalog from sample_data in the SPEC §2 figure shape; no live source yet)
+│   ├── provide_requirement_interpretation/  # F.8, C.8 adapter: LM Studio on localhost (Lab Manual 8.5); the UI path still uses the stored interpretation
+│   ├── provide_benchmark_evidence/  # F.7, C.7 data access: stored catalog (file mode) or the on-demand pull's SQLite snapshot (api mode)
 │   └── requirements.txt       # Python deps for the planned backend
 ├── sample_data/               # 4 UC.1 scenarios (user_inputs, expected_outputs, scenario_criteria) and model data
 ├── hello.txt                  # initial pipeline smoke test
@@ -271,11 +271,12 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── walking-skeleton.md    # UC.1 call path from the Innoslate sequence diagram
 │   ├── traceability.md        # function -> module, and requirement -> need -> test
 │   ├── route-table.md         # every entry point mapped to its use case (Lab Manual 6.4 audit)
+│   ├── deployment.md          # what runs where and what talks to what (Lab Manual 8.5)
 │   ├── PLAN.md
 │   ├── environment.md
 │   ├── prompt-log.md
 │   ├── validation/walkthroughs.csv  # timed runs for the operator-effort requirements
-│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced
+│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced; 0005 SQLite
 └── README.md
 ```
 
