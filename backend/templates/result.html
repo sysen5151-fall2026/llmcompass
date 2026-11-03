@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+  {# UC.1.16 Present ranking and sensitivity finding; UC.1.18 Generate decision record #}
+  <p class="steps">Step 3 of 3 — ranking from the confirmed mapping.</p>
+
+  <section>
+    <h2>Confirmed mapping</h2>
+    <div class="scroll"><table>
+      <tr><th>Requirement</th><th>Metric</th><th>Operator</th><th>Threshold</th><th>Hard / weighted</th><th>Weight</th></tr>
+      {% for c in confirmed %}
+      <tr><td>{{ c.requirement_id }}</td><td>{{ c.metric }}</td><td>{{ c.operator }}</td>
+          <td>{{ (c.threshold | join(", ")) if c.threshold is iterable and c.threshold is not string else c.threshold }}</td>
+          <td>{{ c.designation }}</td><td>{{ c.weight if c.designation == "weighted" else "" }}</td></tr>
+      {% endfor %}
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Ranking</h2>
+    {% if presented.score_breakdown %}
+    <div class="scroll"><table>
+      <tr><th>#</th><th>Model</th><th>Score</th><th>Contributions</th><th>Missing data</th></tr>
+      {% for s in presented.score_breakdown %}
+      <tr><td>{{ loop.index }}</td><td>{{ s.model_id }}</td><td>{{ "%.3f" | format(s.score) }}</td>
+          <td>{% for cid, v in s.contributions.items() %}{{ cid }}: {{ "%.3f" | format(v) }}{% if not loop.last %}; {% endif %}{% endfor %}</td>
+          <td>{{ s.missing_data | join(", ") if s.missing_data else "" }}</td></tr>
+      {% endfor %}
+    </table></div>
+    {% else %}
+      <p class="none">No candidate met every hard constraint.</p>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Excluded</h2>
+    {% if presented.excluded %}
+    <ul>{% for e in presented.excluded %}<li>{{ e.model_id }}: {{ e.failed_constraints | join(", ") }}</li>{% endfor %}</ul>
+    {% else %}<p class="none">None</p>{% endif %}
+  </section>
+
+  <section>
+    <h2>Sensitivity</h2>
+    {% if presented.unstable_pairs %}
+    <ul>{% for p in presented.unstable_pairs %}<li>{{ p | join(" / ") }} can swap under a ±10% weight change</li>{% endfor %}</ul>
+    {% else %}<p>The order does not change under any single ±10% weight change.</p>{% endif %}
+  </section>
+
+  <section>
+    <h2>Decision record</h2>
+    {% if record %}
+      <p>Record ID: <strong>{{ record.record_id }}</strong> (stored; no model selected yet)</p>
+    {% else %}
+      <div class="error">Not stored: {{ record_error }}</div>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Evidence</h2>
+    <div class="scroll"><table>
+      <tr><th>Model</th><th>Metric</th><th>Value</th><th>Source</th><th>Date</th><th>Stale</th></tr>
+      {% for e in presented.evidence %}
+      <tr><td>{{ e.model_id }}</td><td>{{ e.metric }}</td><td>{{ e.value | join(", ") if e.value is iterable and e.value is not string else e.value }} {{ e.unit }}</td>
+          <td>{% if e.source_id.startswith("http") %}<a class="url" href="{{ e.source_id }}">{{ e.source_id }}</a>{% else %}{{ e.source_id }}{% endif %}</td>
+          <td>{{ e.collection_date }}</td><td>{{ "stale" if e.stale else "" }}</td></tr>
+      {% endfor %}
+    </table></div>
+  </section>
+
+  <p class="hint"><a href="/">New comparison</a></p>
+{% endblock %}

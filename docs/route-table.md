@@ -15,10 +15,16 @@ The model is from SYSEN5151_ArchitectureDefinitionReport.pdf:
 
 ```
 GET  /                -- UC.1 (Technical Lead selects a model). Shows the
-  requirements form: the start of UC.1.1/UC.1.2. backend/app.py:47 index()
-POST /                -- UC.1. Runs UC.1.2 -> UC.1.18 in one request through
-  run_uc1() (backend/app.py:27) and shows the decision record. Triggered by the
-  form and its Submit button (backend/templates/index.html:29-32).
+  requirements form: the start of UC.1.1/UC.1.2. backend/app.py index()
+POST /                -- UC.1.2-UC.1.6. Changed 2026-11-03 (Milestone 2 wiring): the
+  stated requirements go to C.1.1 (propose_mapping: C.1.1.1 -> F.8 adapter -> LM Studio
+  -> C.1.1.2, re-sent once on retry -> C.1.1.3) and the mapping review page is shown
+  (backend/templates/review.html). Was: UC.1.2 -> UC.1.18 in one request through
+  run_uc1(), which stays as the walking-skeleton path for its tests only.
+POST /confirm         -- UC.1.9 Confirm the mapping (with UC.1.7 review/amend and UC.1.8
+  weights). Added 2026-11-03. Triggered by the review page's Confirm button. C.1.1.4
+  distribute_confirmed_mapping -> F.1.2 -> F.7 -> F.1.3-F.1.6 -> F.1.7 stores the record;
+  shows the result page (backend/templates/result.html). SR 1.3.1, CR 1.1.1, CR 1.3.6.
 python3 backend/app.py -- UC.1. Starts mechanism C.1's web server, which is how the
   Technical Lead reaches GET /. Was app.run(debug=True). The Werkzeug interactive
   debugger traces to no requirement, so the team turned it off: now app.run().
@@ -34,7 +40,8 @@ python3 -m provide_benchmark_evidence refresh (from backend/) -- UC.1.10/UC.1.11
 ```
 
 Found: 4 entry points. 1 was an orphan and was deleted, so 3 remain, all tracing to
-UC.1. **Orphans remaining: 0.** `app.url_map` now holds only `/`. Neither pass found
+UC.1 (2026-10-28). POST /confirm (UC.1.9) and the refresh CLI were added on 2026-11-03.
+**Orphans remaining: 0.** `app.url_map` holds `/` and `/confirm`. Neither pass found
 any other route, error handler, request hook, `__main__` block, CLI parser, script,
 or live call to an external system.
 
@@ -50,16 +57,16 @@ Sequence diagram, Fig. 6 (p13). "Step" is the call in `run_uc1`.
 
 | # | Interaction | From -> To | Served by | Status |
 |---|---|---|---|---|
-| UC.1.2 | Technical Lead enters requirements and constraints | Technical Lead -> LLM Compass | POST / (`receive_requirements`) | Implemented |
-| UC.1.3 | Submit requirements for interpretation | LLM Compass -> Language model runtime | POST / (`submit_requirements`) | STUB: Language model runtime (F.8) |
-| UC.1.4 | Interpret requirements and propose criteria | Language model runtime -> LLM Compass | POST / (`submit_requirements`) | STUB: Language model runtime (F.8) |
-| UC.1.6 | Present proposed mapping for review | LLM Compass -> Technical Lead | POST / (`present_mapping_for_review`) | Shown on the result page, not as a separate review step |
-| UC.1.9 | Confirm the mapping | Technical Lead -> LLM Compass | none: `confirm_mapping` reads `sample_data/scenario_criteria.json` | **Planned** (SR 1.3.1). It needs its own Technical Lead entry point. UC.1.7 (review/amend) and UC.1.8 (assign weights) belong to the same step. |
-| UC.1.10 | Request model data | LLM Compass -> Benchmark Data Sources | POST / (`request_model_data`, F.7) | STUB: Benchmark Data Sources (stored catalog) |
-| UC.1.11 | Retrieve model specification and benchmark data | Benchmark Data Sources -> LLM Compass | POST / (`request_model_data`, F.7) | STUB: Benchmark Data Sources (stored catalog) |
-| UC.1.16 | Present sensitivity finding | LLM Compass -> Technical Lead | POST / (`present_sensitivity_finding`) | Partial. Ranking and sensitivity are computed; candidate assessment and tradeoffs are still the scenario's expected output. |
+| UC.1.2 | Technical Lead enters requirements and constraints | Technical Lead -> LLM Compass | POST / (`propose_mapping` → C.1.1.1 `request_interpretation`) | Implemented |
+| UC.1.3 | Submit requirements for interpretation | LLM Compass -> Language model runtime | POST / (C.1.1.1 `send_interpretation_request` -> F.8 adapter) | Implemented (LM Studio, local) |
+| UC.1.4 | Interpret requirements and propose criteria | Language model runtime -> LLM Compass | POST / (C.1.1.2 `validate_proposed_criteria`) | Implemented; invalid reply re-sent once, then interpretation_failed |
+| UC.1.6 | Present proposed mapping for review | LLM Compass -> Technical Lead | POST / (C.1.1.3 `present_criteria_mapping`, review page) | Implemented |
+| UC.1.9 | Confirm the mapping | Technical Lead -> LLM Compass | POST /confirm (C.1.1.4 `distribute_confirmed_mapping`) | Implemented 2026-11-03, with UC.1.7 (keep/remove/edit/add) and UC.1.8 (hard/weighted, weights) |
+| UC.1.10 | Request model data | LLM Compass -> Benchmark Data Sources | POST /confirm (F.1.2 `request_model_data` -> F.7 `provide_model_data`) | Implemented (BENCHMARK_SOURCE=api: live snapshot; file: stored catalog) |
+| UC.1.11 | Retrieve model specification and benchmark data | Benchmark Data Sources -> LLM Compass | POST /confirm (F.1.2 `receive_model_data`) | Implemented |
+| UC.1.16 | Present sensitivity finding | LLM Compass -> Technical Lead | POST /confirm (F.1.3-F.1.6, result page) | Implemented: ranking, contributions, exclusions, unstable pairs, sourced evidence |
 | UC.1.17 | Review recommendation and select a model | Technical Lead -> LLM Compass | none: `select_model` takes the scenario's expected recommendation | **Planned** (SR 1.3.1). It needs its own Technical Lead entry point. |
-| UC.1.18 | Generate decision record | LLM Compass -> Technical Lead | POST / (`generate_decision_record`) | Partial. The six sections are built and shown, the narrative is a STUB, and the web path doesn't store the record (F.1.7 isn't on the UI path yet). |
+| UC.1.18 | Generate decision record | LLM Compass -> Technical Lead | POST /confirm (F.1.7 `generate_and_store_decision_record`) | Implemented: stored in SQLite, record_id shown; no selection yet (UC.1.17). A mapping with no weighted criterion is rejected (A27, D-23). |
 
 UC.1.1, 1.5, 1.7, 1.8, 1.12-1.15 and 1.19 are on the action diagram (Fig. 5, p12)
 but not on the sequence diagram. UC.1.5 and 1.12-1.15 are internal to LLM Compass,
@@ -79,16 +86,16 @@ so they need no entry point.
 | | Model (report) | Application |
 |---|---|---|
 | Use cases | 1 (UC.1) | 1 (UC.1). Every entry point traces to it. |
-| Entry points | n/a | 4 found. 1 orphan (/static) deleted, 3 remain (GET /, POST /, launcher), all to UC.1. |
-| Technical Lead -> LLM Compass interactions | 3 (UC.1.2, 1.9, 1.17) | 1 has an entry point (UC.1.2). 1.9 and 1.17 are stubs inside POST /: planned. |
-| LLM Compass -> Technical Lead interactions | 3 (UC.1.6, 1.16, 1.18) | 3, all on the POST / result page |
-| Interactions with external systems | 4 (UC.1.3, 1.4, 1.10, 1.11) | 4, all stubs (F.8, F.7) |
-| Entry point -> use case traces | | 3 |
+| Entry points | n/a | 2026-10-28: 4 found, 1 orphan (/static) deleted. 2026-11-03: 5 (GET /, POST /, POST /confirm, launcher, refresh CLI), all to UC.1. |
+| Technical Lead -> LLM Compass interactions | 3 (UC.1.2, 1.9, 1.17) | 2 have an entry point (UC.1.2 POST /, UC.1.9 POST /confirm, 2026-11-03). 1.17 is planned. |
+| LLM Compass -> Technical Lead interactions | 3 (UC.1.6, 1.16, 1.18) | 3: UC.1.6 on the review page (POST /), UC.1.16 and 1.18 on the result page (POST /confirm) |
+| Interactions with external systems | 4 (UC.1.3, 1.4, 1.10, 1.11) | 4, all real on the web path since 2026-11-03 (F.8 LM Studio, F.7 snapshot or catalog) |
+| Entry point -> use case traces | | 5 |
 
 The model and the application agree on use cases (1 = 1) and have no orphans in
-either direction. They disagree on one thing: the application compresses UC.1 into a
-single request, so two of the three Technical Lead actions have no entry point yet.
-That gap is recorded as planned, and SR 1.3.1 stays red until it closes.
+either direction. Since 2026-11-03 one Technical Lead action is still without an entry
+point: UC.1.17 (select a model), recorded as planned. SR 1.3.1 also needs a logged
+walkthrough, so it stays red until both are done.
 
 ## Other findings from the enumeration
 
@@ -97,8 +104,8 @@ These are not entry points, and nothing here was changed in this audit.
 - **Input that matches no sample scenario returns HTTP 500.** The F.8 stub raises
   `StopIteration` (`provide_requirement_interpretation/__init__.py:15`). This was
   already known (docs/PLAN.md), and the real F.8 replaces it.
-- **The result page shows a "Raw JSON" block** (`index.html:68-71`). It is the same
-  decision record as UC.1.18, in a different form. It isn't an entry point.
+- **The result page showed a "Raw JSON" block** (old `index.html`). Removed 2026-11-03 with
+  the walking-skeleton record view; the result page now lists the record ID.
 - **The F.1 ICOM defs are reached only from tests.** Those defs are
   `request_benchmark_evidence`, `present_ranking_and_sensitivity` and
   `record_decision`, and F.1.1-F.1.7 through them. F.7's `provide_model_data` is
@@ -127,3 +134,10 @@ These are not entry points, and nothing here was changed in this audit.
 - Add a decision-reuse use case for 5.1.5.1 and 5.1.5.2.
 - Rename UC.1.16 to "Present ranking and sensitivity finding" (report p16), so the
   interaction matches the output it carries.
+
+## Milestone 2 wiring (2026-11-03)
+
+POST / now starts F.1.1 live and POST /confirm is the UC.1.9 entry point. `app.url_map` holds `/`
+and `/confirm`. Typed text that matches no sample scenario no longer returns HTTP 500 on the web
+path (it went through the F.8 stub before). UC.1.17 (select a model) is still planned: records are
+stored with no selection (A22).

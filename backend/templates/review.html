@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+  {# UC.1.6 Present proposed mapping for review -> UC.1.9 Confirm (CR 1.2.4, CR 1.4.3, CR 1.3.6, CR 2.1.1) #}
+  <p class="steps">Step 2 of 3 — review the proposed criteria. Keep, edit or remove each one, set hard or
+    weighted and the weights, add any criterion the model missed, then confirm.</p>
+
+  {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+  <form method="post" action="/confirm">
+    <input type="hidden" name="pending" value="{{ pending }}">
+    {% set ns = namespace(n=0) %}
+    {% for entry in presented.requirements %}
+      {% set k = loop.index0 %}
+      <div class="req">
+        <p><strong>{{ entry.requirement_id }}</strong> — {{ entry.requirement }}
+          {% if entry.status == "interpretation_failed" %}
+            <span class="status failed">interpretation_failed</span>
+          {% else %}
+            <span class="status">proposed</span>{% if entry.no_suitable_proxy %} (no suitable proxy){% endif %}
+          {% endif %}
+        </p>
+
+        {% if entry.status == "interpretation_failed" %}
+          <p class="hint">The language model did not return valid criteria twice, so none were made up.
+            Enter the criteria for this requirement by hand below.</p>
+        {% elif entry.no_suitable_proxy %}
+          <p class="hint">The model found no metric that stands in for this requirement. Add one by hand if you know one.</p>
+        {% endif %}
+
+        {% if entry.criteria %}
+        <div class="scroll"><table>
+          <tr><th>Keep</th><th>Metric</th><th>Operator</th><th>Threshold</th><th>Unit</th>
+              <th>Proxy strength</th><th>Category</th><th>Hard / weighted</th><th>Weight</th><th>Rationale</th></tr>
+          {% for c in entry.criteria %}
+            {% set n = ns.n %}
+            {% set d = default_designation(c) %}
+            <tr>
+              <td><input type="checkbox" name="keep_{{ n }}" checked aria-label="keep {{ c.criterion_id }}"></td>
+              <td>{{ c.metric }}</td>
+              <td>{{ c.operator }}</td>
+              <td><input type="text" class="num" name="threshold_{{ n }}" value="{{ show_threshold(c.threshold) }}"></td>
+              <td>{{ c.unit }}</td>
+              <td><strong>{{ c.proxy_strength }}</strong></td>
+              <td>{{ c.category }}</td>
+              <td><select name="designation_{{ n }}">
+                    <option value="weighted" {% if d == "weighted" %}selected{% endif %}>weighted</option>
+                    <option value="hard" {% if d == "hard" %}selected{% endif %}>hard</option>
+                  </select></td>
+              <td><input type="number" step="any" min="0" class="num" name="weight_{{ n }}" value="1"></td>
+              <td class="rationale">{{ c.rationale }}</td>
+            </tr>
+            {% set ns.n = ns.n + 1 %}
+          {% endfor %}
+        </table></div>
+        {% endif %}
+
+        <h3>Add a criterion for {{ entry.requirement_id }}</h3>
+        <div class="scroll"><table>
+          <tr><th>Metric</th><th>Operator</th><th>Threshold</th><th>Unit</th><th>Hard / weighted</th><th>Weight</th></tr>
+          <tr>
+            <td><select name="new_{{ k }}_metric">
+                  <option value="">—</option>
+                  {% for m in known_metrics %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+                </select></td>
+            <td><select name="new_{{ k }}_operator">
+                  {% for op in [">=", "<=", "==", "in"] %}<option value="{{ op }}">{{ op }}</option>{% endfor %}
+                </select></td>
+            <td><input type="text" class="num" name="new_{{ k }}_threshold" placeholder="e.g. 128000 or US, EU"></td>
+            <td><input type="text" class="num" name="new_{{ k }}_unit"></td>
+            <td><select name="new_{{ k }}_designation">
+                  <option value="weighted">weighted</option><option value="hard">hard</option>
+                </select></td>
+            <td><input type="number" step="any" min="0" class="num" name="new_{{ k }}_weight" value="1"></td>
+          </tr>
+        </table></div>
+      </div>
+    {% endfor %}
+    <button type="submit">Confirm mapping</button>
+  </form>
+  <p class="hint"><a href="/">Start again</a></p>
+{% endblock %}

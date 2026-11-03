@@ -61,7 +61,7 @@ shown in the second column. "Status" is the state of the test in this build (202
 | SR 1.2.3 | F.1 `request_interpretation`; F.8 | 5.1.1.2 | SN-TL-01 | test_SR_1_2_3_one_request_per_requirement_with_id_and_unaltered_text | pass |
 | SR 1.2.4 | F.1 `present_criteria_mapping`; F.6 | 5.1.1.3 | SN-TL-01 | test_SR_1_2_4_presented_criterion_shows_requirement_and_strength | pass |
 | SR 1.2.5 | F.1 `present_ranking_and_sensitivity`; F.6 | 5.1.3.1, 5.1.4.1 | SN-TL-04, SN-TL-05, SN-PO-05 | test_SR_1_2_5_contributions_and_unstable_pairs_match_known_answer | pass |
-| SR 1.3.1 | F.1 web interface (C.1-C.6 conduit) | 5.1.1.1 | SN-TL-01 | test_SR_1_3_1_uc1_walkthrough_through_interface_logged | fail: no full_comparison walkthrough logged; web confirm/select steps pending |
+| SR 1.3.1 | F.1 web interface (C.1-C.6 conduit) | 5.1.1.1 | SN-TL-01 | test_SR_1_3_1_uc1_walkthrough_through_interface_logged | fail: no full_comparison walkthrough logged; web review/confirm built 2026-11-03 (tests/test_mapping_review_ui.py), select (UC.1.17) pending |
 | SR 1.3.2 | F.1 <-> F.8 conduit; F.8 `propose_criteria` (LM Studio adapter, Lab Manual 8.5) | 5.1.1.2 | SN-TL-01 | test_SR_1_3_2_model_contract_conformance_and_timeout_as_invalid | pass |
 | SR 1.3.3 | F.1 <-> F.7 conduit; F.7 `provide_model_data`, `refresh_model_data` (snapshot fallback) | 5.1.2.1 | SN-TL-02 | test_SR_1_3_3_data_contract_and_stored_figures_shown_dated_and_flagged; tests/test_data_access_component.py | pass |
 | SR 1.4.1 | F.1 (whole) | all | all | test_SR_1_4_1_full_comparison_walkthrough_within_30_minutes | fail: no walkthrough logged; catalog < 10 |
@@ -135,6 +135,13 @@ C.1.1.4 imports C.1.1.2's known-metrics and threshold helpers (deviation log D-2
 | CR 2.2.1 | C.1.1.1 / F.8 runtime_config | test_CR_2_2_1_runtime_configuration_points_to_local_host | pass |
 | CR 2.3.1 | C.1.1.1, C.1.1.2 | test_CR_2_3_1_only_model_contract_responses_accepted<br>test_CR_2_3_1_requests_and_accepted_responses_conform | pass |
 | CR 2.4.1 | C.1.1.1 / F.8 | test_CR_2_4_1_configuration_and_run_show_no_paid_calls | pass |
+
+### Web UI (Milestone 2 wiring, 2026-11-03)
+
+| Route | Traces | Test file | Status |
+|---|---|---|---|
+| POST / → review page | UC.1.2–UC.1.6; SR 1.3.1, SR 1.1.5, CR 1.2.4, CR 1.3.6, CR 1.4.3; SPEC 3 failure path | tests/test_mapping_review_ui.py | pass (fake runtime; live SCENARIO_02 checked by hand and by the verifier) |
+| POST /confirm → result page | UC.1.7–UC.1.9, UC.1.10–UC.1.18; CR 1.1.1, CR 1.1.2, CR 1.4.4, CR 2.1.2; A27 | tests/test_mapping_review_ui.py | pass |
 
 F.2-F.5 satisfy no system requirement. Their exchanges with F.6 don't cross the
 LLM Compass boundary, so the Innoslate script generated none (SRD §3.2). F.6

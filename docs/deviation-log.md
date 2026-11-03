@@ -74,6 +74,9 @@ contract/SPEC**.
 | D-23 | `distribute_confirmed_mapping.py:41-42, 54-55, 69-73` | ConfirmedCriteriaMapping has no `minItems`. A27: F.1.7 **rejects** a record whose `criteria_mapping` or `weights` is empty (ValueError / 422). CR 1.2.1 is verified by "I: exported record per scenario". | Accepts an empty confirmed mapping (all outflows empty, `weights: {}`). It also accepts a hard-only mapping, which gives `weights: {}`. SCENARIO_04 (EU residency, a hard constraint only) therefore produces a decision basis that F.1.7 must reject, so no record can exist for CR 1.2.1. | The contract does not say whether an empty or hard-only mapping is valid, and A27 conflicts with hard-only scenarios (generator assumption 11; the test writer reported the same gap). | spec defect | **Fix SPEC/contract**: (a) the distributor rejects an empty mapping (add to the 422); (b) the team decides whether a hard-only mapping yields a record (relax A27 / SR 1.2.2 for `weights`). Promote (Innoslate items 16, 17). |
 | D-24 | `distribute_confirmed_mapping.py:43-48, 69-70` | Contract: C.1.1.4 splits the mapping "with the requirement set". Criterion.requirement_id is "The stated requirement this criterion stands for". No rule ties the two together. | The requirement set is used only to build `decision_basis.requirements`. A criterion's `requirement_id` is not checked against the set, so the basis can reference requirements that are not in it. | The distributor's use of the requirement set is unspecified (generator assumption 11). | spec defect | **Fix contract**: state that a criterion carrying a `requirement_id` must name a requirement in the set (hand-added criteria may omit it). Then fix the code. Promote (Innoslate item 18). |
 | D-25 | `request_interpretation.py:51-76`; `validate_proposed_criteria.py:142-150` | SPEC 3: "retry once. If it fails again, mark the requirement interpretation_failed". A31: "Which element re-sends the request after a retry status is not fixed by the model." | No C.1.1 component re-sends. The validator only returns `status: retry`, and the re-send is left to the (out-of-scope) first-level composition. | The model does not allocate the re-send (generator assumption 2). | spec defect | **Fix model**: allocate the re-send to C.1.1.1, the only component that talks to the runtime (SPEC 7). Then add it to the code with the D-05 contract operation. Promote (Innoslate item 7). |
+| D-26 (verifier) | `distribute_confirmed_mapping.py:11-29` | The Criterion schema gives `proxy_strength` and `category` enums. The distributeConfirmedMapping 422 list does not name them. | Accepts any `proxy_strength` / `category` on a confirmed criterion (probe: "bogus" accepted). | The 422 list names only designation, weight and metric; the schema's enums are not stated as a rejection rule. | spec defect | Keep; promote (Innoslate item 20). The web UI now leaves both out for hand-added criteria instead of inventing them. |
+| D-27 (verifier) | `distribute_confirmed_mapping.py:28`; `validate_proposed_criteria.py:34-35` | Weights: number, minimum 0 (A20). Thresholds: number per SPEC 3. | NaN and inf pass `weight < 0` and the number checks; a NaN weight later fails in F.1.7's `json_valid` CHECK (HTTP 500 on the web path). | "Number" was not said to be finite; JSON has no NaN, so the spec never needed to. | spec defect | Web UI rejects non-finite weights and thresholds before C.1.1.4 (app.py). Promote (Innoslate item 21). |
+| D-28 (verifier) | `validate_proposed_criteria.py:48-55`; `distribute_confirmed_mapping.py:43-48` | RequirementSet items need a non-empty requirement_id; nothing says unique. | Duplicate requirement_ids in a requirement set are accepted. | Uniqueness was implied by "an identifier to each stated requirement" but not stated. | spec defect | Keep (C.1.1.1 never makes duplicates); promote (Innoslate item 22). |
 
 ### Checked and not deviations
 
@@ -131,6 +134,9 @@ Items 4, 16 and 17 depend on a team decision noted in the item.
 17. (under CR 1.2.1; D-23, team decision) The Criteria Mapper shall provide a decision basis for a confirmed mapping that has hard constraints only, with empty weights. (SR 1.2.2 and A27 must then allow empty weights. Otherwise replace this with "shall reject a confirmed mapping with no weighted criterion".)
 18. (under CR 1.1.1; D-24) The Criteria Mapper shall reject a confirmed criterion whose requirement_id, when given, is not in the requirement set.
 19. (under CR 1.2.4, CR 1.3.6, CR 1.4.3, CR 2.1.1, verification method; T-3) The Criteria Mapper's mapping review shall be demonstrated by walkthroughs logged in docs/validation/walkthroughs.csv with scenario `mapping_review:<scenario_id>`, one per sample scenario.
+20. (under CR 1.1.1; D-26) The Criteria Mapper shall reject a confirmed criterion whose proxy_strength or category, when given, is not one of the model contract's values.
+21. (under CR 1.1.1; D-27) The Criteria Mapper shall reject a confirmed criterion whose weight or numeric threshold is not a finite number.
+22. (under CR 1.4.1; D-28) The Criteria Mapper shall give every stated requirement in one comparison a different identifier.
 
 The contract-only fixes (T-1, T-2, T-7, and the 422 additions in D-17 and D-22) go in
 `contracts/api-v1.yaml`, not in Innoslate.
@@ -139,10 +145,10 @@ The contract-only fixes (T-1, T-2, T-7, and the 422 additions in D-17 and D-22) 
 
 | Class | Count | Rows |
 |---|---|---|
-| spec defect | 15 | D-01, D-03, D-04, D-08, D-09, D-10, D-11, D-12, D-16, D-17, D-18, D-21, D-23, D-24, D-25 |
+| spec defect | 18 | D-01, D-03, D-04, D-08, D-09, D-10, D-11, D-12, D-16, D-17, D-18, D-21, D-23, D-24, D-25, D-26, D-27, D-28 |
 | assistant error | 4 | D-07, D-14, D-15, D-19 |
 | unrequested addition | 6 | D-02, D-05, D-06, D-13, D-20, D-22 |
-| **Total** | **25** | Plus T-1–T-7 in the spec-defect subsection: T-1–T-3 are contract/SPEC-only, T-4–T-6 repeat D-04, D-16 and D-23, and T-7 was found by the auditor |
+| **Total** | **28** | Plus T-1–T-7 in the spec-defect subsection: T-1–T-3 are contract/SPEC-only, T-4–T-6 repeat D-04, D-16 and D-23, and T-7 was found by the auditor |
 
 ## Reconciliation (main session, 2026-11-03)
 
@@ -168,3 +174,14 @@ Each row was reviewed. What was done, by row (the raw code stays on `ch9-raw-gen
 After the reconcile: the CR tests give 103 passed, 16 failed (the walkthrough demonstrations only);
 the 11 regression tests pass (and fail on the raw commit); the existing suite is unchanged against
 the baseline; `check_conformance.py` and `generate_stubs.py --check` pass.
+
+### Found by the independent verifier (2026-11-03)
+
+The verifier spot-checked 14 rows against `3be0122` (all accurate) and confirmed the raw → current
+diff is exactly D-02, D-07, D-14, D-15, D-17, D-19. It found three differences the audit missed,
+added above as D-26–D-28 (Innoslate items 20–22). It also noted that the D-09 containment holds
+only for one request at a time: the dev server now runs with `threaded=False` (app.py), and the
+proper fix stays the contract change in Innoslate item 8. On the raw branch the CR tests were
+committed (7d2c088) after the generation commit (3be0122); that they were written first is shown
+by the unchanged hash and the order of work in prompts/2026-11-03-criteria-mapper-component.md,
+not by git.

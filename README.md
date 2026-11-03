@@ -243,8 +243,8 @@ See the team's Toolset Justification doc for full rationale.
 ├── .github/workflows/ci.yml   # runs every test with pytest + Flask; red while any requirement is unmet
 ├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
-│   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path (entry points audited in docs/route-table.md)
-│   ├── templates/index.html   # the only page: text box, Submit, decision record
+│   ├── app.py                 # Flask UI: POST / runs C.1.1 live (review page), POST /confirm is UC.1.9 (entry points in docs/route-table.md)
+│   ├── templates/             # base.html layout; index.html form; review.html mapping review (UC.1.6-1.9); result.html ranking + record
 │   ├── provide_llm_selection_decision_support/  # F.1, the system itself: one module per sub-function F.1.1-F.1.7 (IDEF0 A1); the ICOM defs compose them; Technical Lead confirm/select are still stubs; F.1.1 is the package propose_criteria_mapping/ (C.1.1.1-C.1.1.4, Lab 9.4)
 │   ├── define_application_technical_needs/  # F.2 (docstring only: no system requirement)
 │   ├── define_budget_constraints/  # F.3 (docstring only: no system requirement)
@@ -291,20 +291,20 @@ docs/traceability.md. C.7 and C.8 are the only external assets the system calls.
 ## Getting started
 
 ```
-pip install flask
-python3 backend/app.py
+python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
+cd backend && ../.venv/bin/python app.py
 ```
 
-Open http://127.0.0.1:5000 and paste one of the `user_input` texts from
-`sample_data/user_inputs.json`. The UC.1 call path runs end to end.
-The comparison result's ranking, score breakdown, evidence (source, date, stale
-flag), exclusions and sensitivity finding are computed from the sample model data,
-using the criteria and weights for that scenario in `sample_data/scenario_criteria.json`.
-The decision record carries the requirements, criteria, weights, evidence, ranking,
-sensitivity finding and selected model. The written text (assessments, trade-offs,
-selection, record summary) is still that scenario's record from
-`sample_data/expected_outputs.json`. Empty input is rejected. Any other text isn't
-handled yet. To run the
+Start LM Studio (Bionic) with `qwen2.5-7b-instruct` on `127.0.0.1:1234` first, and set
+`BENCHMARK_SOURCE=api` in `.env` to rank the live snapshot (see docs/deployment.md). Open
+http://127.0.0.1:5000 and type any requirements, one per line:
+- **Submit** sends each requirement to the local model (C.1.1 Criteria Mapper) and shows the
+  mapping review page: each proposed criterion with its proxy-strength rating. If the model fails
+  twice, the requirement shows `interpretation_failed` and you enter its criteria by hand.
+- **Confirm mapping** (UC.1.9) after keeping, editing, removing or adding criteria and setting hard
+  or weighted and the weights. The result page shows the ranking, contributions, exclusions,
+  sensitivity, sourced and dated evidence, and the stored decision record's ID.
+The demo walk-through is docs/validation/demo-milestone-2.md. To run the
 acceptance tests (most fail until features are built):
 
 ```

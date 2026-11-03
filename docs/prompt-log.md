@@ -1003,3 +1003,45 @@ team.
   open.
 
 ---
+
+## 2026-11-03 — Allyanna Panganiban — Claude Code (Opus 5.5)
+
+**Built from:** the same one prompt (prompts/2026-11-03-criteria-mapper-component.md), "Milestone 2
+demo alignment" part; Milestone 2 demo item 3 (the product carrying out F.1.1).
+
+**Prompt:** Wire the web UI to C.1.1: requirements form → Request Interpretation (live via the
+Ch 8 adapter) → validated criteria with proxy-strength ratings → a mapping review page where the
+Technical Lead confirms or edits (UC.1.9) → Distribute Confirmed Mapping feeds the ranking and the
+record; interpretation_failed shows manual entry. Demo script with SCENARIO_02. Separate commit.
+
+**Reviewed by:** a UI test writer (PLAN route spec only, no code bodies) and an independent
+verifier (live end-to-end run, outbound hosts, Done When, regressions).
+
+**Output:**
+- `docs/PLAN.md` "Milestone 2 UI wiring": routes and form fields, written before the code.
+- `backend/app.py`: POST / → `propose_mapping` → review page; POST /confirm (UC.1.9) → C.1.1.4 →
+  F.1.2 → F.7 → F.1.3–F.1.7 → result page; `run_uc1` kept for the walking-skeleton tests; `.env`
+  loaded at start; `threaded=False`.
+- `backend/templates/`: `base.html` (shared layout), `index.html` (form), `review.html`,
+  `result.html`.
+- `tests/test_mapping_review_ui.py` (13 tests / 17 cases, fake runtime, file mode).
+- `docs/route-table.md` (POST / changed, POST /confirm added, counts), `docs/traceability.md`,
+  `docs/deployment.md`, `README.md` (getting started), `docs/validation/demo-milestone-2.md`.
+- Verifier findings fixed: 500 on malformed pending or NaN weight, shared weighted list, invented
+  rating on hand-added criteria, stale route-table text; D-26–D-28 added to the deviation log.
+- Verified: full suite 263 passed, 29 failed (13 baseline names + 16 CR walkthrough
+  demonstrations), no pre-existing test edited; conformance and stub checks pass; live SCENARIO_02
+  through the running server ranks 14 models and stores a record.
+
+**Assistant assumptions:** review-page defaults (compliance → hard, else weighted with weight 1),
+threshold text parsing, and hand-added criteria having no proxy_strength/category (PLAN "Routes").
+The UI tests were written while the routes were built (not red first), and the test writer changed
+one test's page reading after a run; both are recorded here and in PLAN.
+
+**Still open:**
+- UC.1.17 (select a model): records are stored with no selection.
+- Timed walkthroughs (mapping_review × 4, full_comparison) by a person.
+- A server started before this change (pid from 15:34) still serves the old page on port 5000:
+  restart it.
+
+---

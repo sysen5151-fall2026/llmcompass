@@ -1031,3 +1031,59 @@ benchmark_id). The first-level F.1.1 defs (`request_interpretation(text)`,
 
 Open: the 16 walkthrough rows (`mapping_review:<scenario>`); the Innoslate list (team);
 SCENARIO_04 hard-only record (D-23, team).
+
+## Milestone 2 UI wiring: web UI calls C.1.1 live (2026-11-03)
+
+Traces: SR 1.3.1 (requirements and recommendations exchanged with the Technical Lead), CR 1.3.6,
+CR 1.2.4 / CR 1.4.3 (presented mapping with ratings), CR 1.1.1 (confirmed mapping), CR 2.1.1
+(review effort), UC.1.2–UC.1.9, UC.1.10–UC.1.18. `run_uc1(text)` stays as the walking-skeleton
+call path for its tests; only the routes change.
+
+### Routes (interface the UI tests rely on)
+
+- `GET /` — requirements form, field `requirements` (unchanged).
+- `POST /` (UC.1.2–UC.1.6) — `propose_mapping(requirements)` (F.1.1: C.1.1.1 → F.8 adapter →
+  C.1.1.2, re-sent once on retry → C.1.1.3). Renders the **mapping review page**, HTTP 200:
+  - each stated requirement's text and status (`proposed`, or `interpretation_failed`);
+  - for each proposed criterion: metric, operator, threshold, unit, proxy_strength (the rating),
+    category, rationale, and editable fields;
+  - `interpretation_failed`: the literal text `interpretation_failed` and a manual-entry row;
+  - empty text: the requirements form again with the rejection message (SR 1.1.5), HTTP 200.
+- `POST /confirm` (UC.1.9, with UC.1.7 review/amend and UC.1.8 weights) — form fields:
+  - `pending`: hidden JSON `{"requirement_set": [...], "presented_mapping": {...}}` from the review page;
+  - proposed criterion n (0-based, in presented order across requirements): `keep_<n>` (present =
+    keep), `designation_<n>` (`hard` | `weighted`), `weight_<n>`, `threshold_<n>`;
+  - manual row k (one per stated requirement, k = its 0-based index): `new_<k>_metric` (blank =
+    no row), `new_<k>_operator`, `new_<k>_threshold`, `new_<k>_unit`, `new_<k>_designation`,
+    `new_<k>_weight`; it stands for requirement k.
+  - Threshold text: blank → null; `in` → comma-separated list of strings; `>=`/`<=` → number;
+    `==` → number if numeric, else string. Weight: number (blank on a weighted criterion → rejected).
+  - Defaults on the review page (the Technical Lead confirms or edits them): `compliance` → hard,
+    every other category → weighted with weight 1.
+  - C.1.1.4 `distribute_confirmed_mapping` checks the confirmed mapping; a ValueError (unknown
+    metric, missing weight, ...) re-renders the review page with the message, HTTP 422.
+  - Then F.1.2 `request_model_data` → F.7 `provide_model_data` (BENCHMARK_SOURCE) → F.1.2
+    `receive_model_data` → F.1.3 → F.1.4 → F.1.5 → F.1.6 `report_selection_rationale` → F.1.7
+    `generate_and_store_decision_record(rationale, None, decision_basis)`. Renders the **result
+    page**, HTTP 200: ranked model ids with scores, exclusions, unstable pairs, and the stored
+    `record_id`. A record F.1.7 rejects (e.g. no weighted criterion, A27 / D-23) shows the ranking
+    with the rejection message instead of a record_id.
+- Model selection (UC.1.17) stays planned: the record is stored with no selection (A22).
+- `python3 backend/app.py` loads `.env` (the stdlib loader in `provide_benchmark_evidence/__main__.py`).
+
+### Progress (2026-11-03)
+
+- Routes built as specified above; templates `base.html`, `index.html` (form only),
+  `review.html`, `result.html`. `app.py` loads `.env` and runs `threaded=False` (D-09).
+- `tests/test_mapping_review_ui.py` (test writer, from this section): 13 tests / 17 cases, sha256
+  `e3dfefe3…d5249054`. Written while the routes were being built, so not red first; one test's
+  page-reading (threshold shown as a field value) was changed after a run.
+- Live: SCENARIO_02 through the web UI on LM Studio + live snapshot ranks 14 models and stores a
+  record (rehearsal and independent verifier); a made-up requirement gets model criteria.
+- Verifier fixes: malformed `pending` → 400; non-finite weight/threshold → 422; each of F.1.4 and
+  F.1.5 gets its own copy of the weighted criteria; hand-added criteria carry no invented rating;
+  stale route-table text corrected; D-26–D-28 added to the deviation log.
+- Demo script: docs/validation/demo-milestone-2.md (SCENARIO_02).
+
+Open: UC.1.17 select a model (record stored with no selection); timed walkthroughs; the data-API
+URLs can be overridden by env vars without a host check (refresh CLI only).
