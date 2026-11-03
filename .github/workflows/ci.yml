@@ -20,10 +20,9 @@ jobs:
       # pytest plus Flask, so the web-interface tests run instead of being skipped
       # (Lab Manual 5.3: an unmet requirement must fail the build).
       # backend/requirements.txt is UTF-16 and pulls in chromadb/onnxruntime,
-      # none of which the tests need, so the two are pinned here instead.
-      # Werkzeug 3 breaks Flask 2.2.2.
+      # none of which the tests need, so Flask is pinned here instead (same version).
       - name: Install test dependencies
-        run: pip install pytest "Flask==2.2.2" "Werkzeug<3" pyyaml openapi-spec-validator openapi-schema-validator
+        run: pip install pytest "Flask==3.1.2" pyyaml openapi-spec-validator openapi-schema-validator
 
       # Internal interface contract (Lab Manual 7.4): the contract is valid OpenAPI,
       # the generated stubs match it, and the F.1.x modules conform to it. Run before
