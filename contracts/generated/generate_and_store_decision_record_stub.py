@@ -1,4 +1,4 @@
-"""GENERATED from contracts/api-v1.yaml (v1.0.0) -- do not hand-edit.
+"""GENERATED from contracts/api-v1.yaml (v1.1.0) -- do not hand-edit.
 Regenerate after changing the contract, never the other way around.
 
 F.1.7 Generate and Store Decision Record.

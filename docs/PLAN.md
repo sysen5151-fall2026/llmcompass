@@ -985,3 +985,30 @@ C.1.7 storage, `generate_and_store_decision_record.py` (F.1.7):
   `text`, so the adapter gives the runtime the allowed metrics from
   `benchmark_map.json` and the SPEC §2 fields. The known metrics list reaches C.8
   without an IDEF0 arrow.
+
+## C.1.1 Criteria Mapper from its component specification (Lab Manual 9.4, 2026-11-03)
+
+Scope: the component is C.1.1 as a whole, the decomposed subsystem whose specification
+Lab Manual 9.2–9.3 asks for, so all four of C.1.1.1–C.1.1.4 are generated together; the
+Milestone 2 demo also needs all four running.
+
+Spec: SPEC.md section 7 (Form report Tables 3, 9, 10, verbatim). Contract:
+contracts/api-v1.yaml v1.1.0 adds the four second-level operations and the internal flows
+1.0.1 Requirement set and 3.0.1 Validated criteria (A28–A31).
+
+### Second-level ICOM signatures (Table F-2: inputs positional, controls keyword-only)
+
+Package `backend/provide_llm_selection_decision_support/propose_criteria_mapping/`, one
+module per F.1.1.x verb phrase (generated stubs in contracts/generated/):
+
+| Function | Module | Signature |
+|---|---|---|
+| F.1.1.1 Request Interpretation (C.1.1.1) | `request_interpretation.py` | `request_interpretation(stated_requirements: str) -> (interpretation_requests, requirement_set)` |
+| F.1.1.2 Validate Proposed Criteria (C.1.1.2) | `validate_proposed_criteria.py` | `validate_proposed_criteria(proposed_criteria, requirement_set, *, known_metrics=None) -> validated_criteria` |
+| F.1.1.3 Present Criteria Mapping (C.1.1.3) | `present_criteria_mapping.py` | `present_criteria_mapping(validated_criteria: list) -> presented_mapping` |
+| F.1.1.4 Distribute Confirmed Mapping (C.1.1.4) | `distribute_confirmed_mapping.py` | `distribute_confirmed_mapping(confirmed_criteria_mapping, requirement_set, *, known_metrics=None) -> (required_metrics, hard_constraints, weighted_criteria, decision_basis)` |
+
+`known_metrics=None` means the configured list (SPEC 2 field names plus every known
+benchmark_id). The first-level F.1.1 defs (`request_interpretation(text)`,
+`present_criteria_mapping`, `split_confirmed_mapping`, `compile_decision_basis`,
+`validate_interpretation`) stay importable from the package (A28).

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: LLM Compass internal interface contract (F.1 first-level IDEF0)
-  version: 1.0.0
+  version: 1.1.0
   description: >-
     Internal interface contract for F.1 Provide LLM Selection Decision Support,
     written from the model (Architecture Definition Report Fig. 8 p15, Table 4 p8,
@@ -13,6 +13,11 @@ info:
     x-icom control = keyword-only), response properties in x-return-order are the
     return value (one output = that value, several = a tuple in that order), and
     each error response names the Python exception raised (x-python-raises).
+    Version 1.1.0 (Lab Manual 9.4, 2026-11-03) adds the second-level operations of
+    F.1.1 from the C.1.1 Criteria Mapper component specification (SPEC.md section 7;
+    Form report Table 3, Figure 4): one module per F.1.1.x function inside the
+    propose_criteria_mapping package (x-module propose_criteria_mapping.<module>), and
+    the internal flows 1.0.1 Requirement set and 3.0.1 Validated criteria.
 x-package: provide_llm_selection_decision_support
 tags:
   - name: F.1.1 Propose Criteria Mapping
@@ -105,6 +110,26 @@ x-flows:
     produced_by: [reportSelectionRationale]
     consumed_by: [generateAndStoreDecisionRecord]
     schema: "#/components/schemas/SelectionRationale"
+  - id: "1.0.1"
+    name: Requirement set
+    level: 2
+    source: F.1.1.1 Request Interpretation
+    destinations: [F.1.1.2 Validate Proposed Criteria, F.1.1.4 Distribute Confirmed Mapping]
+    role_at_destination: {F.1.1.2: input, F.1.1.4: input}
+    produced_by: [requestInterpretation]
+    consumed_by: [validateProposedCriteria, distributeConfirmedMapping]
+    schema: "#/components/schemas/RequirementSet"
+    note: Second-level internal flow (SPEC 7, Form report Table 3 and Figure 7).
+  - id: "3.0.1"
+    name: Validated criteria
+    level: 2
+    source: F.1.1.2 Validate Proposed Criteria
+    destinations: [F.1.1.3 Present Criteria Mapping]
+    role_at_destination: {F.1.1.3: input}
+    produced_by: [validateProposedCriteria]
+    consumed_by: [presentCriteriaMapping]
+    schema: "#/components/schemas/ValidatedCriteria"
+    note: Second-level internal flow (SPEC 7, Form report Table 3 and Figure 7).
 
 x-assumptions:
   - "A1. Return order of splitConfirmedMapping is (weighted_criteria, hard_constraints, required_metrics), i.e. 5.3, 5.2, 5.1, because the SR 1.4.1.1 test unpacks it in that order."
@@ -134,6 +159,10 @@ x-assumptions:
   - "A25. Required metrics are listed once each, in order of first appearance in the confirmed mapping."
   - "A27. (Verification, 2026-10-28) A decision record's ranking and evidence may be empty when every candidate is excluded (UC.1 alternate flow 10a); its requirements, criteria_mapping and weights may not (SR 1.2.2), and F.1.7 rejects an empty one with ValueError / 422. RankingEntry always carries missing_data (SPEC 2 'the gap is shown'; empty list when none) and Exclusion always carries evidence (A11)."
   - "A26. (Review, 2026-10-28) The presented, rationale and record key for scores and contributions is 'score_breakdown', not 'scores': the SR 1.2.5 acceptance test (SPEC-derived, tests/test_system_requirements.py) reads presented['score_breakdown']. F.1.2's input is named model_data_with_provenance, the IDEF0 arrow name."
+  - "A28. (Lab Manual 9.4, 2026-11-03) The second-level operations are the F.1.1.x functions of Form report Table 3. Their defs live in propose_criteria_mapping/<module>.py; the first-level F.1.1 defs (request_interpretation(text), present_criteria_mapping, split_confirmed_mapping, compile_decision_basis) stay at the propose_criteria_mapping package level and are compositions of them. Where a second-level def has the same verb-phrase name as a first-level def, the module path tells them apart."
+  - "A29. Boundary input and output types are carried down unchanged (Table 3 note): Stated requirements is the text the Technical Lead typed; Interpretation request and Proposed criteria are the SPEC 3 model contract request and response; the four outflows keep the 5.1-5.4 schemas."
+  - "A30. How the stated text is divided into separate stated requirements is not fixed by the model (SPEC 7 says only that C.1.1.1 assigns an identifier to each stated requirement)."
+  - "A31. SPEC 3's failure path (an invalid or missing response: retry once, then interpretation_failed) is carried by ValidatedCriteria.status. Which element re-sends the request after a retry status is not fixed by the model."
 
 paths:
   /internal/propose-criteria-mapping/split-confirmed-mapping:
@@ -246,6 +275,227 @@ paths:
           description: >-
             Empty stated requirements, a weighted criterion without a weight, or a
             metric not on the known metrics list (SR 1.1.5, SR 1.4.1.1).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/propose-criteria-mapping/request-interpretation:
+    post:
+      operationId: requestInterpretation
+      summary: F.1.1.1 -> runtime (flow 2), F.1.1.2 and F.1.1.4 (flow 1.0.1) (implements CR 1.4.1, CR 1.2.3)
+      description: >-
+        C.1.1.1 Interpretation Client. Assigns an identifier to each stated
+        requirement (flow 1) and produces one SPEC 3 interpretation request per
+        requirement (flow 2) and the requirement set (1.0.1). Traces to CR 1.1.4,
+        CR 1.2.3, CR 1.4.1, CR 2.2.1, CR 2.3.1.
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1.1 Request Interpretation
+      x-component: C.1.1.1 Interpretation Client
+      x-module: propose_criteria_mapping.request_interpretation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stated_requirements]
+              properties:
+                stated_requirements:
+                  x-icom: input
+                  x-idef0-flow: "1 Stated requirements"
+                  type: string
+                  minLength: 1
+      responses:
+        "200":
+          description: The interpretation requests and the requirement set.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [interpretation_requests, requirement_set]
+                x-return-order: [interpretation_requests, requirement_set]
+                properties:
+                  interpretation_requests:
+                    x-idef0-flow: "2 Interpretation request"
+                    x-python-type: list
+                    type: array
+                    minItems: 1
+                    items:
+                      $ref: "#/components/schemas/InterpretationRequest"
+                  requirement_set:
+                    x-idef0-flow: "1.0.1 Requirement set"
+                    $ref: "#/components/schemas/RequirementSet"
+        "422":
+          description: The stated requirements are not text, or are empty (SR 1.1.5, CR 1.1.4).
+          x-python-raises: ValueError
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /internal/propose-criteria-mapping/validate-proposed-criteria:
+    post:
+      operationId: validateProposedCriteria
+      summary: F.1.1.2 -> F.1.1.3 (flow 3.0.1) (implements CR 1.4.2, CR 1.1.3, CR 1.1.2)
+      description: >-
+        C.1.1.2 Criteria Validator. Checks one runtime response (flow 3; null when
+        there was no response or it timed out) against the SPEC 3 schema, the
+        known metrics list and the requirement set, so that every requirement ends
+        with valid criteria or an explicit no-proxy result. A response whose
+        requirement_id does not match a request in the requirement set is invalid.
+        An invalid response gives status retry the first time for that requirement
+        and interpretation_failed the second (SPEC 3, SR 1.3.2). Traces to CR 1.1.2,
+        CR 1.1.3, CR 1.3.7, CR 1.3.8, CR 1.4.2, CR 2.3.1.
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1.2 Validate Proposed Criteria
+      x-component: C.1.1.2 Criteria Validator
+      x-module: propose_criteria_mapping.validate_proposed_criteria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [proposed_criteria, requirement_set]
+              properties:
+                proposed_criteria:
+                  x-icom: input
+                  x-idef0-flow: "3 Proposed criteria"
+                  x-python-type: dict
+                  nullable: true
+                  type: object
+                  description: The SPEC 3 response as received, unchecked (ProposedCriteria when valid), or null.
+                requirement_set:
+                  x-icom: input
+                  x-idef0-flow: "1.0.1 Requirement set"
+                  $ref: "#/components/schemas/RequirementSet"
+                known_metrics:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Known metrics list"
+                  $ref: "#/components/schemas/KnownMetricsList"
+      responses:
+        "200":
+          description: The validation result for the requirement the response answers.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [validated_criteria]
+                x-return-order: [validated_criteria]
+                properties:
+                  validated_criteria:
+                    x-idef0-flow: "3.0.1 Validated criteria"
+                    $ref: "#/components/schemas/ValidatedCriteria"
+
+  /internal/propose-criteria-mapping/present-criteria-mapping:
+    post:
+      operationId: presentCriteriaMapping
+      summary: F.1.1.3 -> Technical Lead (flow 4) (implements CR 1.4.3, CR 1.2.4)
+      description: >-
+        C.1.1.3 Mapping Presenter. Presents the validated criteria of every stated
+        requirement, each criterion with its proxy-strength rating and the
+        requirement it stands for, to the Technical Lead for review. Traces to
+        CR 1.2.4, CR 1.3.6, CR 1.4.3.
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1.3 Present Criteria Mapping
+      x-component: C.1.1.3 Mapping Presenter
+      x-module: propose_criteria_mapping.present_criteria_mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [validated_criteria]
+              properties:
+                validated_criteria:
+                  x-icom: input
+                  x-idef0-flow: "3.0.1 Validated criteria"
+                  x-python-type: list
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: "#/components/schemas/ValidatedCriteria"
+      responses:
+        "200":
+          description: The mapping as shown for review.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [presented_mapping]
+                x-return-order: [presented_mapping]
+                properties:
+                  presented_mapping:
+                    x-idef0-flow: "4 Presented mapping"
+                    $ref: "#/components/schemas/PresentedMapping"
+
+  /internal/propose-criteria-mapping/distribute-confirmed-mapping:
+    post:
+      operationId: distributeConfirmedMapping
+      summary: F.1.1.4 -> F.1.2, F.1.3, F.1.4, F.1.5, F.1.7 (flows 5.1-5.4) (implements CR 1.4.4, CR 2.1.2)
+      description: >-
+        C.1.1.4 Mapping Distributor. Checks the confirmed mapping (flow 5) against
+        the known metrics list and, with the requirement set, splits it into
+        required metrics (5.1), hard constraints (5.2), weighted criteria (5.3) and
+        the decision basis (5.4), without modifying any confirmed criterion
+        (CR 2.1.2). Rejects a criterion with no valid designation, a weighted
+        criterion without a numeric weight, and a metric not on the known metrics
+        list. Traces to CR 1.1.1, CR 1.2.1, CR 1.2.2, CR 1.2.5, CR 1.2.6, CR 1.3.1-1.3.5,
+        CR 1.4.4, CR 2.1.2.
+      tags: [F.1.1 Propose Criteria Mapping]
+      x-idef0-function: F.1.1.4 Distribute Confirmed Mapping
+      x-component: C.1.1.4 Mapping Distributor
+      x-module: propose_criteria_mapping.distribute_confirmed_mapping
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmed_criteria_mapping, requirement_set]
+              properties:
+                confirmed_criteria_mapping:
+                  x-icom: input
+                  x-idef0-flow: "5 Confirmed criteria mapping"
+                  $ref: "#/components/schemas/ConfirmedCriteriaMapping"
+                requirement_set:
+                  x-icom: input
+                  x-idef0-flow: "1.0.1 Requirement set"
+                  $ref: "#/components/schemas/RequirementSet"
+                known_metrics:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Known metrics list"
+                  $ref: "#/components/schemas/KnownMetricsList"
+      responses:
+        "200":
+          description: The four flows the other subsystems need.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [required_metrics, hard_constraints, weighted_criteria, decision_basis]
+                x-return-order: [required_metrics, hard_constraints, weighted_criteria, decision_basis]
+                properties:
+                  required_metrics:
+                    x-idef0-flow: "5.1 Required metrics"
+                    $ref: "#/components/schemas/RequiredMetrics"
+                  hard_constraints:
+                    x-idef0-flow: "5.2 Hard constraints"
+                    $ref: "#/components/schemas/HardConstraints"
+                  weighted_criteria:
+                    x-idef0-flow: "5.3 Weighted criteria"
+                    $ref: "#/components/schemas/WeightedCriteria"
+                  decision_basis:
+                    x-idef0-flow: "5.4 Decision basis"
+                    $ref: "#/components/schemas/DecisionBasis"
+        "422":
+          description: >-
+            An empty requirement set, a criterion without a valid designation, a
+            weighted criterion without a weight, or a metric not on the known
+            metrics list (SR 1.1.1, CR 1.1.1, CR 1.4.4).
           x-python-raises: ValueError
           content:
             application/json:
@@ -835,6 +1085,108 @@ components:
       x-configured-value: SPEC 2 candidate field names plus every known benchmark_id (SPEC 5 Q7); null means this configured list
       items:
         type: string
+
+    InterpretationRequest:
+      type: object
+      description: SPEC 3 model contract request (flow 2), one per stated requirement.
+      required: [requirement_id, text]
+      properties:
+        requirement_id:
+          type: string
+          minLength: 1
+        text:
+          type: string
+          minLength: 1
+
+    RequirementSet:
+      type: array
+      description: >-
+        Flow 1.0.1 (second-level internal): the identified stated requirements,
+        from C.1.1.1 to C.1.1.2 and C.1.1.4 (SPEC 7).
+      minItems: 1
+      x-python-type: list
+      items:
+        type: object
+        required: [requirement_id, text]
+        properties:
+          requirement_id:
+            type: string
+            minLength: 1
+          text:
+            type: string
+            minLength: 1
+
+    ProposedCriterion:
+      type: object
+      description: One criterion of the SPEC 3 model contract response, before the Technical Lead designates it.
+      required: [criterion_id, metric, operator, threshold, unit, proxy_strength, category, rationale]
+      properties:
+        criterion_id:
+          type: string
+          minLength: 1
+        metric:
+          type: string
+        operator:
+          type: string
+          enum: [">=", "<=", "==", "in"]
+        threshold:
+          nullable: true
+          oneOf:
+            - type: number
+            - type: string
+            - type: array
+              items: {}
+        unit:
+          type: string
+        proxy_strength:
+          type: string
+          enum: [strong, moderate, weak]
+        category:
+          type: string
+          enum: [capability, cost, compliance, other]
+        rationale:
+          type: string
+        requirement_id:
+          type: string
+          description: The stated requirement this criterion stands for (SR 1.2.4), added by C.1.1.2.
+
+    ValidatedCriteria:
+      type: object
+      description: >-
+        Flow 3.0.1 (second-level internal): the result of checking one runtime
+        response. status proposed = valid criteria or an explicit no-proxy result;
+        retry / interpretation_failed = SPEC 3 failure path, with no criteria.
+      required: [requirement_id, requirement, status, no_suitable_proxy, criteria]
+      properties:
+        requirement_id:
+          type: string
+          minLength: 1
+        requirement:
+          type: string
+          description: The stated requirement's text.
+        status:
+          type: string
+          enum: [proposed, retry, interpretation_failed]
+        no_suitable_proxy:
+          type: boolean
+        criteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProposedCriterion"
+
+    PresentedMapping:
+      type: object
+      description: >-
+        Flow 4 Presented mapping: every stated requirement with its proposed
+        criteria and their proxy-strength ratings, for the Technical Lead to
+        review (SR 1.2.4, CR 1.2.4, CR 1.4.3).
+      required: [requirements]
+      properties:
+        requirements:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ValidatedCriteria"
 
     StalenessThreshold:
       type: integer
