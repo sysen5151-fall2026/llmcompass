@@ -1,5 +1,5 @@
 {
-  "_about": "Which source field feeds each SPEC section 2 candidate field in api mode (Lab Manual 8.5, data access component). Data, not code, like benchmark_map.json. Paths are dotted paths into one record of each source's response. The Artificial Analysis price and latency paths follow its v2 API documentation; check them against the first live pull and correct them here if the API differs.",
+  "_about": "Which source field feeds each SPEC section 2 candidate field in api mode (Lab Manual 8.5, data access component). Data, not code, like benchmark_map.json. Paths are dotted paths into one record of each source's response. All paths were checked against live responses on 2026-11-03: Artificial Analysis (14 of 14 catalog ids found), models.dev (14/14) and OpenRouter (13/14).",
   "artificial_analysis": {
     "records": "data",
     "match": "id",

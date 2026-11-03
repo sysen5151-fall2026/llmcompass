@@ -56,7 +56,7 @@ shown in the second column. "Status" is the state of the test in this build (202
 | SR 1.1.3 | F.1 `record_decision`; F.6 | 5.1.3.2 | SN-TL-09 | test_SR_1_1_3_selection_appears_unchanged_in_record | pass |
 | SR 1.1.4 | F.1 `present_criteria_mapping`; F.8 | 5.1.1.2 | SN-TL-01 | test_SR_1_1_4_reference_responses_accepted_or_retried_then_flagged | pass |
 | SR 1.1.5 | F.1 `request_interpretation`; F.6 | 5.1.1.1 | SN-TL-01 | test_SR_1_1_5_text_gets_id_without_reformatting_empty_rejected | pass |
-| SR 1.2.1 | F.1 `request_benchmark_evidence`; F.7 `provide_model_data` | 5.3.1.1 | SN-TL-08 | test_SR_1_2_1_data_request_issued_for_every_candidate_in_catalog_of_10 | fail: stored catalog has 3 models, needs 10 (data gap) |
+| SR 1.2.1 | F.1 `request_benchmark_evidence`; F.7 `provide_model_data` | 5.3.1.1 | SN-TL-08 | test_SR_1_2_1_data_request_issued_for_every_candidate_in_catalog_of_10 | fail in file mode (stored catalog has 3 models); pass in api mode on the live snapshot of 2026-11-03 (14 models) |
 | SR 1.2.2 | F.1 `record_decision`; F.6 | 5.1.3.2 | SN-TL-09 | test_SR_1_2_2_record_has_seven_sections_and_sourced_evidence | pass |
 | SR 1.2.3 | F.1 `request_interpretation`; F.8 | 5.1.1.2 | SN-TL-01 | test_SR_1_2_3_one_request_per_requirement_with_id_and_unaltered_text | pass |
 | SR 1.2.4 | F.1 `present_criteria_mapping`; F.6 | 5.1.1.3 | SN-TL-01 | test_SR_1_2_4_presented_criterion_shows_requirement_and_strength | pass |

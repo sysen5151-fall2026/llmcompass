@@ -124,7 +124,7 @@ class SourceUnavailable(Exception):
 
 
 def _source_mode() -> str:
-    mode = os.environ.get("BENCHMARK_SOURCE", "file")
+    mode = os.environ.get("BENCHMARK_SOURCE") or "file"  # empty in .env = the default
     if mode not in ("file", "api"):
         raise ValueError(f"BENCHMARK_SOURCE must be 'file' or 'api', not {mode!r}")
     return mode

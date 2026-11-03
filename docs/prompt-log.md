@@ -927,3 +927,33 @@ instead of Supabase, LM Studio local, and the AA key from Khai.
   - whether a model missing from one AA response is carried over
 
 ---
+
+## 2026-11-03 — Allyanna Panganiban — Claude Code (Opus 5.5)
+
+**Prompt:** Added the team's Artificial Analysis key to `.env` and asked to finish the
+open Chapter 8 item: the live pull ("real data flows from the real source", Lab Manual
+8.5 Done When).
+
+**Output:**
+- One raw request checked the response shape:
+  - 723 records, all 14 catalog ids present.
+  - `pricing.price_1m_input_tokens`, `pricing.price_1m_output_tokens` and
+    `median_time_to_first_token_seconds` match `sample_data/source_fields.json`.
+  - That file now records the check. The key was never printed.
+- `python3 -m provide_benchmark_evidence refresh` (from backend/): status ok, 14
+  candidates, 117 figures (0 unsourced), 26 gaps with reasons. Stored in
+  `data/benchmark_snapshots.sqlite3` (gitignored).
+- `backend/provide_benchmark_evidence/__init__.py`: an empty `BENCHMARK_SOURCE=` in
+  `.env` now means the file default instead of raising ValueError.
+- `docs/PLAN.md` open items and the `docs/traceability.md` SR 1.2.1 status are updated.
+- Verified:
+  - With `BENCHMARK_SOURCE=api` on the live snapshot, the SR 1.2.1, 1.3.3, 1.4.1.2 and
+    2.3.2 tests pass, and all 4 scenarios rank end to end.
+  - The default suite is unchanged: 129 passed, 13 failed.
+  - Conformance passes.
+
+**Still open:**
+- The tests and CI stay in file mode (3 models), so SR 1.2.1 and 2.1.1 are red there.
+- SCENARIO_01's `aa_omniscience_index` has no live source (SPEC §5 Q12).
+
+---

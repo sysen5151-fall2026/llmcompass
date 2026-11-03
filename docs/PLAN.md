@@ -947,13 +947,21 @@ C.1.7 storage, `generate_and_store_decision_record.py` (F.1.7):
 
 ### Open items (8.5)
 
-- Couldn't finish here:
-  - **Live Artificial Analysis pull.** `.env` has no key, so `refresh_model_data`
-    returns `source_unavailable` and the snapshot fallback stays.
-  - The AA price and latency paths in `source_fields.json` follow the API docs and
-    are not yet checked against a real response.
-  - SR 1.2.1 and 2.1.1 stay red in file mode (3 models) until a pull is stored and
-    the app runs with `BENCHMARK_SOURCE=api`.
+- Done 2026-11-03 (after the key was added to `.env`): **the live pull ran.**
+  - Status ok: 14 of 14 catalog models, 117 figures, all sourced and dated, and 26
+    gaps with reasons.
+  - Most gaps are AA-Omniscience, which the API doesn't publish (SPEC §5 Q12). The
+    rest are API "not measured" values: Kimi K3 and Mistral Large 4 speeds, and the
+    intelligence index for 5 open/smaller models.
+  - The AA paths in `source_fields.json` were checked against the live response.
+  - With `BENCHMARK_SOURCE=api`, SR 1.2.1 and the data-contract tests pass on the
+    live snapshot, and all 4 scenarios rank end to end.
+  - The tests and CI stay in file mode (3 models), so SR 1.2.1 and 2.1.1 are still
+    red there.
+- Fixed: an empty `BENCHMARK_SOURCE=` in `.env` now means file mode instead of an
+  error.
+- Team call: SCENARIO_01 weights `aa_omniscience_index`, which no live source
+  publishes. On live data that criterion scores 0 for every model (SPEC §5 Q12).
 - CI has no LM Studio, so the 4 5.1.1.2 reference-set tests pass locally but stay red
   in CI. The team should decide whether to mark them live-runtime tests or keep them
   red.
