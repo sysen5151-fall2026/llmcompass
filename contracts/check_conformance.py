@@ -45,7 +45,10 @@ def snake(name: str) -> str:
 
 
 def real_def(op_id: str):
-    module = importlib.import_module(f"provide_llm_selection_decision_support.{OPS[op_id]['x-module']}")
+    try:
+        module = importlib.import_module(f"provide_llm_selection_decision_support.{OPS[op_id]['x-module']}")
+    except ModuleNotFoundError:  # a contract module not written yet is a divergence, not a crash
+        return None
     return getattr(module, snake(op_id), None)
 
 

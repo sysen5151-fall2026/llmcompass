@@ -568,3 +568,115 @@ Notes:
   as in section 4 (`full_comparison` and `rerun`).
 - The physical architecture these allocate to (C.1.1-C.1.7, C.1.1.1-C.1.1.4) is in the
   Form report Tables 1 and 3. The deployment view is docs/deployment.md.
+
+## 7. Component specification: C.1.1 Criteria Mapper (Design Definition: Form, Tables 3, 9, 10)
+
+Lab Manual 9.4. Transcribed verbatim from form_architecture_definition.pdf (2026-11). The
+component is C.1.1 as a whole: the decomposed subsystem whose specification Lab Manual
+9.2–9.3 asks for, so its four components C.1.1.1–C.1.1.4 are built together. Component
+requirements are prefixed CR. SR 2.2.1–2.4.1 statements in section 6 stay "not exported";
+the CR 2.x text below is the component's own requirement, not the SR text.
+
+### Second-level functions and components (Table 3, Figure 4)
+
+| Function | Component (mechanism) | Inputs | Controls | Outputs |
+|---|---|---|---|---|
+| F.1.1.1 Request Interpretation | C.1.1.1 Interpretation Client | Stated requirements | — | Interpretation request; Requirement set* |
+| F.1.1.2 Validate Proposed Criteria | C.1.1.2 Criteria Validator | Proposed criteria; Requirement set* | Known metrics list | Validated criteria* |
+| F.1.1.3 Present Criteria Mapping | C.1.1.3 Mapping Presenter | Validated criteria* | — | Presented mapping |
+| F.1.1.4 Distribute Confirmed Mapping | C.1.1.4 Mapping Distributor | Confirmed criteria mapping; Requirement set* | Known metrics list | Required metrics; Hard constraints; Weighted criteria; Decision basis |
+
+"Input/outputs marked with an asterisk (*) are internal flows created at the second level; all
+others are carried down from the first-level IDEF0 and keep the same type they have there."
+
+Component descriptions (verbatim):
+- C.1.1.1 Interpretation Client assigns an identifier to each stated requirement and sends it
+  to the language model runtime. It is the only component that calls the runtime, so a change
+  of runtime is contained within it.
+- C.1.1.2 Criteria Validator checks each response against the known metrics list and against
+  the requirement set, so that every requirement ends with valid criteria or an explicit
+  no-proxy result. The validation rules adopted during the product build, such as rejecting a
+  response whose requirement identifier does not match its request, belong to this component.
+- C.1.1.3 Mapping Presenter presents the validated criteria, with their proxy-strength ratings,
+  to the Technical Lead for review.
+- C.1.1.4 Mapping Distributor checks the confirmed mapping against the known metrics list and
+  splits it into the four flows the other subsystems need: required metrics, hard constraints,
+  weighted criteria and the decision basis.
+
+"Two internal flows connect the components. Requirement set carries the identified requirements
+from the Interpretation Client to both the Criteria Validator and the Mapping Distributor, and
+Validated criteria passes the checked criteria to the Mapping Presenter. The known metrics list is
+a control on two components, because criteria are checked against it both when they are proposed
+and when the Technical Lead confirms or adds them."
+
+"Requirement set and Validated criteria pass only between the second-level functions, so they do
+not cross the component boundary and have no requirement."
+
+Flow numbering and trace through the second level (Form report §2.2, Figure 7, verbatim): "The
+flows of the criteria phase keep their top-level numbers, the first-level flows leaving F.1.1 keep
+their numbers 5.1 to 5.4, and the two second-level internal flows are given a third number level,
+following the same hierarchical convention: 1.0.1 is the internal flow that follows flow 1 at the
+second level, and 3.0.1 the one that follows flow 3. The trace is continuous: flow 1 enters
+C.1.1.1, which sends flow 2 and passes the requirement set (1.0.1) on; flow 3 enters C.1.1.2, which
+passes the validated criteria (3.0.1) to C.1.1.3, which sends flow 4; and flow 5 enters C.1.1.4,
+which, with the requirement set, produces flows 5.1 to 5.4." Also: "only C.1.1.1 Interpretation
+Client talk[s] to the language model runtime."
+
+### System-wide requirements flowed down (Table 9)
+
+| Component requirement | Parent requirement | Method | Why this method |
+|---|---|---|---|
+| CR 2.1.1 Mapping review effort | SR 2.1.1 Comparison effort | Apportionment | The 30-minute operator effort budget is shared across the steps that need the operator. Reviewing and confirming the mapping is the largest of them, so it is allotted 10 minutes, a third of the budget, in the same unit. |
+| CR 2.1.2 Mapping consistency | SR 2.1.3 Result consistency | Synthesis | An identical ranking on re-run is a system property. The Criteria Mapper's contribution is a different, derived requirement: every downstream subsystem must receive exactly the confirmed mapping. |
+| CR 2.2.1 Local interpretation | SR 2.2.1 Local interpretation | Equivalence | All interpretation requests come from this component, so the system requirement applies to it unchanged. |
+| CR 2.3.1 Model contract | SR 2.3.1 Model contract | Equivalence | This component is the only one that exchanges data with the language model runtime, so it carries the whole system requirement. |
+| CR 2.4.1 Query cost | SR 2.4.1 Query cost | Equivalence | The system budget for paid queries is zero, and any share of zero is zero, so the requirement flows down unchanged. |
+
+Not flowed down (verbatim): "SR 2.1.2 Re-evaluation effort and SR 2.1.4 Record retention are met
+by the Decision Recorder and the ranking chain; the Criteria Mapper's only part, supplying the
+decision basis, is already covered by CR 1.2.1. SR 2.1.5 Evidence attribution and SR 2.3.2 Data
+contract concern benchmark figures, which the component never handles. SR 2.1.6 Business
+legibility concerns business-facing output, while the Criteria Mapper's output goes to the
+Technical Lead."
+
+### Component requirements (Table 10)
+
+Verification: T = test, I = inspection, A = analysis, D = demonstration.
+
+| ID | Name | Statement | Traced to | Rationale | MOP and target | Verification |
+|---|---|---|---|---|---|---|
+| CR 1.1.1 | Accept Confirmed criteria mapping | The Criteria Mapper shall accept Confirmed criteria mapping from the Technical Lead. | SR 1.1.1 Accept Confirmed criteria mapping | Ranking must use only criteria the Technical Lead has approved, not the raw model proposal. | Confirmed mappings received and passed on. Target: 100% | T: confirm the mapping in each sample scenario |
+| CR 1.1.2 | Accept Known metrics list | The Criteria Mapper shall accept Known metrics list from the Benchmark Data Sources. | SR 1.1.8 Accept Known metrics list | A proposed criterion is usable only if its metric exists in the benchmark data, so the list is needed to validate it. | Validation runs that use the current list. Target: 100% | T: change the list and check validation results |
+| CR 1.1.3 | Accept Proposed criteria | The Criteria Mapper shall accept Proposed criteria from the Language model runtime. | SR 1.1.4 Accept Proposed criteria | The runtime's interpretation is the starting point of the mapping. | Runtime responses received. Target: 100% | T: interpretation per sample scenario |
+| CR 1.1.4 | Accept Stated requirements | The Criteria Mapper shall accept Stated requirements from the Technical Lead. | SR 1.1.5 Accept Stated requirements | The mapping must start from the Technical Lead's own requirements. | Stated requirements accepted. Target: 100% | T: enter the requirements of each sample scenario |
+| CR 1.2.1 | Provide Decision basis | The Criteria Mapper shall provide Decision basis to the Decision Recorder. | SR 1.4.1.1 Propose Criteria Mapping | The record must hold the requirements and confirmed mapping so a decision can be reviewed and re-run. | Decision records containing the decision basis. Target: 100% | I: exported record per scenario |
+| CR 1.2.2 | Provide Hard constraints | The Criteria Mapper shall provide Hard constraints to the Constraint Filter. | SR 1.4.1.1 Propose Criteria Mapping | Candidates that fail a must-have requirement must be removed before scoring. | Confirmed hard constraints delivered. Target: 100% | T: integration test with the Constraint Filter |
+| CR 1.2.3 | Provide Interpretation request | The Criteria Mapper shall provide Interpretation request to the Language model runtime. | SR 1.2.3 Provide Interpretation request | Interpretation is performed by an external runtime, so the requirements must be sent to it. | Stated requirements sent for interpretation. Target: 100% | T: request log per scenario |
+| CR 1.2.4 | Provide Presented mapping | The Criteria Mapper shall provide Presented mapping to the Technical Lead. | SR 1.2.4 Provide Presented mapping | The Technical Lead must review each proposed criterion before it is used. | Stated requirements shown with their proposed criteria. Target: 100% | D: walkthrough of each scenario |
+| CR 1.2.5 | Provide Required metrics | The Criteria Mapper shall provide Required metrics to the Evidence Retriever. | SR 1.4.1.1 Propose Criteria Mapping | Only the data needed for the confirmed criteria is retrieved. | Confirmed criteria with a required metric delivered. Target: 100% | T: integration test with the Evidence Retriever |
+| CR 1.2.6 | Provide Weighted criteria | The Criteria Mapper shall provide Weighted criteria to the Ranking Engine and the Sensitivity Analyzer. | SR 1.4.1.1 Propose Criteria Mapping | Scoring and sensitivity analysis must use the same weights. | Receivers given identical weights. Target: 2 of 2 | T: integration test with both receivers |
+| CR 1.3.1 | Criteria Mapper / Decision Recorder | The Criteria Mapper shall interface with the Decision Recorder through the Criteria Mapper / Decision Recorder. | SR 1.4.1.1 Propose Criteria Mapping | Carries the decision basis; conduit generated from the first-level IDEF0. | Exchanges in the agreed format. Target: 100% | T: integration test |
+| CR 1.3.2 | Criteria Mapper / Sensitivity Analyzer | The Criteria Mapper shall interface with the Sensitivity Analyzer through the Criteria Mapper / Sensitivity Analyzer. | SR 1.4.1.1 Propose Criteria Mapping | Carries the weighted criteria; conduit generated from the first-level IDEF0. | Exchanges in the agreed format. Target: 100% | T: integration test |
+| CR 1.3.3 | Criteria Mapper / Ranking Engine | The Criteria Mapper shall interface with the Ranking Engine through the Criteria Mapper / Ranking Engine. | SR 1.4.1.1 Propose Criteria Mapping | Carries the weighted criteria; conduit generated from the first-level IDEF0. | Exchanges in the agreed format. Target: 100% | T: integration test |
+| CR 1.3.4 | Criteria Mapper / Constraint Filter | The Criteria Mapper shall interface with the Constraint Filter through the Criteria Mapper / Constraint Filter. | SR 1.4.1.1 Propose Criteria Mapping | Carries the hard constraints; conduit generated from the first-level IDEF0. | Exchanges in the agreed format. Target: 100% | T: integration test |
+| CR 1.3.5 | Criteria Mapper / Evidence Retriever | The Criteria Mapper shall interface with the Evidence Retriever through the Criteria Mapper / Evidence Retriever. | SR 1.4.1.1 Propose Criteria Mapping | Carries the required metrics; conduit generated from the first-level IDEF0. | Exchanges in the agreed format. Target: 100% | T: integration test |
+| CR 1.3.6 | Criteria Mapper / Technical Lead | The Criteria Mapper shall interface with the Technical Lead to accept Stated requirements and Confirmed criteria mapping and to provide Presented mapping. | SR 1.3.1 Requirements and recommendations | The Technical Lead is the only stakeholder who interacts with the system. | Scenario steps with the Technical Lead completed. Target: 100% | D: walkthrough of each scenario |
+| CR 1.3.7 | Criteria Mapper / Language model runtime | The Criteria Mapper shall interface with the Language model runtime to provide Interpretation request and to accept Proposed criteria. | SR 1.3.2 Interpretation request and proposed criteria | The component is the system's single point of contact with the runtime. | Exchanges that follow the model contract. Target: 100% | T: contract validation |
+| CR 1.3.8 | Criteria Mapper / Benchmark Data Sources | The Criteria Mapper shall interface with the Benchmark Data Sources to accept the Known metrics list. | SR 1.3.3 Data request and model data with provenance | Validation needs the list of metrics the data sources can supply. | Known metrics list loaded. Target: 100% of runs | T: load test |
+| CR 1.4.1 | Request Interpretation | The Criteria Mapper shall Request Interpretation. | SR 1.4.1.1 Propose Criteria Mapping | Turns free-text requirements into measurable criteria without manual effort. | Stated requirements with an interpretation request. Target: 100% | T: request log per scenario |
+| CR 1.4.2 | Validate Proposed Criteria | The Criteria Mapper shall Validate Proposed Criteria. | SR 1.4.1.1 Propose Criteria Mapping | A model's proposal can be malformed or name a metric with no data, so it is checked before review. | Invalid or unknown criteria caught. Target: 100% | T: inject invalid and unknown criteria |
+| CR 1.4.3 | Present Criteria Mapping | The Criteria Mapper shall Present Criteria Mapping. | SR 1.4.1.1 Propose Criteria Mapping | The Technical Lead stays in control of how requirements become criteria. | Proposed criteria shown with their rating. Target: 100% | D: walkthrough of each scenario |
+| CR 1.4.4 | Distribute Confirmed Mapping | The Criteria Mapper shall Distribute Confirmed Mapping. | SR 1.4.1.1 Propose Criteria Mapping | Every downstream subsystem must work from the confirmed mapping. | Downstream subsystems that receive it. Target: 5 of 5 | T: integration test |
+| CR 2.1.1 | Mapping review effort | The Criteria Mapper shall allow an operator to review and confirm the criteria mapping for one comparison within 10 minutes of operator effort. | SR 2.1.1 Comparison effort | Apportionment of the 30-minute effort budget (Table 9). | Operator minutes to review and confirm. Target: ≤ 10 | D: timed walkthrough of each scenario |
+| CR 2.1.2 | Mapping consistency | The Criteria Mapper shall distribute the confirmed criteria mapping to the Constraint Filter, Ranking Engine, Sensitivity Analyzer and Decision Recorder without modification. | SR 2.1.3 Result consistency | Synthesis from the consistency requirement (Table 9). | Downstream copies identical to the confirmed mapping. Target: 100% | T: compare received and confirmed mappings |
+| CR 2.2.1 | Local interpretation | The Criteria Mapper shall send every interpretation request to a locally hosted language model runtime. | SR 2.2.1 Local interpretation | Equivalence (Table 9). | Requests sent to a local endpoint. Target: 100% | I: runtime configuration |
+| CR 2.3.1 | Model contract | The Criteria Mapper shall send interpretation requests and accept proposed criteria only in the form defined by the model contract. | SR 2.3.1 Model contract | Equivalence (Table 9). | Requests and responses that conform. Target: 100% | T: contract validation |
+| CR 2.4.1 | Query cost | The Criteria Mapper shall incur no paid per-query charges. | SR 2.4.1 Query cost | Equivalence (Table 9). | Paid charges per comparison. Target: 0 | I: configuration and run logs |
+
+Notes (transcription, not model text):
+- The model contract is section 3; the data shapes of the four outflows are the existing
+  contract operations splitConfirmedMapping and compileDecisionBasis in contracts/api-v1.yaml.
+- CR 1.2.4, CR 1.3.6, CR 1.4.3 and CR 2.1.1 are demonstrations, checked from
+  docs/validation/walkthroughs.csv as in section 4, one row per sample scenario with scenario
+  `mapping_review:<scenario_id>` (minutes ≤ 10 for CR 2.1.1). The label is a test-interface
+  choice (deviation log T-3), on the Innoslate list as a verification-method note.

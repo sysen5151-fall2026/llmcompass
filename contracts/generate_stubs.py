@@ -109,7 +109,7 @@ def render(op_id: str, op: dict, spec: dict) -> str:
     return (f"def {snake(op_id)}({params}) -> {returns}:\n"
             f'    """{doc_text}\n    """\n'
             f"    raise NotImplementedError  # implemented in backend/provide_llm_selection_decision_support/"
-            f"{op['x-module']}.py\n")
+            f"{op['x-module'].replace('.', '/')}.py\n")
 
 
 def main(check: bool = False) -> None:

@@ -245,7 +245,7 @@ See the team's Toolset Justification doc for full rationale.
 ├── backend/
 │   ├── app.py                 # walking skeleton — Flask UI around the UC.1 call path (entry points audited in docs/route-table.md)
 │   ├── templates/index.html   # the only page: text box, Submit, decision record
-│   ├── provide_llm_selection_decision_support/  # F.1, the system itself: one module per sub-function F.1.1-F.1.7 (IDEF0 A1); the ICOM defs compose them; Technical Lead confirm/select are still stubs
+│   ├── provide_llm_selection_decision_support/  # F.1, the system itself: one module per sub-function F.1.1-F.1.7 (IDEF0 A1); the ICOM defs compose them; Technical Lead confirm/select are still stubs; F.1.1 is the package propose_criteria_mapping/ (C.1.1.1-C.1.1.4, Lab 9.4)
 │   ├── define_application_technical_needs/  # F.2 (docstring only: no system requirement)
 │   ├── define_budget_constraints/  # F.3 (docstring only: no system requirement)
 │   ├── define_compliance_constraints/  # F.4 (docstring only: no system requirement)
@@ -276,7 +276,8 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── environment.md
 │   ├── prompt-log.md
 │   ├── validation/walkthroughs.csv  # timed runs for the operator-effort requirements
-│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced; 0005 SQLite
+│   ├── deviation-log.md       # Lab 9.4: every difference between the C.1.1 spec and its one-pass generation
+│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced; 0005 SQLite; 0006 C.1.1 runtime send/retry
 └── README.md
 ```
 

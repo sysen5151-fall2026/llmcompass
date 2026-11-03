@@ -9,7 +9,7 @@ from typing import Optional
 
 from provide_benchmark_evidence import BENCHMARK_IDS
 
-from .retrieve_model_data import FIGURE_FIELDS
+from ..retrieve_model_data import FIGURE_FIELDS
 
 # SR 1.1.4, SR 1.3.2 (SPEC section 3) -- the model contract's vocabulary.
 # With the catalog's benchmark ids (F.7's published vocabulary, SPEC 5 Q7), F.1.2's

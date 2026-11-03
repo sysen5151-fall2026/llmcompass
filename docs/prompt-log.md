@@ -957,3 +957,49 @@ open Chapter 8 item: the live pull ("real data flows from the real source", Lab 
 - SCENARIO_01's `aa_omniscience_index` has no live source (SPEC §5 Q12).
 
 ---
+
+## 2026-11-03 — Allyanna Panganiban — Claude Code (Opus 5.5)
+
+**Built from:** Lab Manual 9.4 (pp. 160–161); Design Definition: Form report Tables 3, 9, 10,
+§2.2 and Figure 7 (C.1.1 Criteria Mapper component specification).
+
+**Prompt:** One prompt for the Chapter 9 build (prompts/2026-11-03-criteria-mapper-component.md,
+verbatim): steps 1–7 for C.1.1, generated in one pass, deviation log before any change, then the
+Milestone 2 UI wiring as a separate commit. Corrections at plan approval: SR 2.2.1–2.4.1 stay
+"not exported" (CR text in §7 only); promoted assumptions go to the team for Innoslate; one
+sentence on why all four components are generated.
+
+**Reviewed by:** a test writer (spec only), a one-pass generator (barred from the old module and
+test bodies), an independent deviation auditor; the main session reviewed every deviation row.
+
+**Output:**
+- `SPEC.md` §7: Tables 3, 9, 10 and the §2.2 flow numbering, verbatim; a test-interface note for
+  the `mapping_review:<scenario>` walkthrough label (T-3).
+- `contracts/api-v1.yaml` v1.1.0: four second-level operations, flows 1.0.1 and 3.0.1, schemas
+  InterpretationRequest, RequirementSet, ProposedCriterion, ProposedCriteria, ValidatedCriteria,
+  PresentedMapping, A28–A32. `generate_stubs.py` writes slash paths for package modules;
+  `check_conformance.py` reports a missing module as a divergence instead of crashing.
+- `tests/test_component_criteria_mapper.py` (test writer): one `test_CR_*` per CR, 119 cases.
+- `backend/.../propose_criteria_mapping/`: package. Four generated modules (raw in `3be0122` on
+  `ch9-raw-generation`); the Chapter 4–7 module moved unchanged to `_first_level.py`; `__init__.py`
+  re-exports it and adds the F.1.1 composition `propose_mapping` (ADR-0006).
+- `docs/deviation-log.md` (auditor): 25 deviations, 15 spec defects / 4 assistant errors / 6
+  unrequested additions, T-1–T-7, 19 "To add in Innoslate" items, plus the reconciliation table.
+- Reconcile fixes D-02, D-07, D-14, D-15, D-17, D-19 with
+  `tests/test_component_criteria_mapper_reconcile.py` (14 tests, all fail on the raw commit).
+- `docs/adr/0006-criteria-mapper-runtime-send-and-retry.md`, `docs/PLAN.md` (signatures, progress),
+  `docs/traceability.md` (CR rows), `README.md` tree.
+- Verified: raw code 103/119 CR cases; after reconcile 103/119 (the 16 failures are walkthrough
+  demonstrations) and 14/14 regression; existing suite unchanged against the baseline (129 passed,
+  13 failed, same names); conformance and `generate_stubs.py --check` pass.
+
+**Assistant assumptions:** listed as D-01–D-25 in docs/deviation-log.md; none promoted without the
+team.
+
+**Still open:**
+- The 19 Innoslate items (team); 16 `mapping_review` walkthroughs (a person with a timer).
+- SCENARIO_04's hard-only mapping can't produce a record (D-23, team decision).
+- The first-level F.1.1 defs still run the Chapter 4–7 code; re-basing them on C.1.1.1–C.1.1.4 is
+  open.
+
+---
