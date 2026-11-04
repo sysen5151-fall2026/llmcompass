@@ -137,6 +137,7 @@ Items 4, 16 and 17 depend on a team decision noted in the item.
 20. (under CR 1.1.1; D-26) The Criteria Mapper shall reject a confirmed criterion whose proxy_strength or category, when given, is not one of the model contract's values.
 21. (under CR 1.1.1; D-27) The Criteria Mapper shall reject a confirmed criterion whose weight or numeric threshold is not a finite number.
 22. (under CR 1.4.1; D-28) The Criteria Mapper shall give every stated requirement in one comparison a different identifier.
+23. (under CR 1.4.2 / CR 2.3.1; found in the demo rehearsal, 2026-11-03) The Criteria Mapper shall treat a proposed criterion whose unit is not the unit of its metric (SPEC 2 field units, benchmark map units) as invalid. (Qwen proposed "%" for intelligence_index and "USD per ticket" for input_price; SPEC 3 lists units in the prompt but no rule checks them, so the Technical Lead had to catch them on the review page.)
 
 The contract-only fixes (T-1, T-2, T-7, and the 422 additions in D-17 and D-22) go in
 `contracts/api-v1.yaml`, not in Innoslate.

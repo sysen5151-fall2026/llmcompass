@@ -1045,3 +1045,22 @@ one test's page reading after a run; both are recorded here and in PLAN.
   restart it.
 
 ---
+
+## 2026-11-03 — Allyanna Panganiban — Claude Code (Opus 5.5)
+
+**Prompt:** Rehearsed the Milestone 2 demo live (warm-up, support-tickets and summarizer prompts)
+and asked for the demo script to be rewritten around three of them, with what to expect and what
+to explain (the Technical Lead's responsibilities, hard vs weighted, error handling).
+
+**Output:**
+- `docs/validation/demo-milestone-2.md`: rewritten. Prompts A (warm-up, hard latency gate +
+  weighted price), B (wrong units: why the review step exists) and C (US residency hard, budget
+  conversion to ≤ 0.10 USD per 1M input tokens, quality weighted 3), each with the rehearsal's
+  proposals, the Technical Lead's edits and the expected ranked/excluded models; optional failure
+  path; talking points. Expected results checked through POST /confirm on the live snapshot.
+- `docs/deviation-log.md`: Innoslate item 23 (no check that a criterion's unit is its metric's
+  unit), found in rehearsal.
+
+**Still open:** the failure path has not been rehearsed; timed walkthroughs not yet logged.
+
+---
