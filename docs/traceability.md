@@ -99,42 +99,42 @@ Each is satisfied by C.1; the "Element" column is the Form report Table 4 alloca
 
 ## C.1.1 Criteria Mapper component requirements (SPEC §7, Lab Manual 9.4)
 
-Module per component: `backend/provide_llm_selection_decision_support/propose_criteria_mapping/`
+Module per second-level function (F.1.1.n is performed by component C.1.1.n): `backend/provide_llm_selection_decision_support/propose_criteria_mapping/`
 (`request_interpretation.py` C.1.1.1, `validate_proposed_criteria.py` C.1.1.2,
 `present_criteria_mapping.py` C.1.1.3, `distribute_confirmed_mapping.py` C.1.1.4). Tests in
-`tests/test_component_criteria_mapper.py` (from spec) and
+`tests/test_functional_requirements.py` (from spec) and
 `tests/test_component_criteria_mapper_reconcile.py` (reconcile fixes, docs/deviation-log.md).
 C.1.1.4 imports C.1.1.2's known-metrics and threshold helpers (deviation log D-20).
 
-| Requirement | Element / def | Test | Status |
-|---|---|---|---|
-| CR 1.1.1 | C.1.1.4 distribute_confirmed_mapping | test_CR_1_1_1_confirmed_mapping_of_each_scenario_accepted_and_passed_on<br>test_CR_1_1_1_criterion_without_valid_designation_or_weight_rejected | pass |
-| CR 1.1.2 | C.1.1.2, C.1.1.4 (known_metrics) | test_CR_1_1_2_changing_known_metrics_list_changes_validation_results | pass |
-| CR 1.1.3 | C.1.1.2 validate_proposed_criteria | test_CR_1_1_3_runtime_proposal_accepted_for_each_scenario<br>test_CR_1_1_3_no_suitable_proxy_response_accepted | pass |
-| CR 1.1.4 | C.1.1.1 request_interpretation | test_CR_1_1_4_stated_requirements_of_each_scenario_accepted<br>test_CR_1_1_4_empty_or_non_text_requirements_rejected | pass |
-| CR 1.2.1 | C.1.1.4 (5.4 Decision basis) | test_CR_1_2_1_exported_record_holds_decision_basis_per_scenario | pass |
-| CR 1.2.2 | C.1.1.4 (5.2) | test_CR_1_2_2_hard_constraints_delivered_to_constraint_filter | pass |
-| CR 1.2.3 | C.1.1.1 | test_CR_1_2_3_one_request_per_stated_requirement_with_id_and_text | pass |
-| CR 1.2.4 | C.1.1.3 present_criteria_mapping | test_CR_1_2_4_presented_mapping_walkthrough_logged_per_scenario<br>test_CR_1_2_4_presented_mapping_shows_each_stated_requirement_with_its_criteria | T part pass; D part fail: no mapping_review walkthrough logged |
-| CR 1.2.5 | C.1.1.4 (5.1) | test_CR_1_2_5_required_metrics_delivered_to_evidence_retriever | pass |
-| CR 1.2.6 | C.1.1.4 (5.3) | test_CR_1_2_6_ranking_engine_and_sensitivity_analyzer_receive_identical_weights | pass |
-| CR 1.3.1 | C.1.1.4 → C.1.7 | test_CR_1_3_1_decision_basis_exchanged_with_decision_recorder | pass |
-| CR 1.3.2 | C.1.1.4 → C.1.5 | test_CR_1_3_2_weighted_criteria_exchanged_with_sensitivity_analyzer | pass |
-| CR 1.3.3 | C.1.1.4 → C.1.4 | test_CR_1_3_3_weighted_criteria_exchanged_with_ranking_engine | pass |
-| CR 1.3.4 | C.1.1.4 → C.1.3 | test_CR_1_3_4_hard_constraints_exchanged_with_constraint_filter | pass |
-| CR 1.3.5 | C.1.1.4 → C.1.2 | test_CR_1_3_5_required_metrics_exchanged_with_evidence_retriever | pass |
-| CR 1.3.6 | C.1.1.1, C.1.1.3, C.1.1.4 / web UI | test_CR_1_3_6_technical_lead_walkthrough_logged_per_scenario | fail: no mapping_review walkthrough logged |
-| CR 1.3.7 | C.1.1.1 send_interpretation_request, C.1.1.2 | test_CR_1_3_7_runtime_exchanges_follow_model_contract<br>test_CR_1_3_7_timeout_handled_as_invalid_response | pass |
-| CR 1.3.8 | C.1.1.2 configured_known_metrics | test_CR_1_3_8_configured_known_metrics_list_loaded<br>test_CR_1_3_8_metric_off_configured_list_rejected | pass |
-| CR 1.4.1 | C.1.1.1 | test_CR_1_4_1_every_stated_requirement_gets_an_interpretation_request | pass |
-| CR 1.4.2 | C.1.1.2 | test_CR_1_4_2_invalid_and_unknown_criteria_caught<br>test_CR_1_4_2_valid_response_after_one_retry_accepted<br>test_CR_1_4_2_retry_is_counted_per_requirement | pass |
-| CR 1.4.3 | C.1.1.3 | test_CR_1_4_3_mapping_presentation_walkthrough_logged_per_scenario<br>test_CR_1_4_3_every_presented_criterion_shows_its_rating_and_requirement | T part pass; D part fail: no mapping_review walkthrough logged |
-| CR 1.4.4 | C.1.1.4 | test_CR_1_4_4_confirmed_mapping_reaches_all_five_downstream_subsystems<br>test_CR_1_4_4_unusable_confirmed_mapping_rejected | pass |
-| CR 2.1.1 | C.1.1.3 / web UI review page | test_CR_2_1_1_mapping_review_walkthrough_within_10_minutes | fail: no mapping_review walkthrough logged |
-| CR 2.1.2 | C.1.1.4 | test_CR_2_1_2_distributed_copies_identical_to_confirmed_mapping<br>test_CR_2_1_2_receivers_hold_the_confirmed_mapping_unmodified | pass |
-| CR 2.2.1 | C.1.1.1 / F.8 runtime_config | test_CR_2_2_1_runtime_configuration_points_to_local_host | pass |
-| CR 2.3.1 | C.1.1.1, C.1.1.2 | test_CR_2_3_1_only_model_contract_responses_accepted<br>test_CR_2_3_1_requests_and_accepted_responses_conform | pass |
-| CR 2.4.1 | C.1.1.1 / F.8 | test_CR_2_4_1_configuration_and_run_show_no_paid_calls | pass |
+| Function ID | Module (in backend/provide_llm_selection_decision_support/propose_criteria_mapping/) | Requirement | Element / def | Test | Status |
+|---|---|---|---|---|---|
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.1.1 | C.1.1.4 distribute_confirmed_mapping | test_CR_1_1_1_confirmed_mapping_of_each_scenario_accepted_and_passed_on<br>test_CR_1_1_1_criterion_without_valid_designation_or_weight_rejected | pass |
+| F.1.1.2<br>F.1.1.4 | validate_proposed_criteria.py<br>distribute_confirmed_mapping.py | CR 1.1.2 | C.1.1.2, C.1.1.4 (known_metrics) | test_CR_1_1_2_changing_known_metrics_list_changes_validation_results | pass |
+| F.1.1.2 | validate_proposed_criteria.py | CR 1.1.3 | C.1.1.2 validate_proposed_criteria | test_CR_1_1_3_runtime_proposal_accepted_for_each_scenario<br>test_CR_1_1_3_no_suitable_proxy_response_accepted | pass |
+| F.1.1.1 | request_interpretation.py | CR 1.1.4 | C.1.1.1 request_interpretation | test_CR_1_1_4_stated_requirements_of_each_scenario_accepted<br>test_CR_1_1_4_empty_or_non_text_requirements_rejected | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.2.1 | C.1.1.4 (5.4 Decision basis) | test_CR_1_2_1_exported_record_holds_decision_basis_per_scenario | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.2.2 | C.1.1.4 (5.2) | test_CR_1_2_2_hard_constraints_delivered_to_constraint_filter | pass |
+| F.1.1.1 | request_interpretation.py | CR 1.2.3 | C.1.1.1 | test_CR_1_2_3_one_request_per_stated_requirement_with_id_and_text | pass |
+| F.1.1.3 | present_criteria_mapping.py | CR 1.2.4 | C.1.1.3 present_criteria_mapping | test_CR_1_2_4_presented_mapping_walkthrough_logged_per_scenario<br>test_CR_1_2_4_presented_mapping_shows_each_stated_requirement_with_its_criteria | pass (walkthroughs 2026-11-10, SCENARIO_01–04, 1 min each) |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.2.5 | C.1.1.4 (5.1) | test_CR_1_2_5_required_metrics_delivered_to_evidence_retriever | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.2.6 | C.1.1.4 (5.3) | test_CR_1_2_6_ranking_engine_and_sensitivity_analyzer_receive_identical_weights | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.3.1 | C.1.1.4 → C.1.7 | test_CR_1_3_1_decision_basis_exchanged_with_decision_recorder | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.3.2 | C.1.1.4 → C.1.5 | test_CR_1_3_2_weighted_criteria_exchanged_with_sensitivity_analyzer | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.3.3 | C.1.1.4 → C.1.4 | test_CR_1_3_3_weighted_criteria_exchanged_with_ranking_engine | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.3.4 | C.1.1.4 → C.1.3 | test_CR_1_3_4_hard_constraints_exchanged_with_constraint_filter | pass |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.3.5 | C.1.1.4 → C.1.2 | test_CR_1_3_5_required_metrics_exchanged_with_evidence_retriever | pass |
+| F.1.1.1<br>F.1.1.3<br>F.1.1.4 | request_interpretation.py<br>present_criteria_mapping.py<br>distribute_confirmed_mapping.py | CR 1.3.6 | C.1.1.1, C.1.1.3, C.1.1.4 / web UI | test_CR_1_3_6_technical_lead_walkthrough_logged_per_scenario | pass (walkthroughs 2026-11-10, SCENARIO_01–04, 1 min each) |
+| F.1.1.1<br>F.1.1.2 | request_interpretation.py<br>validate_proposed_criteria.py | CR 1.3.7 | C.1.1.1 send_interpretation_request, C.1.1.2 | test_CR_1_3_7_runtime_exchanges_follow_model_contract<br>test_CR_1_3_7_timeout_handled_as_invalid_response | pass |
+| F.1.1.2 | validate_proposed_criteria.py | CR 1.3.8 | C.1.1.2 configured_known_metrics | test_CR_1_3_8_configured_known_metrics_list_loaded<br>test_CR_1_3_8_metric_off_configured_list_rejected | pass |
+| F.1.1.1 | request_interpretation.py | CR 1.4.1 | C.1.1.1 | test_CR_1_4_1_every_stated_requirement_gets_an_interpretation_request | pass |
+| F.1.1.2 | validate_proposed_criteria.py | CR 1.4.2 | C.1.1.2 | test_CR_1_4_2_invalid_and_unknown_criteria_caught<br>test_CR_1_4_2_valid_response_after_one_retry_accepted<br>test_CR_1_4_2_retry_is_counted_per_requirement | pass |
+| F.1.1.3 | present_criteria_mapping.py | CR 1.4.3 | C.1.1.3 | test_CR_1_4_3_mapping_presentation_walkthrough_logged_per_scenario<br>test_CR_1_4_3_every_presented_criterion_shows_its_rating_and_requirement | pass (walkthroughs 2026-11-10, SCENARIO_01–04, 1 min each) |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 1.4.4 | C.1.1.4 | test_CR_1_4_4_confirmed_mapping_reaches_all_five_downstream_subsystems<br>test_CR_1_4_4_unusable_confirmed_mapping_rejected | pass |
+| F.1.1.3 | present_criteria_mapping.py | CR 2.1.1 | C.1.1.3 / web UI review page | test_CR_2_1_1_mapping_review_walkthrough_within_10_minutes | pass (walkthroughs 2026-11-10: 1 min each, target ≤ 10) |
+| F.1.1.4 | distribute_confirmed_mapping.py | CR 2.1.2 | C.1.1.4 | test_CR_2_1_2_distributed_copies_identical_to_confirmed_mapping<br>test_CR_2_1_2_receivers_hold_the_confirmed_mapping_unmodified | pass |
+| F.1.1.1 | request_interpretation.py | CR 2.2.1 | C.1.1.1 / F.8 runtime_config | test_CR_2_2_1_runtime_configuration_points_to_local_host | pass |
+| F.1.1.1<br>F.1.1.2 | request_interpretation.py<br>validate_proposed_criteria.py | CR 2.3.1 | C.1.1.1, C.1.1.2 | test_CR_2_3_1_only_model_contract_responses_accepted<br>test_CR_2_3_1_requests_and_accepted_responses_conform | pass |
+| F.1.1.1 | request_interpretation.py | CR 2.4.1 | C.1.1.1 / F.8 | test_CR_2_4_1_configuration_and_run_show_no_paid_calls | pass |
 
 ### Web UI (Milestone 2 wiring, 2026-11-03)
 

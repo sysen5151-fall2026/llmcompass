@@ -186,3 +186,10 @@ proper fix stays the contract change in Innoslate item 8. On the raw branch the 
 committed (7d2c088) after the generation commit (3be0122); that they were written first is shown
 by the unchanged hash and the order of work in prompts/2026-11-03-criteria-mapper-component.md,
 not by git.
+
+## Renames (2026-11-10, Milestone 2 rubric)
+
+`tests/test_component_criteria_mapper.py` is now `tests/test_functional_requirements.py` and
+`.github/workflows/ci.yml` is now `.github/workflows/tests.yml`, the names the Milestone 2 rubric
+uses. Test code unchanged. Earlier entries in this log, docs/PLAN.md, docs/prompt-log.md and
+prompts/ keep the old names as written at the time.
