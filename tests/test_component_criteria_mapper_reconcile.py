@@ -2,7 +2,7 @@
 
 Each test pins one fixed deviation of the raw generation: D-02 (SR 1.2.3 unaltered text),
 D-14 (SPEC 3 failure path, not a crash), D-15 (contract 422 -> ValueError), D-17 (presenter 422).
-The CR tests themselves are tests/test_component_criteria_mapper.py (written from spec, unchanged).
+The CR tests themselves are tests/test_functional_requirements.py (written from spec, unchanged).
 """
 
 import importlib

@@ -240,7 +240,7 @@ See the team's Toolset Justification doc for full rationale.
 
 ```
 .
-├── .github/workflows/ci.yml   # runs every test with pytest + Flask; red while any requirement is unmet
+├── .github/workflows/tests.yml # runs every test with pytest + Flask; red while any requirement is unmet
 ├── .claude/commands/          # /log and the explorer / spec-tracer agents
 ├── backend/
 │   ├── app.py                 # Flask UI: POST / runs C.1.1 live (review page), POST /confirm is UC.1.9 (entry points in docs/route-table.md)

@@ -47,7 +47,7 @@ or live call to an external system.
 
 ### Not an application entry point
 
-- `.github/workflows/ci.yml`, triggered on push and pull_request, runs `pytest`.
+- `.github/workflows/tests.yml`, triggered on push and pull_request, runs `pytest`.
   It is verification tooling (Lab Manual 5.3) and isn't part of the application.
   No actor in the model triggers it, so it is neither mapped nor an orphan.
 

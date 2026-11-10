@@ -38,3 +38,25 @@ jobs:
       # requirement is unmet.
       - name: Run acceptance and system requirement tests
         run: pytest -v
+
+  # F.1.1 Propose Criteria Mapping (C.1.1 Criteria Mapper) functional requirements only:
+  # CR 1.1.1-2.4.1 (SPEC.md section 7) plus the reconcile tests (docs/deviation-log.md).
+  # A result scoped to one function; the full-suite job above is unchanged and stays red
+  # while any requirement is unmet (Lab Manual 5.3).
+  functional-requirements-F_1_1:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: pip install pytest "Flask==3.1.2" pyyaml
+
+      - name: Run F.1.1 functional requirement tests (CR 1.1.1-2.4.1)
+        run: pytest -v tests/test_functional_requirements.py tests/test_component_criteria_mapper_reconcile.py

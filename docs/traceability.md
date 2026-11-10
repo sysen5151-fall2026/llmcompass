@@ -102,7 +102,7 @@ Each is satisfied by C.1; the "Element" column is the Form report Table 4 alloca
 Module per component: `backend/provide_llm_selection_decision_support/propose_criteria_mapping/`
 (`request_interpretation.py` C.1.1.1, `validate_proposed_criteria.py` C.1.1.2,
 `present_criteria_mapping.py` C.1.1.3, `distribute_confirmed_mapping.py` C.1.1.4). Tests in
-`tests/test_component_criteria_mapper.py` (from spec) and
+`tests/test_functional_requirements.py` (from spec) and
 `tests/test_component_criteria_mapper_reconcile.py` (reconcile fixes, docs/deviation-log.md).
 C.1.1.4 imports C.1.1.2's known-metrics and threshold helpers (deviation log D-20).
 

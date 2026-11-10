@@ -1087,3 +1087,56 @@ call path for its tests; only the routes change.
 
 Open: UC.1.17 select a model (record stored with no selection); timed walkthroughs; the data-API
 URLs can be overridden by env vars without a host check (refresh CLI only).
+
+## Milestone 2 video, codebase-to-model segment (2026-11-10, due 2026-11-11)
+
+Owners: Allyanna, Khai. Function: F.1.1 Propose Criteria Mapping (C.1.1 Criteria Mapper).
+Covers rubric items: product demo of F.1.1, traceability rows, module, tests + passing CI,
+contracts/api-v1.yaml, docs/route-table.md. No new requirements; renames only (option A).
+
+### Current state (gh, 2026-11-10)
+
+- Every CI run since 2026-10-30 is `failure` (latest main: run 41748630425).
+- F.1.1 failures are only the four D-method tests (CR 1.2.4, CR 1.3.6, CR 1.4.3, CR 2.1.1),
+  x4 scenarios: no `MAPPING_REVIEW:<scenario>` rows in docs/validation/walkthroughs.csv (empty).
+- Outside F.1.1 (stay red, not in scope): test_product_owner.py (not implemented), SR 1.2.1
+  (catalog of 3 in file mode), SR 1.3.1 / SR 1.4.1 / SR 2.1.1 / SR 2.1.2 / SN-TL-08
+  (full_comparison and rerun walkthroughs), SN-TL-01 reference set, SN-TL-06 XPASS(strict).
+
+### Steps
+
+1. Rename the workflow: `git mv .github/workflows/ci.yml .github/workflows/tests.yml`.
+2. Rename the tests: `git mv tests/test_component_criteria_mapper.py tests/test_functional_requirements.py`.
+   Test code unchanged (CLAUDE.md: never edit a test to make an implementation pass).
+3. Update references to both names: README.md (tree), docs/traceability.md (C.1.1 section),
+   docs/route-table.md, docs/deployment.md, tests/test_component_criteria_mapper_reconcile.py
+   docstring. Historical entries (PLAN.md, prompt-log.md, deviation-log.md, prompts/) keep the
+   old names; add one deviation-log line recording the rename.
+4. Add a second job to tests.yml, `functional-requirements-F.1.1`, that runs only
+   `pytest -v tests/test_functional_requirements.py tests/test_component_criteria_mapper_reconcile.py`.
+   The existing full-suite job stays as is (still red). This gives a CI result scoped to the
+   function in the video without hiding the other failures. **Team to confirm.**
+5. Log the mapping-review walkthroughs (real, timed, by a team member through the web UI):
+   one `MAPPING_REVIEW:SCENARIO_01`-`_04` row each in docs/validation/walkthroughs.csv
+   (date, operator, scenario, minutes). That turns the CR 1.2.4 / 1.3.6 / 1.4.3 / 2.1.1 D tests
+   green if each is <= 10 minutes. These can double as the demo rehearsal. Do not write the
+   rows without doing the walkthroughs.
+6. Set up a local venv with the CI deps and run step 4's command. Then push to `allyanna`, open
+   or update the PR, and confirm with `gh run list` / `gh run view` that the F.1.1 job is green.
+7. Update the Status column in docs/traceability.md for the CR rows that change.
+8. Recording checklist (who shows what):
+   - Demo: docs/validation/demo-milestone-2.md, SCENARIO_02, one UI step per F.1.1.1-F.1.1.4 box.
+   - traceability.md: the F.1.1 / SR 1.4.1.1 row and the "C.1.1 Criteria Mapper component
+     requirements" table (CR ID, element, test, status).
+   - Module: propose_criteria_mapping/__init__.py docstring (F.1.1 / C.1.1), then
+     request_interpretation.py (F.1.1.1) and distribute_confirmed_mapping.py (positional
+     inputs, keyword-only controls).
+   - Tests: tests/test_functional_requirements.py `test_CR_*` names, then the green F.1.1 job
+     in GitHub Actions (tests.yml).
+   - contracts/api-v1.yaml: requestInterpretation, validateProposedCriteria,
+     presentCriteriaMapping, distributeConfirmedMapping (+ splitConfirmedMapping,
+     compileDecisionBasis), each mapped to its IDEF0 arrow.
+   - route-table.md: GET /, POST /, POST /confirm -> UC.1.1-UC.1.9.
+
+Open: whether step 4 (scoped CI job) is acceptable to the team/instructor, or the video
+shows the full suite red with the F.1.1 tests passing.
