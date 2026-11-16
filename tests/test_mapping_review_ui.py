@@ -454,3 +454,17 @@ def test_UC_1_9_confirm_route_exists_and_requires_pending(client, runtime, pendi
     assert resp.status_code not in (404, 405)
     assert 400 <= resp.status_code < 500
     assert stored_record(resp.get_data(as_text=True)) is None
+
+
+def test_D29_same_criterion_id_in_two_replies_confirms_with_defaults(client, runtime):
+    # D-29 / ADR-0008 (CR 1.4.4, CR 2.1.2): two requirements whose replies both use "c1" -- the
+    # Lab 10.4 smoke run's failure (Confirm 422). With the page defaults, Confirm must succeed.
+    runtime["replies"] = [valid(_crit("c1", "input_price", "<=", 5, "USD per 1M input tokens", "cost")),
+                          valid(_crit("c1", "context_window", ">=", 100000, "tokens", "capability"))]
+    _, page = review(client, "Keep operating cost low.\nHandle long documents.")
+    resp, result = confirm(client, pending_of(page))
+    assert resp.status_code == 200, "Confirm rejected two replies that reuse a criterion_id"
+    record = stored_record(result)
+    assert record is not None
+    ids = [c["criterion_id"] for c in record["criteria_mapping"]]
+    assert len(ids) == len(set(ids)) == 2

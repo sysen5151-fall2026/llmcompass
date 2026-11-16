@@ -125,3 +125,19 @@ def test_propose_mapping_one_request_per_line(fake_runtime):
     presented, rset = f11.propose_mapping("Respond quickly.\n\nCost little.")
     assert [r["text"] for r in rset] == ["Respond quickly.", "Cost little."]
     assert [e["status"] for e in presented["requirements"]] == ["proposed", "proposed"]
+
+
+def test_propose_mapping_criterion_ids_unique_across_requirements(fake_runtime):
+    # D-29 (found by the Lab 10.4 measured runs): each reply numbers its criteria on its own
+    # (prompt: "unique within this response"), so two requirements can both return "c1" and
+    # C.1.1.4 rejects the confirmed mapping (D-13). CR 1.4.4, CR 2.1.2 -- ids unique per comparison.
+    fake_runtime["replies"] = [_valid, _valid]
+    presented, rset = f11.propose_mapping("Respond quickly.\nCost little.")
+    ids = [c["criterion_id"] for e in presented["requirements"] for c in e["criteria"]]
+    assert len(ids) == len(set(ids)) == 2
+    for entry in presented["requirements"]:  # still traceable to the reply's own id
+        assert [c["criterion_id"] for c in entry["criteria"]] == [f"{entry['requirement_id']}:c1"]
+    confirmed = [{**c, "designation": "weighted", "weight": 1}
+                 for e in presented["requirements"] for c in e["criteria"]]
+    required, hard, weighted, _ = c114.distribute_confirmed_mapping(confirmed, rset)
+    assert len(weighted) == 2 and required == ["latency_p50"]

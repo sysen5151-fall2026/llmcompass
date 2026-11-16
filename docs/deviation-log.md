@@ -77,6 +77,7 @@ contract/SPEC**.
 | D-26 (verifier) | `distribute_confirmed_mapping.py:11-29` | The Criterion schema gives `proxy_strength` and `category` enums. The distributeConfirmedMapping 422 list does not name them. | Accepts any `proxy_strength` / `category` on a confirmed criterion (probe: "bogus" accepted). | The 422 list names only designation, weight and metric; the schema's enums are not stated as a rejection rule. | spec defect | Keep; promote (Innoslate item 20). The web UI now leaves both out for hand-added criteria instead of inventing them. |
 | D-27 (verifier) | `distribute_confirmed_mapping.py:28`; `validate_proposed_criteria.py:34-35` | Weights: number, minimum 0 (A20). Thresholds: number per SPEC 3. | NaN and inf pass `weight < 0` and the number checks; a NaN weight later fails in F.1.7's `json_valid` CHECK (HTTP 500 on the web path). | "Number" was not said to be finite; JSON has no NaN, so the spec never needed to. | spec defect | Web UI rejects non-finite weights and thresholds before C.1.1.4 (app.py). Promote (Innoslate item 21). |
 | D-28 (verifier) | `validate_proposed_criteria.py:48-55`; `distribute_confirmed_mapping.py:43-48` | RequirementSet items need a non-empty requirement_id; nothing says unique. | Duplicate requirement_ids in a requirement set are accepted. | Uniqueness was implied by "an identifier to each stated requirement" but not stated. | spec defect | Keep (C.1.1.1 never makes duplicates); promote (Innoslate item 22). |
+| D-29 (Lab 10.4 measured runs, 2026-11-15) | `propose_criteria_mapping/__init__.py` (`propose_mapping`); `distribute_confirmed_mapping.py:56-59`; `prompt_template.txt:7` | SPEC 3 prompt: criterion_id "unique within this response"; D-13: a repeated criterion_id in the confirmed mapping is invalid. | One request per stated requirement, so each reply numbers its own criteria (`CRI-1`, `C1`). With 2+ requirements the ids collided and every default Confirm returned 422 (smoke run: REQ-1, REQ-3, REQ-4 all `CRI-1`). | The two uniqueness scopes (per response, per comparison) were never joined. | spec defect | **Fixed**: `propose_mapping` prefixes the requirement_id (`REQ-3:CRI-1`); ADR-0008, contract note A33, regression test `test_propose_mapping_criterion_ids_unique_across_requirements`. Promote (Innoslate item 24). |
 
 ### Checked and not deviations
 
@@ -138,6 +139,7 @@ Items 4, 16 and 17 depend on a team decision noted in the item.
 21. (under CR 1.1.1; D-27) The Criteria Mapper shall reject a confirmed criterion whose weight or numeric threshold is not a finite number.
 22. (under CR 1.4.1; D-28) The Criteria Mapper shall give every stated requirement in one comparison a different identifier.
 23. (under CR 1.4.2 / CR 2.3.1; found in the demo rehearsal, 2026-11-03) The Criteria Mapper shall treat a proposed criterion whose unit is not the unit of its metric (SPEC 2 field units, benchmark map units) as invalid. (Qwen proposed "%" for intelligence_index and "USD per ticket" for input_price; SPEC 3 lists units in the prompt but no rule checks them, so the Technical Lead had to catch them on the review page.)
+24. (under CR 1.4.4 / CR 2.1.2; D-29) The Criteria Mapper shall give every proposed criterion an identifier that is unique within one comparison.
 
 The contract-only fixes (T-1, T-2, T-7, and the 422 additions in D-17 and D-22) go in
 `contracts/api-v1.yaml`, not in Innoslate.
@@ -146,10 +148,10 @@ The contract-only fixes (T-1, T-2, T-7, and the 422 additions in D-17 and D-22) 
 
 | Class | Count | Rows |
 |---|---|---|
-| spec defect | 18 | D-01, D-03, D-04, D-08, D-09, D-10, D-11, D-12, D-16, D-17, D-18, D-21, D-23, D-24, D-25, D-26, D-27, D-28 |
+| spec defect | 19 | D-01, D-03, D-04, D-08, D-09, D-10, D-11, D-12, D-16, D-17, D-18, D-21, D-23, D-24, D-25, D-26, D-27, D-28, D-29 |
 | assistant error | 4 | D-07, D-14, D-15, D-19 |
 | unrequested addition | 6 | D-02, D-05, D-06, D-13, D-20, D-22 |
-| **Total** | **28** | Plus T-1–T-7 in the spec-defect subsection: T-1–T-3 are contract/SPEC-only, T-4–T-6 repeat D-04, D-16 and D-23, and T-7 was found by the auditor |
+| **Total** | **29** | Plus T-1–T-7 in the spec-defect subsection: T-1–T-3 are contract/SPEC-only, T-4–T-6 repeat D-04, D-16 and D-23, and T-7 was found by the auditor |
 
 ## Reconciliation (main session, 2026-11-03)
 

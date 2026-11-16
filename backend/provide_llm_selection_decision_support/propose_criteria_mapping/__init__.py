@@ -35,6 +35,19 @@ from ._first_level import (  # noqa: F401 -- first-level F.1.1 defs (F.1 boundar
 )
 
 
+def _qualify_criterion_ids(result: dict) -> dict:
+    # CR 1.4.4, CR 2.1.2 (D-29, ADR-0008): each reply numbers its criteria on its own ("unique within
+    # this response", SPEC 3), so two requirements can return the same id and C.1.1.4 would reject
+    # the confirmed mapping (D-13). Prefixing the requirement_id makes ids unique per comparison and
+    # stays deterministic (SR 2.1.3). Done here, where the replies are combined: C.1.1.3 presents
+    # what it is given unchanged (CR 1.2.4).
+    rid = result.get("requirement_id")
+    for c in result.get("criteria") or []:
+        if rid and isinstance(c.get("criterion_id"), str) and not c["criterion_id"].startswith(f"{rid}:"):
+            c["criterion_id"] = f"{rid}:{c['criterion_id']}"
+    return result
+
+
 def propose_mapping(stated_requirements: str, *, known_metrics=None) -> tuple:
     """F.1.1 flows 1 -> 4: Request Interpretation, send, Validate Proposed Criteria, Present Criteria Mapping.
 
@@ -54,6 +67,6 @@ def propose_mapping(stated_requirements: str, *, known_metrics=None) -> tuple:
                                                       known_metrics=known_metrics)
             if result["status"] != "retry":
                 break
-        validated.append(result)
+        validated.append(_qualify_criterion_ids(result))
     # CR 1.4.3, CR 1.2.4 -- every stated requirement with its criteria and proxy-strength ratings (flow 4)
     return _c113.present_criteria_mapping(validated), requirement_set
