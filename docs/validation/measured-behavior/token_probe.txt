@@ -1,0 +1,8 @@
+utc 2026-11-16T05:07:44.374945+00:00 model qwen2.5-7b-instruct-1m temperature 0 seed 5151 max_tokens 512 response_format json_schema strict
+REQ  mean_s  prompt_tok  completion_tok  completion tokens all reps
+REQ-1  10.45     461     301  [301, 301, 301]
+REQ-2   6.49     465     185  [185, 185, 185]
+REQ-3   4.43     456     122  [122, 122, 122]
+REQ-4   4.36     464     121  [121, 121, 121]
+REQ-5   1.21     457      32  [32, 32, 32]
+fit: seconds = 0.18 + 0.0342 * completion_tokens  (=> 29.2 tok/s), r = 0.998; sum of completion tokens per comparison = 761

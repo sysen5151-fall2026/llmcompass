@@ -265,6 +265,7 @@ See the team's Toolset Justification doc for full rationale.
 │   └── check_conformance.py   # checks the F.1.x modules against the contract (CI)
 ├── tests/                     # one test per acceptance criterion; test_system_requirements.py has one per system requirement (SR 1.1.1-1.4.1)
 ├── prompts/                   # generation prompts
+├── tools/                     # Lab 10.4 measurement (not product code): measure_uc1.py times every UC.1 boundary; compare_measured_simulated.py, export_submission.py
 ├── pytest.ini
 ├── docs/
 │   ├── context.md             # external assets, and which of them hold an interface
@@ -276,8 +277,9 @@ See the team's Toolset Justification doc for full rationale.
 │   ├── environment.md
 │   ├── prompt-log.md
 │   ├── validation/walkthroughs.csv  # timed runs for the operator-effort requirements
+│   ├── validation/measured-behavior.md  # Lab 10.4: Modeling report Section 6 (measured vs simulated); data and plots in measured-behavior/
 │   ├── deviation-log.md       # Lab 9.4: every difference between the C.1.1 spec and its one-pass generation
-│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced; 0005 SQLite; 0006 C.1.1 runtime send/retry
+│   └── adr/                   # 0001 toolchain; 0002-0004 divergences the interface contract forced; 0005 SQLite; 0006 C.1.1 runtime send/retry; 0007 api mode default; 0008 criterion ids unique per comparison
 └── README.md
 ```
 

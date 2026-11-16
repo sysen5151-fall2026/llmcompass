@@ -1141,3 +1141,91 @@ contracts/api-v1.yaml, docs/route-table.md. No new requirements; renames only (o
 
 Open: whether step 4 (scoped CI job) is acceptable to the team/instructor, or the video
 shows the full suite red with the F.1.1 tests passing.
+
+## Product build: instrumentation and measured behavior (Lab Manual 10.4, 2026-11-15)
+
+Owner: Khai. Fills Modeling report Section 6 (6.1-6.3). Traces to SR 1.3.2 (MOP "interpretation
+response time per requirement", target still to be set by the team), SR 2.1.1 / CR 2.1.1 (effort
+budgets the simulation was traced to) and the Modeling report Table X duration estimates. No new
+product behaviour: the harness is tooling outside `backend/` and changes no product module.
+
+### What the model authorizes (10.4.1, from SYSEN5151Modeling.pdf)
+
+- Functional simulation: UC.1 baseline (local runtime), Monte Carlo 100 runs (mean 16.84 min, SD
+  1.74) and Discrete Event 10 runs (13.28-19.43 min).
+- Alternative: UC.1A hosted runtime (mean 15.42 min). Only UC.1.4 differs.
+- Timelines: DE Gantt charts. No resources modelled (cost $0, no utilisation) -- stated, not a gap.
+
+### Instrumentation design
+
+- `tools/measure_uc1.py` drives the real web path in-process with the Flask test client: POST /
+  (requirements) -> review page -> POST /confirm with the review page's default form fields (the
+  Technical Lead accepts every default; human time is zero by construction and is not measured).
+- Entry/exit timestamps (`time.perf_counter_ns`, plus wall-clock ISO) are taken by wrapping the
+  callables at each sequence-diagram boundary at run time (module attributes), so product code is
+  unchanged. Stage map (simulated action -> wrapped callable):
+
+| Stage | Boundary (sequence diagram msg) | Wrapped callable | Simulated (s) |
+|---|---|---|---|
+| UC.1.3 Submit requirements | inside C.1 before msg 2 | `_c111.request_interpretation` | N(0.5, 0.1) |
+| UC.1.4 Interpret (per requirement, incl. re-send) | msgs 2-3 C.1 <-> C.8 | `_c111.send_interpretation_request` | N(90, 25) per comparison |
+| UC.1.5 Assign confidence / validate | C.1 | `_c112.validate_proposed_criteria` | N(0.2, 0.05) |
+| UC.1.6 Present mapping | msg 4 C.1 -> TL | `_c113.present_criteria_mapping` + render `review.html` | N(1, 0.2) |
+| UC.1.7-1.9 TL review, weight, confirm | msgs 4-5 | not measured here: docs/validation/walkthroughs.csv | N(240,60)+N(120,30)+N(15,5) |
+| (C.1.1.4 distribute, not modelled) | after msg 5 | `_c114.distribute_confirmed_mapping` | -- |
+| UC.1.10 Request model data | msg 6 C.1 -> C.7 | `retrieve_model_data_request` (F.1.2) | N(0.5, 0.1) |
+| UC.1.11 Retrieve spec and benchmark data | msgs 6-7 C.1 <-> C.7 | `provide_model_data` (F.7) | Exp(mean 2) |
+| (F.1.2 receive, not modelled) | after msg 7 | `receive_model_data` | -- |
+| UC.1.12 Exclude (hard constraints) | C.1 | `apply_hard_constraints` | N(0.2, 0.05) |
+| UC.1.13 Score and rank | C.1 | `score_and_rank_candidates` | N(0.3, 0.05) |
+| UC.1.14 Sensitivity | C.1 | `analyze_ranking_sensitivity` | N(0.5, 0.1) |
+| UC.1.15-1.16 Present ranking and finding | msg 8 C.1 -> TL | `report_selection_rationale` + render `result.html` | N(1, 0.2) + N(0.5, 0.1) |
+| UC.1.18 Generate decision record | msg 10 C.1 -> TL | `generate_and_store_decision_record` | N(0.5, 0.1) |
+
+- Each request's whole wall time is also recorded, so time outside the wrapped stages shows up as
+  "unattributed" instead of disappearing.
+- Scenario (fixed for all runs, 5 stated requirements, inside the model's 5-8 assumption): the
+  sentences of sample SCENARIO_03 and SCENARIO_04, verbatim, one per line (a high-volume EU
+  customer assistant). Runtime: LM Studio, qwen2.5-7b-instruct (Q4_K_S), 127.0.0.1:1234 (as in
+  docs/deployment.md). Data: BENCHMARK_SOURCE=api, the stored snapshot (14 models). Decision
+  records go to a temporary DECISION_RECORD_DIR so runs do not touch data/.
+- At least 30 runs, plus 1 discarded warm-up (first call after model load is slowest; recorded
+  separately, not hidden).
+
+### Outputs
+
+- `docs/validation/measured-behavior/runs.csv` (one row per stage call), `runs_meta.json`.
+- `tools/compare_measured_simulated.py` -> `comparison.md` (simulated mean/SD vs measured
+  n/mean/SD/median/p95/min/max per stage) and `*.png` plots (per-stage box plot on a log axis;
+  measured UC.1.4 vs N(90, 25)).
+- `docs/validation/measured-behavior.md`: report Section 6 text (6.1 instrumentation and runs,
+  6.2 comparison, 6.3 divergence explanation grounded in checks, and the decision).
+
+### Decision rule (10.4.2 last bullet)
+
+Update simulation parameters where a measured stage mean is outside the simulated mean +/- 2 SD
+and the stage matters to the total; change the architecture only if a measured result breaks an
+SR/CR target. Record the decision in Section 6.3 and, if parameters change, as a model finding.
+
+### Progress (2026-11-15)
+
+- Harness and analysis built by two parallel agents; integration checked on fake-runtime data.
+- Smoke run found D-29 (criterion ids repeat across requirements -> Confirm 422). Fixed before the
+  runs in `propose_mapping` (ADR-0008, contract note A33, regression test). Suite: same 12
+  pre-existing failures with and without the fix, +1 passing test.
+- 30 measured runs + 1 warm-up, 04:30-04:49 UTC, LM Studio qwen2.5-7b-instruct-1m Q4_K_M on an M2
+  Pro (deviation from the Q4_K_S in docs/deployment.md, recorded in Section 6.1). All 200/200.
+- Runs 1-16 were on battery and 17-30 on mains power (pmset log); UC.1.4 41.6 s vs 27.5 s.
+- Token probe (15 direct requests, exact adapter body, token_probe.txt): UC.1.4 time = 0.18 s + 0.0342 s/output token, r = 0.998.
+- Verifier (independent recomputation from runs.csv): all table numbers match; wording fixes applied
+  (Low Power Mode on battery, coverage 99.94%, 7.2 s simulated software+retrieval, decision rationale,
+  power-state-specific UC.1.4 parameters). Web-level D-29 test added (red without fix, green with);
+  idempotency guard on the id prefix; export median/end time fixed.
+- Section 6 written (docs/validation/measured-behavior.md); decision: update UC.1.4, UC.1.11 and
+  software-action parameters; no architecture change for performance; human steps unchanged.
+
+### Open items (10.4)
+
+- Team to confirm the 6.3 explanation and decision, ADR-0008, and set SR 1.3.2's target.
+- Timed full-comparison walkthroughs by people (SR 2.1.1, CR 2.1.1), minutes to 0.1.
+- Update UC.1.4 / UC.1.11 / software-action durations in Innoslate and re-run the simulation.

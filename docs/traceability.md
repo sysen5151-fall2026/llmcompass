@@ -164,3 +164,16 @@ decision-record arrow, which has no output end on the IDEF0.
 The xfail markers come off when the retrieval/re-run arrow is modeled and the
 next SRD export generates its system requirement. Strict means an unexpected
 pass fails the run, so a marker can't outlive the gap.
+
+## Measured behavior (Lab Manual 10.4, 2026-11-15)
+
+Tooling outside `backend/`; it changes no product module. Write-up: docs/validation/measured-behavior.md
+(Modeling report Section 6). Data: docs/validation/measured-behavior/.
+
+| Element | Traces to | Evidence | Status |
+|---|---|---|---|
+| tools/measure_uc1.py (entry/exit timers at every UC.1 sequence-diagram boundary, 30 runs + 1 warm-up) | SR 1.3.2 MOP (interpretation response time per requirement), SR 2.1.1, CR 2.1.1 | runs.csv, per_run.csv, interpretation_log.csv | 30 runs, all 200/200, 150 interpretations valid first time |
+| tools/compare_measured_simulated.py (comparison table, 3 plots) | SR 1.3.2, SR 2.1.1, CR 2.1.1; Modeling report Table X | comparison.md, *.png | done |
+| tools/export_submission.py (per-run CSV, interpretation log, context) | SR 1.3.2 | per_run.csv, interpretation_log.csv, CONTEXT.md | done |
+| propose_mapping `_qualify_criterion_ids` (D-29, ADR-0008, contract A33) | CR 1.4.4, CR 2.1.2 (via D-13) | test_propose_mapping_criterion_ids_unique_across_requirements | pass |
+| SR 1.3.2 target | SR 1.3.2 | measured per request: mean 7.0 s, p95 16.0 s, max 18.1 s | team to set the target |

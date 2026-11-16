@@ -1064,3 +1064,64 @@ to explain (the Technical Lead's responsibilities, hard vs weighted, error handl
 **Still open:** the failure path has not been rehearsed; timed walkthroughs not yet logged.
 
 ---
+
+## 2026-11-16 — Khai Xin Kuan — Claude Code (Opus 5.5)
+
+**Prompt:** Complete the Lab Manual 10.4 product build (Instrumentation and Measured Behavior,
+pp. 169-171) for LLM Compass, using SYSEN5151Modeling.pdf (UC.1/UC.1A action and sequence
+diagrams, Table X durations, Monte Carlo and Discrete Event results) as context; update the
+documents, orchestrate multiple agents, validate and verify. Mid-session: a teammate's list of four
+submission items (per-run CSV, per-request interpretation log, proof of instrumentation, context)
+due 23:52; human stages to be compared with the logged walkthroughs, not automated.
+
+**Reviewed by:** two build agents in parallel (harness; comparison and plots, each checked on fake
+data), then an independent verifier that recomputed every number from runs.csv and re-ran the
+grounding checks. The verifier's findings were fixed (below).
+
+**Output:**
+- `docs/PLAN.md`: "Product build: instrumentation and measured behavior" section (stage map,
+  scenario, decision rule) written before the code; progress and open items.
+- `tools/measure_uc1.py` (new): wraps every UC.1 sequence-diagram boundary at run time with
+  entry/exit `perf_counter_ns` timers and drives POST / and POST /confirm through the Flask test
+  client; product code unchanged. `--fake-runtime`, `--check`, temp `DECISION_RECORD_DIR`, records
+  uncommitted paths. SR 1.3.2, SR 2.1.1, CR 2.1.1.
+- `tools/compare_measured_simulated.py` (new): per-stage comparison against Table X, per-requirement
+  UC.1.4 table, human-stage and hybrid end-to-end tables, 3 plots.
+- `tools/export_submission.py` (new): `per_run.csv`, `interpretation_log.csv`, `CONTEXT.md`.
+- `docs/validation/measured-behavior/`: 30 measured runs + 1 warm-up (2026-11-16 04:30-04:49 UTC,
+  LM Studio qwen2.5-7b-instruct-1m Q4_K_M, M2 Pro, api-mode snapshot): `runs.csv`, `runs_meta.json`,
+  derived CSVs, `comparison.md`, plots, `token_probe.txt`. All 200/200, 150 interpretations valid
+  first time, identical mapping in all 31 records.
+- `docs/validation/measured-behavior.md` (new): Modeling report Section 6 (6.1-6.3). Divergences
+  each tied to a check: UC.1.4 35.1 s vs N(90, 25), decode-bound (probe: 0.18 s + 0.0342 s/output
+  token, r = 0.998); runs 1-16 on battery with Low Power Mode in the battery profile, 17-30 on mains
+  (`pmset` log, switch 1 s after run 17 started); software stages ms not s; UC.1.11 a local SQLite
+  read (code). Decision: update UC.1.4 (and UC.1.11 / software actions for fidelity), no
+  architecture change for performance, human steps unchanged.
+- D-29 fix, found by the first instrumented smoke run (Confirm 422 on multi-line requirements:
+  criterion ids repeat across replies): `propose_criteria_mapping/__init__.py`
+  `_qualify_criterion_ids` (`REQ-3:CRI-1`, idempotent); regression tests
+  `test_propose_mapping_criterion_ids_unique_across_requirements` and
+  `test_D29_same_criterion_id_in_two_replies_confirms_with_defaults` (both red without the fix).
+  Recorded in `docs/adr/0008-criterion-ids-unique-per-comparison.md`, `contracts/api-v1.yaml` note
+  A33, `docs/deviation-log.md` D-29, Innoslate item 24, summary counts.
+- `docs/traceability.md` (measured-behavior section), `README.md` (tools/, measured-behavior, ADRs).
+- Verified: full suite 282 passed, 12 failed (the same 12 pre-existing failures with and without
+  the fix, checked by A/B stash run), 2 xfailed; `generate_stubs.py --check` and
+  `check_conformance.py` pass; spec trace: every cited ID exists in SPEC.md.
+
+**Assistant assumptions / corrections:** the first Section 6 draft said Low Power Mode was off
+(`pmset -g` read on AC); the verifier found it enabled in the battery profile, now stated as the
+probable mechanism. The first token probe omitted the adapter's seed and JSON schema; re-run with
+the exact body. The submitted `CONTEXT.md` gave median 39.7 s (true 39.61) and the last run's start
+as the end time; fixed in the script and regenerated. Model differs from docs/deployment.md
+(Q4_K_M 1M vs Q4_K_S).
+
+**Still open:**
+- Team to confirm the 6.3 explanation and decision, ADR-0008, and set SR 1.3.2's target.
+- Timed full-comparison walkthroughs by people (SR 2.1.1, CR 2.1.1), minutes to 0.1.
+- Update UC.1.4 / UC.1.11 / software-action durations in Innoslate and re-run the simulation.
+- `.env` still points `ARTIFICIAL_ANALYSIS_API_URL` at the retired endpoint (refresh would fail).
+- Nothing committed yet (branch `ch10-measured-behavior`, on top of unpushed `f7-api-mode-default`).
+
+---
