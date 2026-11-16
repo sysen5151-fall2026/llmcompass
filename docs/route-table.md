@@ -36,7 +36,7 @@ GET  /static/<filename> -- ORPHAN, deleted. Flask registers it by default. There
 python3 -m provide_benchmark_evidence refresh (from backend/) -- UC.1.10/UC.1.11
   (SR 1.2.1, SR 1.3.3). Added 2026-11-03 (Lab Manual 8.5): the operator's on-demand
   pull (SPEC §2 "Refresh"). backend/provide_benchmark_evidence/__main__.py. It stores
-  a snapshot; the app serves it when BENCHMARK_SOURCE=api.
+  a snapshot; the app serves it when BENCHMARK_SOURCE=api (the default since 2026-11-10, ADR-0007).
 ```
 
 Found: 4 entry points. 1 was an orphan and was deleted, so 3 remain, all tracing to
@@ -62,7 +62,7 @@ Sequence diagram, Fig. 6 (p13). "Step" is the call in `run_uc1`.
 | UC.1.4 | Interpret requirements and propose criteria | Language model runtime -> LLM Compass | POST / (C.1.1.2 `validate_proposed_criteria`) | Implemented; invalid reply re-sent once, then interpretation_failed |
 | UC.1.6 | Present proposed mapping for review | LLM Compass -> Technical Lead | POST / (C.1.1.3 `present_criteria_mapping`, review page) | Implemented |
 | UC.1.9 | Confirm the mapping | Technical Lead -> LLM Compass | POST /confirm (C.1.1.4 `distribute_confirmed_mapping`) | Implemented 2026-11-03, with UC.1.7 (keep/remove/edit/add) and UC.1.8 (hard/weighted, weights) |
-| UC.1.10 | Request model data | LLM Compass -> Benchmark Data Sources | POST /confirm (F.1.2 `request_model_data` -> F.7 `provide_model_data`) | Implemented (BENCHMARK_SOURCE=api: live snapshot; file: stored catalog) |
+| UC.1.10 | Request model data | LLM Compass -> Benchmark Data Sources | POST /confirm (F.1.2 `request_model_data` -> F.7 `provide_model_data`) | Implemented (BENCHMARK_SOURCE=api, the default: last pulled snapshot; file: prototype catalog) |
 | UC.1.11 | Retrieve model specification and benchmark data | Benchmark Data Sources -> LLM Compass | POST /confirm (F.1.2 `receive_model_data`) | Implemented |
 | UC.1.16 | Present sensitivity finding | LLM Compass -> Technical Lead | POST /confirm (F.1.3-F.1.6, result page) | Implemented: ranking, contributions, exclusions, unstable pairs, sourced evidence |
 | UC.1.17 | Review recommendation and select a model | Technical Lead -> LLM Compass | none: `select_model` takes the scenario's expected recommendation | **Planned** (SR 1.3.1). It needs its own Technical Lead entry point. |

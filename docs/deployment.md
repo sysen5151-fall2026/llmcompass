@@ -58,7 +58,7 @@ condition).
 
 | Variable | Default | Used by |
 |---|---|---|
-| `BENCHMARK_SOURCE` | `file` | C.7: `file` = stored catalog, `api` = latest pulled snapshot |
+| `BENCHMARK_SOURCE` | `api` (since 2026-11-10, ADR-0007) | C.7: `api` = latest pulled snapshot (run a refresh first), `file` = the prototype's hand-entered catalog |
 | `ARTIFICIAL_ANALYSIS_API_KEY` | — | C.7 refresh |
 | `ARTIFICIAL_ANALYSIS_API_URL`, `MODELS_DEV_API_URL`, `OPENROUTER_API_URL` | see `.env.example` | C.7 refresh |
 | `BENCHMARK_SNAPSHOT_DB` | `data/benchmark_snapshots.sqlite3` | C.7 |

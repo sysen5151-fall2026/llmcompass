@@ -1,6 +1,8 @@
 # Data access component for C.7 Benchmark Data Sources (Lab Manual 8.5).
-# file mode (default, tests): the stored catalog in sample_data/ -- still a STUB: Benchmark Data Sources.
-# api mode: the latest snapshot of the on-demand pull from the live sources (SPEC section 2).
+# api mode (default since 2026-11-10, SPEC section 2 increment 2): the latest snapshot of the
+# on-demand pull from the live sources.
+# file mode (prototype, increment 1; kept for the tests that ask for it): the hand-entered catalog in
+# sample_data/ -- still a STUB: Benchmark Data Sources.
 """Implements F.7 -- Provide Benchmark Evidence. Mechanism: C.7 Benchmark Data Sources."""
 
 import json
@@ -111,11 +113,14 @@ MODEL_SOURCES = SAMPLE_DATA / "model_sources.json"
 SNAPSHOT_SCHEMA = Path(__file__).with_name("snapshot_schema.sql")
 DEFAULT_SNAPSHOT_DB = Path(__file__).resolve().parents[2] / "data" / "benchmark_snapshots.sqlite3"
 DEFAULT_URLS = {
-    "ARTIFICIAL_ANALYSIS_API_URL": "https://artificialanalysis.ai/api/v2/data/llms/models",
+    # The legacy /api/v2/data/llms/models was retired 2026-11-04 (HTTP 410); its free-tier
+    # replacement is paged, 200 records a page (checked 2026-11-10: 734 models, 4 pages).
+    "ARTIFICIAL_ANALYSIS_API_URL": "https://artificialanalysis.ai/api/v2/language/models/free",
     "MODELS_DEV_API_URL": "https://models.dev/api.json",
     "OPENROUTER_API_URL": "https://openrouter.ai/api/v1/models",
 }
 HTTP_TIMEOUT_S = 30
+MAX_AA_PAGES = 20  # a stop for a source that never reports has_more = false
 REQUIRED_FIELDS = ("input_price", "output_price", "context_window")  # SPEC section 2, required
 
 
@@ -124,7 +129,8 @@ class SourceUnavailable(Exception):
 
 
 def _source_mode() -> str:
-    mode = os.environ.get("BENCHMARK_SOURCE") or "file"  # empty in .env = the default
+    # SPEC section 2 increment 2 (SR 1.2.1): the pulled catalog is the default; file is the prototype.
+    mode = os.environ.get("BENCHMARK_SOURCE") or "api"  # empty in .env = the default
     if mode not in ("file", "api"):
         raise ValueError(f"BENCHMARK_SOURCE must be 'file' or 'api', not {mode!r}")
     return mode
@@ -172,14 +178,19 @@ def _read(record, spec: dict):
 
 
 def _pull_sources() -> dict:
-    # One request per source per pull (Artificial Analysis allows 1,000 a day; docs/PLAN.md).
+    # One request per source per pull, plus one per further Artificial Analysis page
+    # (1,000 requests a day allowed; docs/PLAN.md).
     key = os.environ.get("ARTIFICIAL_ANALYSIS_API_KEY")
     if not key:
         raise SourceUnavailable("ARTIFICIAL_ANALYSIS_API_KEY is not set (.env)")
     aa_url = _url("ARTIFICIAL_ANALYSIS_API_URL")
-    aa = _get_json(aa_url, {"x-api-key": key})
-    aa_records = {r.get(SOURCE_FIELDS["artificial_analysis"]["match"]): r
-                  for r in _path(aa, SOURCE_FIELDS["artificial_analysis"]["records"]) or []}
+    aa_records = {}
+    for page in range(1, MAX_AA_PAGES + 1):  # SR 1.2.1 -- every catalog model may be on any page
+        aa = _get_json(aa_url if page == 1 else f"{aa_url}?page={page}", {"x-api-key": key})
+        aa_records.update({r.get(SOURCE_FIELDS["artificial_analysis"]["match"]): r
+                           for r in _path(aa, SOURCE_FIELDS["artificial_analysis"]["records"]) or []})
+        if not _path(aa, "pagination.has_more"):
+            break
     if not aa_records:
         raise SourceUnavailable(f"{aa_url}: no model records in the response")
     pulled = {"aa": (aa_url, aa_records), "models_dev": None, "openrouter": None, "errors": []}

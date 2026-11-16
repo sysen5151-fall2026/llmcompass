@@ -6,7 +6,9 @@ exists.
 """
 
 import importlib
+import json
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 
@@ -48,6 +50,29 @@ def candidate(model_id, input_price, output_price, context, score, residency):
 def decision_record_dir(tmp_path, monkeypatch):
     """Keep each test's stored decision records (SN-TL-06 / 5.1.3.3) out of data/decision_records/."""
     monkeypatch.setenv("DECISION_RECORD_DIR", str(tmp_path / "decision_records"))
+
+
+SNAPSHOT_FIXTURE = Path(__file__).with_name("fixtures") / "benchmark_snapshot.json"
+
+
+@pytest.fixture(autouse=True)
+def benchmark_snapshot_db(tmp_path, monkeypatch):
+    """Api mode (the F.7 default, SPEC section 2 increment 2) reads the last pulled snapshot (SR 1.2.1, SR 1.3.3).
+
+    Each test gets its own copy of one frozen live pull (tests/fixtures/benchmark_snapshot.json),
+    so no test reaches the network or data/benchmark_snapshots.sqlite3. A test that sets
+    BENCHMARK_SNAPSHOT_DB itself replaces this one.
+    """
+    import provide_benchmark_evidence as f7
+
+    db = tmp_path / "benchmark_snapshots.fixture.sqlite3"
+    monkeypatch.setenv("BENCHMARK_SNAPSHOT_DB", str(db))
+    pull = json.loads(SNAPSHOT_FIXTURE.read_text())
+    conn = f7._connect()
+    try:
+        f7._insert_pull(conn, pull["status"], pull["detail"], pull["candidates"], pull["pulled_at"])
+    finally:
+        conn.close()
 
 
 @pytest.fixture

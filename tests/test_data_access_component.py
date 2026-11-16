@@ -2,7 +2,9 @@
 
 SR 1.2.1 (every catalog model requested), SR 1.1.2 / SN-TL-02 / 5.1.2.1 (source and date on
 every figure), SR 1.3.3 (source unavailable -> last snapshot), SR 2.3.2 (data contract).
-No network: the three sources are served from 127.0.0.1.
+No network: the three sources are served from 127.0.0.1. The fake Artificial Analysis source
+answers in the shape of the paged GET /api/v2/language/models/free that replaced the retired
+/api/v2/data/llms/models on 2026-11-04 (checked live 2026-11-10).
 """
 
 import json
@@ -18,21 +20,24 @@ SOURCES = json.loads((Path(__file__).resolve().parents[1] / "sample_data" / "mod
 
 
 def _fake_payloads():
-    aa = {"status": 200, "data": []}
+    records = []
     models_dev = {}
     for i, m in enumerate(SOURCES):
         rec = {"id": m["artificial_analysis_id"], "name": m["model_id"].upper(),
                "pricing": {"price_1m_input_tokens": 1.0 + i, "price_1m_output_tokens": 2.0 + i},
-               "median_time_to_first_token_seconds": 0.5,
-               "median_time_to_first_answer_token": 0 if i == 0 else 1.5,   # 0 = not measured -> gap
-               "median_output_tokens_per_second": 100,
-               "evaluations": {"artificial_analysis_intelligence_index": 40 + i, "lcr": 0.5}}
-        aa["data"].append(rec)
+               "performance": {"median_time_to_first_token_seconds": 0.5,
+                               "median_time_to_first_answer_token_seconds": 0 if i == 0 else 1.5,  # 0 = not measured -> gap
+                               "median_output_tokens_per_second": 100},
+               "evaluations": {"artificial_analysis_intelligence_index": 40 + i}}  # the free tier has no lcr
+        records.append(rec)
         md = m.get("models_dev")
         if md and i != 1:  # model 1 has no models.dev entry -> OpenRouter fallback
             models_dev.setdefault(md["provider"], {"models": {}})["models"][md["model"]] = {"limit": {"context": 200000}}
     openrouter = {"data": [{"id": m["openrouter_id"], "context_length": 128000} for m in SOURCES if m.get("openrouter_id")]}
-    return {"/aa": aa, "/models.dev": models_dev, "/openrouter": openrouter}
+    half = len(records) // 2  # two pages, so a catalog model on page 2 is still found
+    aa = {"tier": "free", "data": records[:half], "pagination": {"page": 1, "total_pages": 2, "has_more": True}}
+    aa_2 = {"tier": "free", "data": records[half:], "pagination": {"page": 2, "total_pages": 2, "has_more": False}}
+    return {"/aa": aa, "/aa?page=2": aa_2, "/models.dev": models_dev, "/openrouter": openrouter}
 
 
 @pytest.fixture
@@ -76,9 +81,9 @@ def test_pull_builds_one_sourced_candidate_per_catalog_model(fake_sources):
             assert fig["source_id"].startswith(fake_sources["base"]) and fig["collection_date"] == result["pulled_at"][:10]
         for b in c["benchmarks"]:
             assert b["score"]["source_id"] and b["score"]["collection_date"]
-    # one request per source, the key only on the Artificial Analysis request
-    assert sorted(p for p, _ in fake_sources["seen"]) == ["/aa", "/models.dev", "/openrouter"]
-    assert dict(fake_sources["seen"])["/aa"] == "test-key"
+    # one request per source and per further Artificial Analysis page, the key only on Artificial Analysis
+    assert sorted(p for p, _ in fake_sources["seen"]) == ["/aa", "/aa?page=2", "/models.dev", "/openrouter"]
+    assert dict(fake_sources["seen"])["/aa"] == dict(fake_sources["seen"])["/aa?page=2"] == "test-key"
     assert dict(fake_sources["seen"])["/models.dev"] is None
 
 
@@ -93,9 +98,10 @@ def test_missing_values_become_gaps_and_fallback_fills_context(fake_sources):
     # SPEC section 2 -- no models.dev entry -> OpenRouter's context length
     assert served[second]["context_window"]["value"] == 128000
     assert served[second]["context_window"]["source_id"].endswith("/openrouter")
-    # lcr is scaled x100 to % (benchmark_map.json)
-    lcr = next(b for b in served[first]["benchmarks"] if b["benchmark_id"] == "aa_lcr_v1_1_percent")
-    assert lcr["score"]["value"] == 50
+    # lcr is not published by the free-tier API (benchmark_map.json, team 2026-11-10): a gap, never a score
+    assert "aa_lcr_v1_1_percent" not in {b["benchmark_id"] for b in served[first]["benchmarks"]}
+    assert {"model_id": first, "field": "benchmark:aa_lcr_v1_1_percent",
+            "reason": "not published by the API"} in result["gaps"]
 
 
 def test_source_unavailable_keeps_last_snapshot(fake_sources, monkeypatch):

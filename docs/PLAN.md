@@ -523,7 +523,8 @@ weight the catalog further toward US or China).
 
 ### Design
 
-- **Config, not code.** `BENCHMARK_SOURCE` (`file` | `api`, default `file`), the
+- **Config, not code.** `BENCHMARK_SOURCE` (`file` | `api`, default `file`; default `api` since
+  2026-11-10, ADR-0007), the
   source URLs and the keys come from `.env` (python-dotenv). `.env.example` is
   committed, and `.env` is gitignored.
 - **`file` mode** is today's behaviour: the stored catalog in `sample_data/`. The

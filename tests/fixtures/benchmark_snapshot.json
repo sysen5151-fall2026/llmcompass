@@ -1,0 +1,1066 @@
+{
+ "_about": "One live F.7 pull (python3 -m provide_benchmark_evidence refresh), frozen as the api-mode snapshot the tests read (SR 1.2.1; SPEC section 2 'Refresh'; team, 2026-11-10). tests/conftest.py loads it into a temporary snapshot database for every test. Refresh it by running a pull and re-exporting; figures go stale 90 days after their collection_date (SR 1.1.6).",
+ "pulled_at": "2026-11-10T20:47:01+00:00",
+ "status": "ok",
+ "detail": {
+  "gaps": [
+   {
+    "model_id": "claude-fable-5-1",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "claude-fable-5-1",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "claude-sonnet-5-5",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "claude-sonnet-5-5",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "claude-haiku-5-5",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "claude-haiku-5-5",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gpt-6-astra",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gpt-6-astra",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gpt-oss-120b",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gpt-oss-120b",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gemini-4-argon",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gemini-4-argon",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gemma-4-26b-a4b",
+    "field": "benchmark:intelligence_index",
+    "reason": "evaluations.artificial_analysis_intelligence_index not measured"
+   },
+   {
+    "model_id": "gemma-4-26b-a4b",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "gemma-4-26b-a4b",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "muse-spark-open",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "muse-spark-open",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "deepseek-v4-1-flash-1017",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "deepseek-v4-1-flash-1017",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "qwen3-8-max",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "qwen3-8-max",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "kimi-k3",
+    "field": "benchmark:intelligence_index",
+    "reason": "evaluations.artificial_analysis_intelligence_index not measured"
+   },
+   {
+    "model_id": "kimi-k3",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "kimi-k3",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "mistral-large-4",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "mistral-large-4",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "solar-pro4",
+    "field": "benchmark:intelligence_index",
+    "reason": "evaluations.artificial_analysis_intelligence_index not measured"
+   },
+   {
+    "model_id": "solar-pro4",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "solar-pro4",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "sarvam-105b",
+    "field": "benchmark:intelligence_index",
+    "reason": "evaluations.artificial_analysis_intelligence_index not measured"
+   },
+   {
+    "model_id": "sarvam-105b",
+    "field": "benchmark:aa_omniscience_index",
+    "reason": "not published by the API"
+   },
+   {
+    "model_id": "sarvam-105b",
+    "field": "benchmark:aa_lcr_v1_1_percent",
+    "reason": "not published by the API"
+   }
+  ],
+  "errors": []
+ },
+ "candidates": [
+  {
+   "model_id": "claude-fable-5-1",
+   "vendor": "Anthropic",
+   "model_name": "Claude Fable 5.1 (Max, Default Fallback)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 49.2,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 320.78,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 67.88,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 10,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 50,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 320.78,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1000000,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "US"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+    "collection_date": "2026-10-05"
+   },
+   "data_retention": {
+    "value": 30,
+    "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+    "collection_date": "2026-10-05"
+   },
+   "deprecation_date": {
+    "value": "2027-09-01",
+    "unit": "date (retirement not sooner than)",
+    "source_id": "https://platform.claude.com/docs/en/models/overview",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "claude-sonnet-5-5",
+   "vendor": "Anthropic",
+   "model_name": "Claude Sonnet 5.5 (Max, Default Fallback)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 54.5,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 478.28,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 128.96,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 2,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 10,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 478.28,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1000000,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "US"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+    "collection_date": "2026-10-05"
+   },
+   "data_retention": {
+    "value": 30,
+    "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+    "collection_date": "2026-10-05"
+   },
+   "deprecation_date": {
+    "value": "2027-09-28",
+    "unit": "date (retirement not sooner than)",
+    "source_id": "https://platform.claude.com/docs/en/models/overview",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "claude-haiku-5-5",
+   "vendor": "Anthropic",
+   "model_name": "Claude Haiku 5.5 (Max)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 36.5,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 346.39,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 231.98,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.1,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 0.5,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 346.39,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1000000,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "US"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996890-where-are-your-servers-located-do-you-host-your-models-on-eu-servers",
+    "collection_date": "2026-10-05"
+   },
+   "data_retention": {
+    "value": 30,
+    "unit": "days (default retention of API inputs and outputs); 'up to 30 days'",
+    "source_id": "https://privacy.anthropic.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data",
+    "collection_date": "2026-10-05"
+   },
+   "deprecation_date": {
+    "value": "2027-10-07",
+    "unit": "date (retirement not sooner than)",
+    "source_id": "https://platform.claude.com/docs/en/models/overview",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "gpt-6-astra",
+   "vendor": "OpenAI",
+   "model_name": "GPT-6 Astra (Max)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 56.9,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 332.56,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 53.18,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 10,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 50,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 332.56,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1050000,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_retention": {
+    "value": 30,
+    "unit": "days (default retention of API inputs and outputs); abuse-monitoring logs 'up to 30 days'",
+    "source_id": "https://developers.openai.com/api/docs/guides/your-data",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "gpt-oss-120b",
+   "vendor": "OpenAI",
+   "model_name": "gpt-oss-120b (High)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 3.8,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 10.66,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 203.22,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.15,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 0.6,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 0.82,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 131072,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   }
+  },
+  {
+   "model_id": "gemini-4-argon",
+   "vendor": "Google",
+   "model_name": "Gemini 4 Argon (High)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 50.4,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 50.35,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 94.63,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 4,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 20,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 50.35,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1048576,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_retention": {
+    "value": 55,
+    "unit": "days (default retention of API inputs and outputs); paid-tier abuse monitoring, 55 days",
+    "source_id": "https://ai.google.dev/gemini-api/docs/usage-policies",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "gemma-4-26b-a4b",
+   "vendor": "Google",
+   "model_name": "Gemma 4 26B A4B (Reasoning)",
+   "benchmarks": [
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 19.39,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 108.26,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.1,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 0.34,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 0.92,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 262144,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   }
+  },
+  {
+   "model_id": "muse-spark-open",
+   "vendor": "Meta",
+   "model_name": "Muse Spark Open (Xhigh)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 24.9,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 9.47,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 230.17,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 1.25,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 4.25,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 0.78,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1048576,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   }
+  },
+  {
+   "model_id": "deepseek-v4-1-flash-1017",
+   "vendor": "DeepSeek",
+   "model_name": "DeepSeek V4.1 Flash 1017 (Max)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 32.6,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 13.99,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 155.52,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.3,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 1.2,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 1.13,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1048576,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "CN"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+    "source_id": "https://chat.deepseek.com/downloads/DeepSeek%20Open%20Platform%20Privacy%20Policy.html",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "qwen3-8-max",
+   "vendor": "Alibaba",
+   "model_name": "Qwen3.8 Max (0902)",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 33.7,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 52.88,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 40.06,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 2,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 6,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 2.96,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1000000,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "SG"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API); 'Your static data always remains in the selected region'",
+    "source_id": "https://www.alibabacloud.com/help/en/model-studio/regions",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "kimi-k3",
+   "vendor": "Moonshot AI",
+   "model_name": "Kimi K3 (Max)",
+   "benchmarks": [
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 47.01,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 46.86,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 3,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 15,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 4.32,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1048576,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "SG"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API)",
+    "source_id": "https://platform.kimi.ai/docs/agreement/userprivacy",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "mistral-large-4",
+   "vendor": "Mistral",
+   "model_name": "Mistral Large 4 Preview",
+   "benchmarks": [
+    {
+     "benchmark_id": "intelligence_index",
+     "score": {
+      "value": 25.3,
+      "unit": "index",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 15.74,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 141.77,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.7,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 2.1,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 1.64,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 1048576,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "EU"
+    ],
+    "unit": "ISO 3166-1 alpha-2 exceptionally reserved code EU (default: hosted in the European Union; member states not published)",
+    "source_id": "https://help.mistral.ai/en/articles/347629-where-do-you-store-my-data-or-my-organization-s-data",
+    "collection_date": "2026-10-28"
+   },
+   "data_retention": {
+    "value": 30,
+    "unit": "days (default retention of API inputs and outputs); abuse monitoring, 30 rolling days",
+    "source_id": "https://legal.mistral.ai/terms/privacy-policy/",
+    "collection_date": "2026-10-28"
+   }
+  },
+  {
+   "model_id": "solar-pro4",
+   "vendor": "Upstage",
+   "model_name": "Solar Pro 4",
+   "benchmarks": [
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 23.43,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 92.87,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.3,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 1.2,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 1.9,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 524288,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   }
+  },
+  {
+   "model_id": "sarvam-105b",
+   "vendor": "Sarvam",
+   "model_name": "Sarvam 105B (High)",
+   "benchmarks": [
+    {
+     "benchmark_id": "time_to_first_answer_token_seconds",
+     "score": {
+      "value": 12.44,
+      "unit": "seconds",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    },
+    {
+     "benchmark_id": "output_speed_tokens_per_second",
+     "score": {
+      "value": 184.76,
+      "unit": "tokens per second",
+      "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+      "collection_date": "2026-11-10"
+     }
+    }
+   ],
+   "input_price": {
+    "value": 0.042,
+    "unit": "USD per 1M input tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "output_price": {
+    "value": 0.17,
+    "unit": "USD per 1M output tokens",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "latency_p50": {
+    "value": 1.61,
+    "unit": "seconds",
+    "source_id": "https://artificialanalysis.ai/api/v2/language/models/free",
+    "collection_date": "2026-11-10"
+   },
+   "context_window": {
+    "value": 131072,
+    "unit": "tokens",
+    "source_id": "https://models.dev/api.json",
+    "collection_date": "2026-11-10"
+   },
+   "data_residency": {
+    "value": [
+     "IN"
+    ],
+    "unit": "ISO 3166-1 alpha-2 (default data storage location of the first-party API); 'process and store information in India' (may transfer)",
+    "source_id": "https://www.sarvam.ai/terms-of-service",
+    "collection_date": "2026-10-28"
+   }
+  }
+ ]
+}
