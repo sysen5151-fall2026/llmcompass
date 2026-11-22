@@ -893,6 +893,11 @@ C.8 adapter, `backend/provide_requirement_interpretation/` (F.8):
   `LLM_MODEL`) with the defaults in SPEC §3.
 - `propose_criteria` raises `ValueError` before sending anything if `base_url`'s host
   isn't `localhost`, `127.0.0.1` or `::1` (SR 2.2.1, SR 2.4.1).
+- Pinned model (Lab Manual 11.2, ADR-0009, 2026-11-22): `runtime_config()["model"]`
+  defaults to `qwen2.5-7b-instruct-1m` (unset or empty `LLM_MODEL`); `max_tokens` is
+  512 and `timeout_s` 110, both fixed by SR 1.3.2's statement (Innoslate export 2026-11-22). `propose_criteria` returns `None` when the
+  reply's `model` field names a different model than the configured one; a reply
+  without a `model` field is accepted (SR 2.1.3, SR 2.3.1).
 
 C.7 data access, `backend/provide_benchmark_evidence/` (F.7):
 - `provide_model_data(*, data_request)` is unchanged. `BENCHMARK_SOURCE=file`
@@ -1229,3 +1234,50 @@ SR/CR target. Record the decision in Section 6.3 and, if parameters change, as a
 - Team to confirm the 6.3 explanation and decision, ADR-0008, and set SR 1.3.2's target.
 - Timed full-comparison walkthroughs by people (SR 2.1.1, CR 2.1.1), minutes to 0.1.
 - Update UC.1.4 / UC.1.11 / software-action durations in Innoslate and re-run the simulation.
+
+## Runtime trade study product build (Lab Manual 11.2, 2026-11-22)
+
+Decision (open since the Form report's Pugh tie, SPEC §3 "provisional until the Week 12 runtime
+trade study"): F.8's mechanism, A local runtime (C.8, LM Studio) vs B hosted GPT-6.2 Sol API (C.9).
+Swing weight result A 75.0 / B 55.9; LCC $0.25 vs $28.60 a year; only A meets SR 2.4.1. Selected A.
+Recorded in ADR-0009.
+
+### Build steps (11.2.2)
+
+- Measure what's missing: A was measured in Lab 10.4 (150 requests, token probe). B was not
+  measured (no paid account, SR 2.4.1). Its EC.3 is an assumption, and the sensitivity at 90%
+  validity keeps A.
+- Swing weight matrix recomputed from the raw CSVs: `tools/swing_weight_analysis.py`, 70/71
+  figures reproduce (`docs/validation/trade-study/swing-weight-check.md`). Sourced figures
+  checked: `sources-check.md` (team sign-off pending).
+- Implement A:
+  - Contract first: SPEC §3 Adapter now pins the model identifier `qwen2.5-7b-instruct-1m`
+    (the measured Q4_K_M build), keeps the timeout at 110 s and `max_tokens` at 512 (both now SR 1.3.2's statement), and
+    rejects replies naming another model.
+  - Tests first: an independent writer saw only SPEC §3 and the interface and appended 9 tests
+    to `tests/test_data_access_component.py`; 5 were red before the change.
+  - Adapter: `backend/provide_requirement_interpretation/__init__.py`.
+  - Suite: 291 passed, the same 12 pre-existing failures (was 282 / 12).
+  - Live check against LM Studio: `docs/validation/trade-study/live-pin-check.txt`.
+- Found: LM Studio answers an unknown model name with the loaded model. `LLM_MODEL=qwen2.5-7b-instruct`
+  (`.env`, SPEC, README) was silently served by `-1m`, so EC.4's "pinned weights" weren't
+  enforced. Current-state docs were updated (README, deployment.md, demo-milestone-2.md,
+  `.env.example`). The local `.env` was updated by hand.
+- Report text for Section 3.3 and the corrections list: `docs/validation/trade-study/section-3-3-implementation.md`.
+
+### Open items (11.2)
+
+- Merge (commit and push to main) once the team approves.
+- A team member signs the sources check (11.2.3: "a source you checked yourself").
+- Innoslate export: StR 5.3.2.1 and 5.4.1.1 (cited by the evaluation criteria, not yet in SPEC
+  §1); SR 2.1.6, 2.2.1-2.4.1 statements; SR 1.3.2's target. **Done 2026-11-22** from `ORD.csv`,
+  `requirement.csv`, `evaluation.csv` (gitignored). SR 1.3.2's statement fixes 110 s and 512 tokens,
+  so `max_tokens` went back from 1024 to 512 (user decision). Not imported: SR 1.2.2's export adds
+  "When the confirmed mapping has hard constraints only, the decision record shall show empty
+  weights" (the SCENARIO_04 open item from 8.5). That is a new behaviour for the team to schedule.
+- StR 5.3.2.1 ("without depending on a specific team member's machine") is not met by the
+  selected A (EC.5 = 0). ADR-0009 accepts this as R2; the team should record it as a known gap.
+- Team call: shared team server for EC.5 (A rises to 87.2) needs SR 2.2.1's "locally hosted"
+  read as "team-controlled", which the loopback-only guard refuses.
+- Optional: a check of quantization through LM Studio's model API; logging of the rejected
+  reply model.

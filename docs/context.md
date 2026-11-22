@@ -55,6 +55,9 @@ Language model runtime (C.8) — external service
            vendor-spec or pricing feed — confirmed against the UC.1 sequence
            diagram, which shows LLM Compass (not the Technical Lead) as the
            caller on both sides of this interface.
+  Selected: kept local by the Week 12 runtime trade study over a hosted
+           commercial API (the alternative C.9 in Innoslate, UC.1A); model
+           pinned to qwen2.5-7b-instruct-1m Q4_K_M (docs/adr/0009).
 
 ## Contributing stakeholders
 

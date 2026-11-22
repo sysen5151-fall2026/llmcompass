@@ -1,0 +1,12 @@
+utc 2026-11-22T15:52:08.792915+00:00 runtime {'base_url': 'http://127.0.0.1:1234/v1', 'model': 'qwen2.5-7b-instruct-1m', 'timeout_s': 110.0, 'max_tokens': 512, 'temperature': 0, 'seed': 5151}
+LLM_MODEL=qwen2.5-7b-instruct-1m   REQ-1  15.52s -> 3 criteria, no_proxy=False
+LLM_MODEL=qwen2.5-7b-instruct-1m   REQ-2   9.73s -> 2 criteria, no_proxy=False
+LLM_MODEL=qwen2.5-7b-instruct-1m   REQ-3   6.41s -> 1 criteria, no_proxy=False
+LLM_MODEL=qwen2.5-7b-instruct-1m   REQ-4   6.43s -> 1 criteria, no_proxy=False
+LLM_MODEL=qwen2.5-7b-instruct-1m   REQ-5   1.91s -> 0 criteria, no_proxy=True
+utc 2026-11-22T15:52:48.787034+00:00 runtime {'base_url': 'http://127.0.0.1:1234/v1', 'model': 'qwen2.5-7b-instruct', 'timeout_s': 110.0, 'max_tokens': 512, 'temperature': 0, 'seed': 5151}
+LLM_MODEL=qwen2.5-7b-instruct      REQ-1  15.77s -> None (rejected/invalid)
+LLM_MODEL=qwen2.5-7b-instruct      REQ-2   9.55s -> None (rejected/invalid)
+LLM_MODEL=qwen2.5-7b-instruct      REQ-3   6.64s -> None (rejected/invalid)
+LLM_MODEL=qwen2.5-7b-instruct      REQ-4   7.25s -> None (rejected/invalid)
+LLM_MODEL=qwen2.5-7b-instruct      REQ-5   1.90s -> None (rejected/invalid)

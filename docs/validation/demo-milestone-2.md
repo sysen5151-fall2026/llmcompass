@@ -8,8 +8,10 @@ data-side results below (who is ranked, who is excluded) are fixed by the snapsh
 
 ## Before your turn (about 5 minutes)
 
-1. Bionic (LM Studio) → Developer → start the server with **qwen2.5-7b-instruct** loaded.
-   Check: `curl -s http://127.0.0.1:1234/v1/models` lists `qwen2.5-7b-instruct`.
+1. Bionic (LM Studio) → Developer → start the server with **qwen2.5-7b-instruct-1m** (Q4_K_M) loaded.
+   Check: `curl -s http://127.0.0.1:1234/v1/models` lists `qwen2.5-7b-instruct-1m`. (Since 2026-11-22
+   the adapter rejects replies from any other model, ADR-0009; the 2026-11-03 rehearsal used
+   qwen2.5-7b-instruct.)
 2. `.env` has `BENCHMARK_SOURCE=api` (live snapshot, 14 models). Refresh only if you want newer data:
    `cd backend && ../.venv/bin/python -m provide_benchmark_evidence refresh`.
 3. Start the app: `cd backend && ../.venv/bin/python app.py` → http://127.0.0.1:5000. If an older

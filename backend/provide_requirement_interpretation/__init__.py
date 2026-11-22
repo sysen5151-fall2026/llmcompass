@@ -1,5 +1,6 @@
 # Model adapter for C.8 Language model runtime (Lab Manual 8.5): LM Studio, local only
-# (ADR-0001, SR 2.2.1). The prompt template, parameters, timeout, token limit, response
+# (ADR-0001, SR 2.2.1). Selected by the Week 12 runtime trade study and pinned to the
+# measured build (Lab Manual 11.2, ADR-0009). The prompt template, parameters, timeout, token limit, response
 # schema and failure behaviour are specified in SPEC section 3 "Adapter".
 """Implements F.8 -- Provide Requirement Interpretation. Mechanism: C.8 Language model runtime."""
 
@@ -18,9 +19,10 @@ PROMPT_TEMPLATE = Path(__file__).with_name("prompt_template.txt")
 
 # SPEC section 3 "Adapter" -- defaults; LLM_RUNTIME_URL and LLM_MODEL come from .env.
 DEFAULT_RUNTIME_URL = "http://127.0.0.1:1234/v1"
-DEFAULT_MODEL = "qwen2.5-7b-instruct"
-TIMEOUT_S = 110.0      # provisional: about 3x the slowest measured call, 36.3 s (SPEC section 3, SR 1.3.2)
-MAX_TOKENS = 512       # provisional: about 3x the largest measured reply, 165 tokens (SPEC section 3)
+# ADR-0009 / SR 2.1.3: the build the trade study measured (lmstudio-community/Qwen2.5-7B-Instruct-1M-GGUF, Q4_K_M)
+DEFAULT_MODEL = "qwen2.5-7b-instruct-1m"
+TIMEOUT_S = 110.0      # SR 1.3.2: "within 110 s per interpretation request" (SPEC section 3, ADR-0009)
+MAX_TOKENS = 512       # SR 1.3.2: "responses limited to 512 tokens"; pinned model's largest reply 301 tokens
 TEMPERATURE = 0        # SR 2.1.3 -- repeatable interpretation for the same text
 SEED = 5151
 LOCAL_HOSTS = ("localhost", "127.0.0.1", "::1")  # SR 2.2.1, SR 2.4.1 -- no data leaves the machine
@@ -104,7 +106,8 @@ def propose_criteria(*, interpretation_request: dict) -> Optional[dict]:
 
     control: interpretation_request. out: proposed_criteria.
     Returns the parsed SPEC section 3 response, or None when the runtime times out, can't
-    be reached, or doesn't return a JSON object. F.1.1 validates the schema rules and
+    be reached, doesn't return a JSON object, or answers with a model other than the
+    pinned one (ADR-0009). F.1.1 validates the schema rules and
     retries once (SR 1.3.2, SR 1.1.4).
     """
     # UC.1.3, UC.1.4 (SR 1.2.3, SR 1.1.4, SR 1.3.2, SR 2.3.1; SN-TL-01 / 5.1.1.2)
@@ -126,6 +129,10 @@ def propose_criteria(*, interpretation_request: dict) -> Optional[dict]:
     try:
         with urllib.request.urlopen(request, timeout=config["timeout_s"]) as response:
             reply = json.loads(response.read().decode("utf-8"))
+        # SR 2.1.3, SR 2.3.1 (ADR-0009): LM Studio answers an unknown model name with whatever model
+        # is loaded, so a reply naming another model is not the pinned runtime's answer -> invalid.
+        if isinstance(reply, dict) and reply.get("model") not in (None, config["model"]):
+            return None
         content = reply["choices"][0]["message"]["content"]
         proposed = json.loads(content)
     except (urllib.error.URLError, socket.timeout, TimeoutError, OSError,

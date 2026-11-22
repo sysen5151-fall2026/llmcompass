@@ -297,7 +297,7 @@ python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
 cd backend && ../.venv/bin/python app.py
 ```
 
-Start LM Studio (Bionic) with `qwen2.5-7b-instruct` on `127.0.0.1:1234` first, and set
+Start LM Studio (Bionic) with `qwen2.5-7b-instruct-1m` (GGUF Q4_K_M, pinned by ADR-0009) on `127.0.0.1:1234` first, and set
 `BENCHMARK_SOURCE=api` in `.env` to rank the live snapshot (see docs/deployment.md). Open
 http://127.0.0.1:5000 and type any requirements, one per line:
 - **Submit** sends each requirement to the local model (C.1.1 Criteria Mapper) and shows the

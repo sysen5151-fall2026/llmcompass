@@ -16,7 +16,7 @@ SPEC.md §1), and the test that verifies them (tests/test_system_requirements.py
 | F.5 | Define Product Needs and Priorities | C.5 Product Owner | backend/define_product_needs_and_priorities/ | none: no system requirement (stub removed 2026-10-25) |
 | F.6 | Provide Technical Decision Oversight | C.6 Technical Lead | backend/provide_technical_decision_oversight/ | pending (human mechanism) |
 | F.7 | Provide Benchmark Evidence | C.7 Benchmark Data Sources | backend/provide_benchmark_evidence/ | Chapter 5 (stored catalog) |
-| F.8 | Provide Requirement Interpretation | C.8 Language model runtime | backend/provide_requirement_interpretation/ | pending (needs LM Studio, ADR-0001) |
+| F.8 | Provide Requirement Interpretation | C.8 Language model runtime | backend/provide_requirement_interpretation/ | Lab Manual 8.5 adapter; mechanism selected by the Week 12 trade study and model pinned (Lab Manual 11.2, ADR-0009) |
 
 F.1 is decomposed into F.1.1-F.1.7 (IDEF0 A1, 2026-10-26; docs/PLAN.md "F.1
 decomposition"). Each is matched by name to 1.4.1.x with the same last digit (SPEC §6). The
@@ -94,6 +94,7 @@ Each is satisfied by C.1; the "Element" column is the Form report Table 4 alloca
 | SR 2.1.6 | C.1.6 | 5.2.2.1 | none | not verifiable: restricted term list to be defined |
 | SR 2.2.1 | C.1.1.1 / F.8 adapter `runtime_config` | 5.1.1.2 | test_SR_2_2_1_interpretation_requests_sent_to_local_runtime | pass |
 | SR 2.3.1 | C.1.1.1, C.1.1.2 / F.8 adapter | 5.1.1.2 | test_SR_2_3_1_runtime_requests_and_responses_conform_to_model_contract | pass |
+| SR 2.1.3, SR 2.3.1 (ADR-0009 model pin) | F.8 adapter `runtime_config`, `propose_criteria` | 5.1.3.2, 5.1.1.2 | tests/test_data_access_component.py `test_SR_2_1_3_*`, `test_SR_2_3_1_*` (pin) | pass (9 tests; PLAN.md C.8 adapter interface, "Pinned model" bullet; ADR-0009) |
 | SR 2.3.2 | C.1.2 / F.7 data access | 5.1.2.1 | test_SR_2_3_2_data_exchanges_conform_to_data_contract | pass |
 | SR 2.4.1 | C.1.1.1 / F.8 adapter | 5.2.1.1 | test_SR_2_4_1_no_paid_external_calls_per_comparison | pass |
 

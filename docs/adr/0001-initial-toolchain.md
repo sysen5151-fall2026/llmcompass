@@ -26,3 +26,7 @@ What would change this decision: If the product needs in-app AI features reachab
 from the live Netlify deployment, not just local dev, the team will need a hosted API
 (Anthropic, OpenAI, or Hugging Face) instead — a separate cost from the Claude Code
 subscription. Revisit at the Week 12 trade study.
+
+Update 2026-11-22: the Week 12 trade study kept the local runtime (ADR-0009). The
+hosted API scored 55.9 to the local runtime's 75.0 and is unaffordable under SR 2.4.1.
+The model is pinned to `qwen2.5-7b-instruct-1m` Q4_K_M.

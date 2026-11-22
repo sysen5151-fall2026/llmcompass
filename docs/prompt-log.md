@@ -1125,3 +1125,95 @@ as the end time; fixed in the script and regenerated. Model differs from docs/de
 - Nothing committed yet (branch `ch10-measured-behavior`, on top of unpushed `f7-api-mode-default`).
 
 ---
+
+## 2026-11-22 — Khai Xin Kuan — Claude Code (Opus 5.5)
+
+**Prompt:** Complete the Chapter 11 product build task (Lab Manual 11.2, pp. 172-174: implement
+the alternative selected by the trade study, merge it, write an ADR, and verify every factual claim
+in the study), using the team's draft System Analysis report (`SYSEN 5151_chapter11.docx`, swing
+weight study: A local LM Studio runtime vs B hosted GPT-6.2 Sol API, A selected 75.0 to 55.9).
+Update the documents, orchestrate multiple agents, validate and verify. Build on main (synced to
+origin/main `f92ccd6` first). The user asked the assistant to pick the model to pin; it recommended
+the measured build.
+
+**Output:**
+- `SPEC.md` §3 Adapter (contract first): model identifier pinned to `qwen2.5-7b-instruct-1m`
+  (GGUF Q4_K_M, the build the 10.4 runs measured). The timeout stays at 110 s and `max_tokens`
+  at 512 (see the update below).
+  A reply naming another model is now "not the required schema". There is a "Settled by the
+  Week 12 trade study" paragraph. Traces to SR 2.1.3, SR 2.3.1, SR 1.3.2.
+- `backend/provide_requirement_interpretation/__init__.py`: new `DEFAULT_MODEL`,
+  and `propose_criteria` returns None when the reply's `model` differs from the configured one
+  (a missing field is still accepted; a non-dict reply is guarded). Why: LM Studio answered a
+  request for `qwen2.5-7b-instruct` with the loaded `-1m` model, which the assistant checked
+  live, so the study's EC.4 "pinned weights" wasn't enforced.
+- `tests/test_data_access_component.py`: 9 tests appended by an independent test-writer agent that
+  saw only SPEC §3 and the PLAN interface (104 lines added, 0 removed). 5 were red before the
+  change.
+- `docs/adr/0009-local-runtime-selected-model-pinned.md` (new): the decision, criteria and
+  objective functions, measures and sources, swing weights, totals, LCC, sensitivity, what the
+  change did, what B would have required, consequences (EC.5 = 0 accepted as R2; a mismatch
+  costs about 2 x 15 s per requirement before manual entry), and verification.
+  `docs/adr/0001` got an update note.
+- `tools/swing_weight_analysis.py` and `docs/validation/trade-study/swing-weight-check.md` (new,
+  verifier agent): recompute every study figure from the raw 10.4 CSVs. 70/71 reproduce. Fails:
+  the LCC basis "$0.029 x 1,000" (= $29.00; the $28.60 total uses $0.0286). Also rounding and
+  wording items.
+- `docs/validation/trade-study/sources-check.md` (new; web-fetch agent plus the EIA PDF read
+  directly): 6 of 7 sourced claims verified. Artificial Analysis now gives 2.03 s / 60 tok/s,
+  not 2.00 s / 61; recomputed, B stays at 55.9.
+- `docs/validation/trade-study/section-3-3-implementation.md` (new): paste-ready text for report
+  Section 3.3 "Implementation" plus a table of 8 corrections for the report.
+- `docs/validation/trade-study/live-pin-check.txt` (new): live LM Studio run. The pinned model
+  gave valid criteria for all 5 requirements of the 10.4 scenario, and `LLM_MODEL=qwen2.5-7b-instruct`
+  was rejected 5/5.
+- Current-state docs updated to the pinned model: `README.md`, `docs/deployment.md`,
+  `docs/validation/demo-milestone-2.md`, `.env.example`, `docs/context.md` (C.8 selected),
+  `docs/traceability.md` (F.8 row, new pin row), `tools/export_submission.py` (generated text).
+  The local `.env` `LLM_MODEL` was changed to `-1m` (not committed).
+- `docs/PLAN.md`: C.8 interface "Pinned model" bullet and a new "Runtime trade study product
+  build (Lab Manual 11.2)" section.
+- Verified:
+  - Full suite 291 passed, 12 failed, 2 xfailed (was 282 / 12 / 2; the same 12 pre-existing
+    failures).
+  - `test_data_access_component.py` 20/20.
+  - `python3 tools/swing_weight_analysis.py` exits 0.
+  - Spec trace: no untraced code; the SR 2.1.3 trace for the pin is weak (SR 2.3.1 fits better).
+  - Independent audit agent: 11.2 Done When 1 and 3 met, 2 and 4 partial. Its findings were
+    applied: claims ahead of facts reworded, stale docs, "identifier" wording, retry cost,
+    broken trace reference.
+
+- Update, same session: the user supplied Innoslate exports (`ORD.csv`, `requirement.csv`,
+  `evaluation.csv`, 2 PNGs; now gitignored).
+  - `SPEC.md` §1 gets StR 5.3.2.1 and 5.4.1.1, and §6 gets the SR 2.1.6 and 2.2.1-2.4.1
+    statements, all verbatim. SR 1.3.2's statement adds "within 110 s … limited to 512 tokens".
+  - That conflicts with the 1024 above, so the assistant stopped and asked. The user chose to
+    revert to 512.
+  - Order: SPEC §3 first; then the assistant changed 2 test asserts from 1024 to 512 (to follow
+    the corrected spec; red 2/20 against the 1024 code); then the code.
+  - ADR-0009, PLAN, `section-3-3-implementation.md`, the tool header and `swing-weight-check.md`
+    item 5 were corrected. The report's "110 s SR 1.3.2 limit" wording turns out to be right.
+  - `live-pin-check.txt` re-run at 512: 5/5 valid, 5/5 rejected.
+  - Suite: 291 passed, the same 12 failures.
+
+**Assistant assumptions / corrections:**
+- The first draft of the 3.3 text said "merged" and "the suite passed" before either was true;
+  reworded.
+- The first draft said the pin "enforced" Q4_K_M, but only the identifier is checked; reworded.
+- `.gitignore`'s new line for the chapter 11 docx was not made by the assistant and was left as is.
+- The assistant raised `max_tokens` to 1024 from a stale SPEC.md that lacked SR 1.3.2's token
+  limit. The Innoslate export exposed this, and it was reverted.
+
+**Still open:**
+- Merge: nothing is committed or pushed yet.
+- A team member signs `sources-check.md` (11.2.3, "a source you checked yourself").
+- SR 1.2.2's exported statement adds empty weights for hard-constraint-only mappings. It was
+  not imported, because it is new behaviour (the SCENARIO_04 item).
+- StR 5.3.2.1 is not met by the selected local runtime (EC.5 = 0); team to record it as a known
+  gap.
+- The new StRs have no SN or MOE yet.
+- Report corrections (section-3-3-implementation.md) to be applied in the docx by the team.
+- Team call: a shared team server for EC.5 conflicts with the loopback-only SR 2.2.1 guard.
+- The new `test_SR_*` tests sit outside `tests/test_system_requirements.py` (naming rule).
+
+---

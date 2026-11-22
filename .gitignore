@@ -231,6 +231,15 @@ SYSEN5151_ArchitectureDefinitionReport.pdf
 
 SYSEN5151Modeling.pdf
 
+SYSEN 5151_chapter11.docx 
+
 
 # Decision records and source snapshots kept by C.1 (SPEC 5.1.3.3, section 2)
 data/
+
+# Innoslate exports (verbatim text is in SPEC.md)
+ORD.csv
+evaluation.csv
+requirement.csv
+LLM Compass Operational Requirements Document (ORD).png
+Evaluation Criteria.png

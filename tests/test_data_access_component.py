@@ -212,3 +212,107 @@ def test_runtime_error_or_malformed_reply_returns_none(fake_runtime, status, bod
     # SR 1.3.2 -- handled like an invalid response: None, so F.1.1 retries then marks interpretation_failed
     fake_runtime["next"] = (status, body)
     assert f8.propose_criteria(interpretation_request={"requirement_id": "R1", "text": "Respond quickly."}) is None
+
+
+# --- C.8 adapter pinned model, SPEC §3 Adapter (Model, Timeout, Token limit, Not the required
+# schema) and the Week 12 runtime trade study, ADR-0009 (SR 2.1.3, SR 2.3.1) ---
+
+PINNED_MODEL = "qwen2.5-7b-instruct-1m"  # SPEC §3 Adapter "Model", ADR-0009
+_REQUEST = {"requirement_id": "R1", "text": "Respond quickly."}
+_PROPOSAL = {"requirement_id": "R1", "no_suitable_proxy": True, "criteria": []}
+
+
+@pytest.fixture
+def recording_runtime(monkeypatch):
+    # Like fake_runtime, but records each POST body and answers with an OpenAI-style reply whose
+    # `model` field is state["reply_model"] (omitted when None).
+    state = {"bodies": [], "reply_model": None, "content": json.dumps(_PROPOSAL)}
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            state["bodies"].append(json.loads(raw))
+            reply = {"id": "x", "object": "chat.completion",
+                     "choices": [{"index": 0, "message": {"role": "assistant", "content": state["content"]},
+                                  "finish_reason": "stop"}]}
+            if state["reply_model"] is not None:
+                reply["model"] = state["reply_model"]
+            data = json.dumps(reply).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, *args):
+            pass
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    monkeypatch.setenv("LLM_RUNTIME_URL", f"http://127.0.0.1:{server.server_port}/v1")
+    monkeypatch.delenv("LLM_MODEL", raising=False)  # a real .env may set it
+    yield state
+    server.shutdown()
+
+
+def test_SR_2_1_3_default_model_is_the_pinned_build(monkeypatch):
+    # SPEC §3 Adapter "Model" / ADR-0009 -- unset LLM_MODEL -> the pinned build
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    assert f8.runtime_config()["model"] == PINNED_MODEL
+
+
+def test_SR_2_1_3_empty_model_falls_back_to_pinned_build(monkeypatch):
+    # SPEC §3 Adapter "Model" / ADR-0009 -- empty LLM_MODEL is treated as unset
+    monkeypatch.setenv("LLM_MODEL", "")
+    assert f8.runtime_config()["model"] == PINNED_MODEL
+
+
+def test_SR_2_1_3_model_override_is_respected(monkeypatch):
+    # SPEC §3 Adapter "Model" / ADR-0009 -- LLM_MODEL names the configured model
+    monkeypatch.setenv("LLM_MODEL", "some-other-model")
+    assert f8.runtime_config()["model"] == "some-other-model"
+
+
+def test_SR_2_3_1_token_limit_and_timeout_are_settled(monkeypatch):
+    # SPEC §3 Adapter "Timeout" 110 s and "Token limit" max_tokens 512 (SR 1.3.2, ADR-0009)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    config = f8.runtime_config()
+    assert config["max_tokens"] == 512
+    assert config["timeout_s"] == 110
+
+
+def test_SR_2_3_1_request_carries_pinned_model_and_token_limit(recording_runtime):
+    # SPEC §3 Adapter "Model" / "Token limit", ADR-0009 -- the POST body names the pinned model
+    recording_runtime["reply_model"] = PINNED_MODEL
+    f8.propose_criteria(interpretation_request=_REQUEST)
+    assert len(recording_runtime["bodies"]) == 1
+    body = recording_runtime["bodies"][0]
+    assert body["model"] == PINNED_MODEL
+    assert body["max_tokens"] == 512
+
+
+def test_SR_2_3_1_request_carries_overridden_model(recording_runtime, monkeypatch):
+    # SPEC §3 Adapter "Model", ADR-0009 -- the configured model (LLM_MODEL) is the one sent
+    monkeypatch.setenv("LLM_MODEL", "some-other-model")
+    recording_runtime["reply_model"] = "some-other-model"
+    assert f8.propose_criteria(interpretation_request=_REQUEST) == _PROPOSAL
+    assert recording_runtime["bodies"][0]["model"] == "some-other-model"
+
+
+def test_SR_2_1_3_reply_from_pinned_model_is_returned(recording_runtime):
+    # SPEC §3 Adapter "Not the required schema", ADR-0009 -- matching model + JSON object -> the dict
+    recording_runtime["reply_model"] = PINNED_MODEL
+    assert f8.propose_criteria(interpretation_request=_REQUEST) == _PROPOSAL
+
+
+def test_SR_2_1_3_reply_from_unpinned_model_is_rejected(recording_runtime):
+    # SPEC §3 Adapter "Not the required schema", ADR-0009 -- LM Studio answers an unknown model name
+    # with whatever it has loaded; a reply naming another model is None (F.1.1 retries, SR 1.3.2)
+    recording_runtime["reply_model"] = "qwen2.5-7b-instruct"
+    assert f8.propose_criteria(interpretation_request=_REQUEST) is None
+
+
+def test_SR_2_1_3_reply_without_model_field_is_accepted(recording_runtime):
+    # PLAN C.8 adapter / ADR-0009 -- a reply with no `model` field is accepted as before
+    recording_runtime["reply_model"] = None
+    assert f8.propose_criteria(interpretation_request=_REQUEST) == _PROPOSAL

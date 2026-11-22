@@ -75,7 +75,7 @@ lines = [
     f"- Runs: {n} measured + {len(warm)} warm-up (warm-up excluded from statistics). Target: 30.",
     f"- Date (UTC): {meta.get('start_wall')} to {meta.get('end_wall')}",
     f"- Language model: {meta.get('llm_model')} (LM Studio, GGUF Q4_K_M, lmstudio-community Qwen2.5-7B-Instruct-1M), "
-    f"local endpoint {meta.get('llm_runtime_url')}. Team setup in docs/deployment.md is qwen2.5-7b-instruct Q4_K_S.",
+    f"local endpoint {meta.get('llm_runtime_url')}. This build is now the pinned model identifier (ADR-0009, docs/deployment.md).",
     f"- Machine: {cpu}, {int(mem) // 2**30 if mem.isdigit() else '?'} GB RAM, macOS {platform.mac_ver()[0]}, "
     f"Python {meta.get('python')}.",
     f"- App version: commit {meta.get('git_commit')} plus uncommitted: {', '.join(meta.get('git_dirty_paths') or []) or 'none'} "

@@ -179,6 +179,17 @@ of her own."
 |---|---|---|---|
 | 5.2.2.1 | see SN-PO-01 | | Same tests as SN-PO-01. |
 
+### Stakeholder requirements added in the System Analysis (Week 12)
+
+Verbatim from the Innoslate ORD export of 2026-11-22 (`ORD.csv`). The team added them while
+tracing the runtime trade study's evaluation criteria (EC.5 and EC.1). Neither has a
+stakeholder need (SN) or an MOE/method yet: the export has no such columns.
+
+| StR | Requirement | Rationale (Innoslate) | Traced from |
+|---|---|---|---|
+| 5.3.2.1 | Interpret requirements whenever a comparison is run: "The Technical Lead shall be able to have requirements interpreted whenever they run a comparison, without depending on a specific team member's machine." | Technical Lead needs the tool available when a selection decision is due. | EC.5 Availability |
+| 5.4.1.1 | Keep requirement text in approved environments: "The stakeholder requirement text that LLM Compass interprets shall not leave environments approved by the Compliance Officer." | Raised by the Compliance Officer (C.4): customer and company data must not be sent to unapproved third parties. | EC.1 Data locality; SR 2.2.1 |
+
 ## 2. Data contract - Benchmark Data Sources (C.7)
 
 Covers UC.1.10 (request model data) and UC.1.11 (model spec + benchmark data).
@@ -254,7 +265,7 @@ show "no model data available" and don't rank.
 
 ## 3. Model contract - Language model runtime (C.8)
 
-Local model via LM Studio (ADR-0001). Covers UC.1.3 (submit requirement) and UC.1.4
+Local model via LM Studio (ADR-0001; selected by the Week 12 trade study, ADR-0009). Covers UC.1.3 (submit requirement) and UC.1.4
 (proposed criteria).
 
 What it's asked to do: for one requirement, propose measurable criteria that stand
@@ -318,14 +329,14 @@ generated:
 | Item | Value |
 |---|---|
 | Runtime | LM Studio (Bionic app), OpenAI-compatible `POST {LLM_RUNTIME_URL}/chat/completions` |
-| Model | Qwen2.5 7B Instruct, GGUF Q4_K_S (`LLM_MODEL=qwen2.5-7b-instruct`) |
+| Model | **Pinned model identifier (ADR-0009):** Qwen2.5 7B Instruct 1M, GGUF Q4_K_M (`lmstudio-community/Qwen2.5-7B-Instruct-1M-GGUF`, file `Qwen2.5-7B-Instruct-1M-Q4_K_M.gguf`), `LLM_MODEL=qwen2.5-7b-instruct-1m`. This is the build the Week 12 trade study measured (150 requests, 2026-11-16). A reply whose `model` field names any other model is not accepted (see "Not the required schema"), because LM Studio answers an unknown model name with whatever model it has loaded (SR 2.1.3, SR 2.3.1). The check is on the identifier only: the quantization is fixed by what the team downloads, not checked at run time. |
 | Endpoint | `LLM_RUNTIME_URL`, default `http://127.0.0.1:1234/v1`. Any host other than `localhost`, `127.0.0.1` or `::1` raises ValueError before anything is sent (SR 2.2.1, SR 2.4.1). |
 | Prompt template | `prompt_template.txt`: the allowed metrics (the section 2 fields plus `benchmark_map.json` ids, with units), the response rules above, and the request's `requirement_id` and `text` unaltered |
 | Parameters | `temperature` 0 and `seed` 5151 (repeatable, SR 2.1.3); `stream` false |
 | Response schema | The response above, sent as `response_format` `json_schema` (strict), so the runtime constrains its output to that shape |
-| Timeout | **110 s (provisional).** About 3x the slowest measured call. |
-| Token limit | **`max_tokens` 512 (provisional).** About 3x the largest measured reply. |
-| Not the required schema | Timeout, unreachable runtime, non-JSON or a non-object reply: returns `None`. A JSON object is returned as is, and F.1.1 `validate_interpretation` applies the validity rules above. Either way F.1.1 retries once, then marks `interpretation_failed` (SR 1.3.2, SR 1.1.4). |
+| Timeout | **110 s (settled, ADR-0009).** About 3x the slowest measured call (36.3 s, cold, 2026-11-03). The 150 measured calls on the pinned model took at most 18.1 s. |
+| Token limit | **`max_tokens` 512 (fixed by SR 1.3.2: "responses limited to 512 tokens", Innoslate export 2026-11-22).** The pinned model's largest measured reply is 301 tokens (`docs/validation/measured-behavior/token_probe.txt`), 1.7x below the limit. |
+| Not the required schema | Timeout, unreachable runtime, non-JSON or a non-object reply, or a reply whose `model` field names a model other than `LLM_MODEL` (ADR-0009): returns `None`. A JSON object is returned as is, and F.1.1 `validate_interpretation` applies the validity rules above. Either way F.1.1 retries once, then marks `interpretation_failed` (SR 1.3.2, SR 1.1.4). |
 
 Measurements (2026-11-03, MacBook, LM Studio, the 4 sample scenarios in
 `sample_data/user_inputs.json`, two rounds each):
@@ -338,10 +349,19 @@ Measurements (2026-11-03, MacBook, LM Studio, the 4 sample scenarios in
 | SCENARIO_04 | 17.8 | 15.5 | 95 | 491 | yes |
 
 The slowest call was 36.3 s, so the timeout is 110 s. The largest reply was 165
-tokens, so `max_tokens` is 512. Both are provisional until the Week 12 runtime trade
+tokens, so `max_tokens` was 512. Both were provisional until the Week 12 runtime trade
 study (Form report §2.3.1). They are also the first values for SR 1.3.2's MOP
 ("interpretation response time per requirement", target to be set after the local
 runtime is benchmarked), which the team still has to set as a target.
+
+Settled by the Week 12 runtime trade study (Lab Manual 11.2, ADR-0009, 2026-11-22):
+the local runtime (Alternative A) was selected over a hosted commercial API
+(Alternative B) by swing weight, 75.0 to 55.9. The pinned model was measured on
+2026-11-16 (`docs/validation/measured-behavior.md`): 150 requests, mean 7.01 s, max
+18.1 s, 150 of 150 valid on the first attempt; largest reply 301 tokens. So the
+timeout stays 110 s and `max_tokens` stays 512. Both are set by SR 1.3.2's statement
+in Innoslate ("within 110 s per interpretation request, with responses limited to 512
+tokens"), so they are no longer provisional.
 
 ## 4. Test interface (provisional)
 
@@ -423,7 +443,7 @@ the function at its other end.
 | 1.2.4 | The LLM Compass shall provide Presented mapping to the Technical Lead. | Presented mapping; F.6 | 5.1.1.3 |
 | 1.2.5 | The LLM Compass shall provide Presented ranking and sensitivity to the Technical Lead. | Presented ranking and sensitivity; F.6 | 5.1.3.1, 5.1.4.1 |
 | 1.3.1 | The LLM Compass shall interface with the Technical Lead through the Requirements and recommendations. | C.1, C.6, conduit | 5.1.1.1 |
-| 1.3.2 | The LLM Compass shall interface with the Language model runtime through the Interpretation request and proposed criteria. | C.1, C.8, conduit | 5.1.1.2 |
+| 1.3.2 | The LLM Compass shall interface with the Language model runtime through the Interpretation request and proposed criteria. The Language model runtime shall return proposed criteria within 110 s per interpretation request, with responses limited to 512 tokens. | C.1, C.8, conduit | 5.1.1.2 |
 | 1.3.3 | The LLM Compass shall interface with the Benchmark Data Sources through the Data request and model data with provenance. | C.1, C.7, conduit | 5.1.2.1 |
 | 1.4.1 | The LLM Compass shall provide LLM selection decision support. | - | 5.1, 5.2, 5.3 (spider diagram, 2026-10-26); 5.1.2.2, 5.1.5.1, 5.1.5.2, 5.1.6.2, 5.1.6.3, 5.2.x only through this one until 1.4.1.x are traced |
 
@@ -442,7 +462,7 @@ Verification (SRD Table 9) and MOP with target (Table 10), all verbatim:
 | 1.2.4 | I | Every presented criterion shows the requirement it stands for and a rating of strong, moderate or weak. | % of presented criteria with a proxy-strength rating | 100% |
 | 1.2.5 | T, A | Each ranked candidate shows one contribution entry per weighted criterion. On a fixture with a known answer, the reported unstable pairs exactly match those found by changing each weight by −10% and +10%, one at a time. | Weight change covered by the sensitivity check; missed or false unstable pairs | ±10% on any single weight; 0 |
 | 1.3.1 | D | The Technical Lead completes UC.1, from stated requirements to decision record, entirely through the system's interface. | Number of UC.1 exchanges with the Technical Lead supported | 6 of 6 |
-| 1.3.2 | T | Every request and response conforms to the language model runtime's model contract, and a timeout is handled the same way as an invalid response. | Interpretation response time per requirement | To be set after the local runtime is benchmarked |
+| 1.3.2 | T | Every request and response conforms to the language model runtime's model contract, and a timeout is handled the same way as an invalid response. | Interpretation response time per requirement; response length | ≤ 110 s per request; ≤ 512 tokens (statement, Innoslate export 2026-11-22) |
 | 1.3.3 | T | Every data exchange conforms to the data contract. If the source is unavailable, the ranking uses the last stored figures, each shown with its date and staleness flag. | % of data exchanges that conform to the data contract | 100% |
 | 1.4.1 | D | All leaf-level requirements pass, and a timed walkthrough of UC.1 with at least 10 candidates takes 30 minutes or less. | Operator time for a complete comparison | ≤ 30 min with ≥ 10 candidates |
 
@@ -527,10 +547,10 @@ Staleness threshold, Sensitivity policy). Each is satisfied by F.1.
 
 From form_architecture_definition.pdf §2.1.1.2: Figure 8 (Innoslate requirements
 document) and Table 4. Each leaf requirement is satisfied by C.1 LLM Compass and traced
-to the StR shown. Statements for 2.1.1-2.1.5 are verbatim from Figure 8. Figure 8 cuts
-off 2.1.6 and doesn't show 2.2.1-2.4.1, so those rows give the requirement name and
-Table 4's MOS instead, marked *(statement not exported)*. Replace them with the
-exported text once it exists.
+to the StR shown. Statements for 2.1.1-2.1.5 are verbatim from Figure 8. The statements
+for 2.1.6 and 2.2.1-2.4.1 are verbatim from the Innoslate System Requirements export of
+2026-11-22 (`requirement.csv`). The export has no trace column: SR 2.2.1's added trace to
+StR 5.4.1.1 is from the System Analysis report (Week 12).
 
 | ID | Name | Statement | Traces to StR |
 |---|---|---|---|
@@ -539,11 +559,11 @@ exported text once it exists.
 | 2.1.3 | Result consistency | The LLM Compass shall produce an identical ranking when re-run with the same confirmed criteria mapping, weights and evidence. | 5.1.3.2 |
 | 2.1.4 | Record retention | The LLM Compass shall retain each stored decision record for at least six months. | 5.1.3.3 |
 | 2.1.5 | Evidence attribution | The LLM Compass shall attach a source identifier and collection date to every figure it displays or exports. | 5.1.2.1 |
-| 2.1.6 | Business legibility | The LLM Compass shall present business-facing output without benchmark names or technical [cut off in Figure 8] | 5.2.2.1 |
-| 2.2.1 | Local interpretation | *(statement not exported)* MOS: interpretation requests sent to a locally hosted runtime. | 5.1.1.2 |
-| 2.3.1 | Model contract | *(statement not exported)* MOS: requests and responses conforming to the model contract. | 5.1.1.2 |
-| 2.3.2 | Data contract | *(statement not exported)* MOS: data exchanges conforming to the data contract. | 5.1.2.1 |
-| 2.4.1 | Query cost | *(statement not exported)* MOS: paid per-query charges per comparison. | 5.2.1.1 |
+| 2.1.6 | Business legibility | The LLM Compass shall present business-facing output without benchmark names or technical metric identifiers. | 5.2.2.1 |
+| 2.2.1 | Local interpretation | The LLM Compass shall perform requirement interpretation with a locally hosted language model runtime. | 5.1.1.2, 5.4.1.1 |
+| 2.3.1 | Model contract | The LLM Compass shall exchange interpretation requests and responses with the language model runtime in the format defined by the model contract. | 5.1.1.2 |
+| 2.3.2 | Data contract | The LLM Compass shall exchange model data with the benchmark data sources in the format defined by the data contract. | 5.1.2.1 |
+| 2.4.1 | Query cost | The LLM Compass shall incur no paid per-query charges to run a comparison. | 5.2.1.1 |
 
 Verification and MOS with target, verbatim from Table 4 (D = demonstration, T = test,
 I = inspection):
