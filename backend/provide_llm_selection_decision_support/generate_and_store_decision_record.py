@@ -92,6 +92,9 @@ def generate_and_store_decision_record(selection_rationale: dict, model_selectio
     if "score_breakdown" in selection_rationale:
         record["score_breakdown"] = selection_rationale["score_breakdown"]
     record["excluded"] = selection_rationale.get("excluded", [])  # SN-TL-07 / 5.1.6.3
+    if "requested_models" in selection_rationale:
+        # SR 1.4.1.8 (UC.1.18, StR 5.1.6.3) -- the models not compared stay visible when the record is reopened
+        record["requested_models"] = selection_rationale["requested_models"]
     record["selected_model"] = model_selection  # SR 1.1.3 -- unchanged; None = UC alt flow 15a
     record["record_id"] = f"REC-{uuid.uuid4().hex}"
     store_decision_record(record)

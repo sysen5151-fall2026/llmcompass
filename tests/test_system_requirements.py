@@ -654,6 +654,61 @@ def test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart(p
         generate(copy.deepcopy(rationale), "model-not-ranked")
 
 
+def _known(name, vendor, intelligence):
+    return {"name": name, "slug": name.lower().replace(" ", "-"), "vendor": vendor,
+            "intelligence_index": intelligence}
+
+
+def test_SR_1_4_1_8_named_non_catalog_models_reported_in_presented_ranking_and_record():
+    # "Stated requirements that name a model on the known-models list but not in the catalog, or a model-like name on neither, give one entry per model in the presented ranking and the decision record, with reason not_in_catalog or not_recognised and at most three catalog alternatives. Catalog models are not listed, and the exclusions and ranking are unchanged. With no known-models list, both state that the check could not run."
+    criteria = confirmed_criteria()
+    weighted = [c for c in criteria if c["designation"] == "weighted"]
+    hard = [c for c in criteria if c["designation"] == "hard"]
+    pool = known_answer_candidates() + [candidate("model-x", 300_000, 0.5, residency=("EU",))]
+    for c, vendor in zip(pool, ("Acme", "Acme", "Beta", "Beta")):
+        c["vendor"] = vendor
+    known = [_known(c["model_name"], c["vendor"], 50) for c in pool] + [
+        _known("Acme Nova 9", "Acme", 80), _known("Acme Nova 7", "Acme", 70), _known("Zeta 2", "Zeta", 40)]
+    named = {"Acme Nova 9": "not_in_catalog", "Zeta 2": "not_in_catalog", "Acme Nova 12": "not_recognised"}
+    text = "Compare model-1 with Acme Nova 9, Zeta 2 and Acme Nova 12; data must stay in the US."
+
+    receive = sub("retrieve_model_data", "receive_model_data")
+    check = sub("retrieve_model_data", "check_requested_models")
+    apply_hard = sub("apply_hard_constraints", "apply_hard_constraints")
+    rank_fn = sub("score_and_rank_candidates", "score_and_rank_candidates")
+    analyze = sub("analyze_ranking_sensitivity", "analyze_ranking_sensitivity")
+    report = sub("report_selection_rationale", "report_selection_rationale")
+    generate = sub("generate_and_store_decision_record", "generate_and_store_decision_record")
+    basis = {"requirements": [text], "criteria_mapping": criteria,
+             "weights": {c["criterion_id"]: c["weight"] for c in weighted}}
+
+    def run(known_models):
+        evidence = receive(copy.deepcopy(pool))
+        requested = check([text], evidence, known_models=known_models)
+        eligible, exclusions = apply_hard(evidence, hard_constraints=hard)
+        ranking = rank_fn(eligible, weighted_criteria=weighted)
+        presented, rationale = report(ranking, exclusions, analyze(ranking, weighted_criteria=weighted), requested)
+        return presented, generate(rationale, None, basis)
+
+    presented, record = run(copy.deepcopy(known))
+    for shown in (presented["requested_models"], record["requested_models"]):
+        assert shown["catalog_check"] == "ran"
+        entries = shown["requested_not_compared"]
+        assert {e["name_as_written"]: e["reason"] for e in entries} == named  # 100%, once each, no catalog model
+        catalog_names = {c["model_name"] for c in pool}
+        for e in entries:
+            assert len(e["suggestions"]) <= 3 and set(e["suggestions"]) <= catalog_names, e
+    plain = report(rank_fn(apply_hard(receive(copy.deepcopy(pool)), hard_constraints=hard)[0],
+                           weighted_criteria=weighted),
+                   apply_hard(receive(copy.deepcopy(pool)), hard_constraints=hard)[1],
+                   {"method": "-", "ranking_is_stable": None, "unstable_pairs": []})[0]
+    assert presented["ranking"] == plain["ranking"] and presented["excluded"] == plain["excluded"]
+
+    presented, record = run(None)
+    for shown in (presented["requested_models"], record["requested_models"]):
+        assert shown == {"catalog_check": "could_not_run", "requested_not_compared": []}
+
+
 
 # 1.1.6-1.1.8 Input requirements for the three F.1 controls -----------------------
 # (Architecture Definition Report, 2026-10-28; SPEC.md section 6.) The controls

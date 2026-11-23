@@ -252,6 +252,15 @@ pulls on demand (team, 2026-10-28): the sources are queried only when the operat
 asks for fresh data. Between pulls, ranking uses the last stored snapshot, each figure
 with its date. Stale flag applies either way.
 
+Known models (SR 1.4.1.8, 2026-11-22): each successful pull also stores every model the
+Artificial Analysis response lists (about 720), not only the 14 in the catalog. For each one it
+stores `name`, `slug`, `vendor` (`model_creator.name`) and `intelligence_index` (null when not
+measured). This list only names models; it is never ranked. The refresh also reports the
+catalog gap: of the top-20 listed models by intelligence index, those not in the catalog
+(R4 indicator, docs/risks.md). A model's effort or mode variants, such as "(High)" or "(Max)",
+count once under the base name, and a variant of a catalog model is not a gap. If no pull has stored the list, there is no known-models list
+and the catalog check reports that it could not run.
+
 Missing values:
 - Missing data for a weighted criterion: candidate scores 0 on it and the gap is
   shown in the rationale. Never filled in silently.
@@ -497,6 +506,7 @@ Replace the rows with the exported text once it exists.
 | 1.4.1.5 | The LLM Compass shall analyze ranking sensitivity. | F.1.5 | 5.1.4.1 |
 | 1.4.1.6 | The LLM Compass shall report selection rationale. | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.1.1-5.2.4.1 |
 | 1.4.1.7 | The LLM Compass shall generate and store decision record. | F.1.7 | 5.1.3.2, 5.1.3.3 |
+| 1.4.1.8 | The LLM Compass shall report each model named in the stated requirements that is not in the candidate catalog, with the reason and up to three catalog alternatives, in the presented ranking and the decision record. | R4.M1 (Innoslate); built in F.1.2 (ADR-0010) | 5.1.6.3 |
 
 5.1.5.1 and 5.1.5.2 still have no system requirement: there is no retrieval or
 re-run input on the IDEF0 yet. Their tests are strict xfail
@@ -510,7 +520,16 @@ re-run input on the IDEF0 yet. Their tests are strict xfail
 | 1.4.1.4 | T | Each ranked candidate has one contribution per weighted criterion, its score is the sum of its contributions, and candidates are in descending score order. On the known-answer fixture the order is model-1, model-2, model-3. | % of ranked candidates with a full contribution breakdown | 100% |
 | 1.4.1.5 | T, A | On a fixture with a known answer, the unstable pairs exactly match those found by applying each sensitivity-policy factor (x0.9, x1.1) to each weight, one at a time. A policy with no change finds no unstable pairs. | Missed or false unstable pairs | 0 |
 | 1.4.1.6 | T | The presented ranking and sensitivity shows every figure used with its source, date and stale flag, every excluded candidate with its failed constraints, and the unstable pairs. The selection rationale carries the same ranking, exclusions, evidence and sensitivity finding. The 5.2.x StRs are verified by their own tests (tests/test_product_owner.py). | % of figures shown with source, date and stale flag | 100% |
+| 1.4.1.8 | T | Stated requirements that name a model on the known-models list but not in the catalog, or a model-like name on neither, give one entry per model in the presented ranking and the decision record, with reason `not_in_catalog` or `not_recognised` and at most three catalog alternatives. Catalog models are not listed, and the exclusions and ranking are unchanged. With no known-models list, both state that the check could not run. | % of named non-catalog models reported | 100% |
 | 1.4.1.7 | T | A record generated from a selection rationale and a model selection has all seven sections, with the selection unchanged. The stored record retrieved by its ID matches the original, including after a restart (module reload). A selection that isn't in the ranking is rejected. | % of records retrievable unchanged after a restart | 100% |
+
+1.4.1.8 (Report models missing from the catalog) was added to the Innoslate model by the team on
+2026-11-22 for the top risk R4 (Lab Manual 12.3; docs/risks.md). Its statement and target are
+from Innoslate: it decomposes 1.4.1, is satisfied by R4.M1 and traces to 5.1.6.3, and its
+rationale reads "Mitigates top risk R4 Candidate catalog incomplete. Target: 100% of named
+non-catalog models reported. Verified by test." The verification criterion above is derived.
+Innoslate allocates it to no function yet. It is built in F.1.2, where the catalog meets the
+stated requirements before F.1.3 (UC.1.11 -> UC.1.12), see ADR-0010.
 
 1.4.1.1's rejection of a metric not on the known metrics list is derived from that
 control entering F.1.1 in A1. The team kept it on 2026-10-28.

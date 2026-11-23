@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: LLM Compass internal interface contract (F.1 first-level IDEF0)
-  version: 1.1.0
+  version: 1.2.0
   description: >-
     Internal interface contract for F.1 Provide LLM Selection Decision Support,
     written from the model (Architecture Definition Report Fig. 8 p15, Table 4 p8,
@@ -18,6 +18,10 @@ info:
     Form report Table 3, Figure 4): one module per F.1.1.x function inside the
     propose_criteria_mapping package (x-module propose_criteria_mapping.<module>), and
     the internal flows 1.0.1 Requirement set and 3.0.1 Validated criteria.
+    Version 1.2.0 (Lab Manual 12.3, 2026-11-22; SR 1.4.1.8, ADR-0010) adds the R4
+    fallback: F.1.2 checkRequestedModels compares the stated requirements with the
+    catalog and the known-models list, and flow 7.6 Requested models report carries
+    the result to F.1.6, which shows it and passes it on to the decision record.
 x-package: provide_llm_selection_decision_support
 tags:
   - name: F.1.1 Propose Criteria Mapping
@@ -110,6 +114,17 @@ x-flows:
     produced_by: [reportSelectionRationale]
     consumed_by: [generateAndStoreDecisionRecord]
     schema: "#/components/schemas/SelectionRationale"
+  - id: "7.6"
+    name: Requested models report
+    source: F.1.2 Retrieve Model Data
+    destinations: [F.1.6 Report Selection Rationale]
+    role_at_destination: {F.1.6: input}
+    produced_by: [checkRequestedModels]
+    consumed_by: [reportSelectionRationale]
+    schema: "#/components/schemas/RequestedModelsReport"
+    note: >-
+      Added for SR 1.4.1.8 (R4.M1) on 2026-11-22; not yet on IDEF0 A1. F.1.2 also takes the
+      stated requirements as an input and the known-models list as a control for it (ADR-0010).
   - id: "1.0.1"
     name: Requirement set
     level: 2
@@ -165,6 +180,10 @@ x-assumptions:
   - "A31. SPEC 3's failure path (an invalid or missing response: retry once, then interpretation_failed) is carried by ValidatedCriteria.status. Which element re-sends the request after a retry status is not fixed by the model."
   - "A32. (Reconcile, 2026-11-03; deviation log) Null threshold is allowed on the number branch (T-2); ProposedCriteria names the valid SPEC 3 response (T-1); validateProposedCriteria and presentCriteriaMapping raise ValueError on a malformed input list (D-17). send_interpretation_request and the re-send after retry are outside this contract (ADR-0006)."
   - "A33. (Lab Manual 10.4, 2026-11-15; ADR-0008, deviation log D-29) criterion_id is unique within one comparison, not only within one model response: the F.1.1 composition propose_mapping prefixes each proposed criterion_id with its requirement_id (<requirement_id>:<id>) before C.1.1.3, so the presented and confirmed mappings never repeat an id across requirements. Schemas are unchanged (string, minLength 1)."
+  - "A34. (Lab Manual 12.3, 2026-11-22; SR 1.4.1.8, ADR-0010) A model is named in the stated requirements when a run of 1 to 6 consecutive words matches a name key. Words are runs of letters and digits that may contain hyphens, dots and underscores. Keys and runs are compared casefolded with spaces, hyphens, dots and underscores removed. A known model's keys are its name, its name without a parenthesised suffix, and its slug; a catalog candidate's keys are its model_id and model_name. Keys shorter than 4 characters are ignored. The longest run that matches wins, and its words are not matched again. A model named more than once is reported once."
+  - "A35. A run that matches a catalog key is not reported. A run that matches only a known-models key is reported as not_in_catalog with that known model's name. An unmatched word whose leading letters are a family word (the leading letters of the first word of at least two known-model names, 3 or more letters) starts a model-like name: that word and the up to 3 unmatched words after it that start with a capital letter or a digit. If any of these words contains a digit, the name is reported as not_recognised, with those words as name_as_written."
+  - "A36. Suggestions are up to 3 catalog model_names: the catalog models from the same vendor (vendor names compared like keys), highest intelligence_index first. With none from that vendor, the catalog models nearest to the missing model's intelligence_index. With no index value to compare, the catalog models with the highest intelligence_index. Catalog models with no intelligence_index come last; ties keep catalog order. A not_recognised model's vendor is the vendor of the known models sharing its family word, when they all have one vendor."
+  - "A37. known_models null means no list has been stored (no refresh has run on this machine): catalog_check is could_not_run and requested_not_compared is empty. F.1.6 called without a report emits the same could_not_run report, so the check is never silently treated as passed."
 
 paths:
   /internal/propose-criteria-mapping/split-confirmed-mapping:
@@ -614,6 +633,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /internal/retrieve-model-data/check-requested-models:
+    post:
+      operationId: checkRequestedModels
+      summary: F.1.2 -> F.1.6 (implements SR 1.4.1.8)
+      description: >-
+        R4 fallback (Lab Manual 12.3; R4.M1). After the model data is retrieved and
+        before any candidate is excluded (UC.1.11 -> UC.1.12), compares the models
+        named in the stated requirements with the catalog and the known-models list
+        and reports each named model that is not in the catalog, with the reason and
+        up to three catalog alternatives (A34-A37). Plain code, no language model.
+      tags: [F.1.2 Retrieve Model Data]
+      x-idef0-function: F.1.2 Retrieve Model Data
+      x-module: retrieve_model_data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stated_requirements, candidate_evidence, known_models]
+              properties:
+                stated_requirements:
+                  x-icom: input
+                  x-idef0-flow: "boundary: Stated requirements"
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/StatedRequirement"
+                candidate_evidence:
+                  x-icom: input
+                  x-idef0-flow: "7.1 Candidate evidence"
+                  $ref: "#/components/schemas/CandidateEvidence"
+                known_models:
+                  x-icom: control
+                  x-idef0-flow: "boundary: Known models list (ADR-0010)"
+                  $ref: "#/components/schemas/KnownModels"
+      responses:
+        "200":
+          description: One entry per named model that is not in the catalog.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requested_models_report]
+                x-return-order: [requested_models_report]
+                properties:
+                  requested_models_report:
+                    x-idef0-flow: "7.6 Requested models report"
+                    $ref: "#/components/schemas/RequestedModelsReport"
+
   /internal/apply-hard-constraints:
     post:
       operationId: applyHardConstraints
@@ -774,11 +842,19 @@ paths:
                   x-icom: input
                   x-idef0-flow: "7.5 Sensitivity finding"
                   $ref: "#/components/schemas/SensitivityFinding"
+                requested_models_report:
+                  x-icom: input
+                  x-idef0-flow: "7.6 Requested models report"
+                  x-default: null
+                  description: Optional positional input; absent means the check did not run (A37).
+                  allOf:
+                    - $ref: "#/components/schemas/RequestedModelsReport"
       responses:
         "200":
           description: >-
             The presented result and the selection rationale; ranking, excluded,
-            evidence and unstable_pairs are identical in both (SR 1.4.1.6).
+            evidence, unstable_pairs and requested_models are identical in both
+            (SR 1.4.1.6, SR 1.4.1.8).
           content:
             application/json:
               schema:
@@ -791,11 +867,11 @@ paths:
                     $ref: "#/components/schemas/PresentedRankingAndSensitivity"
                   selection_rationale:
                     x-idef0-flow: "8.1 Selection rationale"
-                    description: F.1.6 always emits score_breakdown and unstable_pairs (A23).
+                    description: F.1.6 always emits score_breakdown, unstable_pairs (A23) and requested_models (A37).
                     allOf:
                       - $ref: "#/components/schemas/SelectionRationale"
                       - type: object
-                        required: [score_breakdown, unstable_pairs]
+                        required: [score_breakdown, unstable_pairs, requested_models]
 
   /internal/generate-and-store-decision-record:
     post:
@@ -1446,8 +1522,10 @@ components:
         Boundary output of F.1.6 to the Technical Lead: ranking, contributions,
         every figure used with source, date and stale flag, every exclusion and
         the unstable pairs (SR 1.2.5, SR 1.3.3, SR 1.4.1.6).
-      required: [ranking, score_breakdown, excluded, evidence, unstable_pairs, sensitivity]
+      required: [ranking, score_breakdown, excluded, evidence, unstable_pairs, sensitivity, requested_models]
       properties:
+        requested_models:
+          $ref: "#/components/schemas/RequestedModelsReport"
         ranking:
           type: array
           description: model_ids in descending score order.
@@ -1513,6 +1591,8 @@ components:
           $ref: "#/components/schemas/ConfirmedCriteriaMapping"
         weights:
           $ref: "#/components/schemas/Weights"
+        requested_models:
+          $ref: "#/components/schemas/RequestedModelsReport"
 
     Weights:
       type: object
@@ -1585,3 +1665,71 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ExcludedSummary"
+        requested_models:
+          description: Copied from the selection rationale when it carries one (SR 1.4.1.8).
+          allOf:
+            - $ref: "#/components/schemas/RequestedModelsReport"
+
+    KnownModel:
+      type: object
+      description: >-
+        One model listed by the benchmark source, in the catalog or not (SPEC 2 Known
+        models; SR 1.4.1.8). Names a model; never ranked.
+      required: [name, slug, vendor, intelligence_index]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        slug:
+          type: string
+        vendor:
+          type: string
+        intelligence_index:
+          type: number
+          nullable: true
+
+    KnownModels:
+      type: array
+      nullable: true
+      description: The known-models list of the last pull; null when none is stored (A37).
+      items:
+        $ref: "#/components/schemas/KnownModel"
+
+    RequestedNotCompared:
+      type: object
+      description: A model named in the stated requirements that is not in the catalog (A34-A36).
+      required: [name_as_written, reason, known_model, suggestions]
+      properties:
+        name_as_written:
+          type: string
+          minLength: 1
+          description: The words of the stated requirements that name the model, as typed.
+        reason:
+          type: string
+          enum: [not_in_catalog, not_recognised]
+        known_model:
+          type: string
+          nullable: true
+          description: The known-models name it matched; null when not_recognised.
+        suggestions:
+          type: array
+          maxItems: 3
+          description: Catalog model_names to compare instead (A36).
+          items:
+            type: string
+
+    RequestedModelsReport:
+      type: object
+      description: >-
+        Flow 7.6 (SR 1.4.1.8, R4.M1): whether the catalog check ran and every named
+        model that was not compared. Shown above the ranking and kept in the decision
+        record (StR 5.1.6.3).
+      required: [catalog_check, requested_not_compared]
+      properties:
+        catalog_check:
+          type: string
+          enum: [ran, could_not_run]
+        requested_not_compared:
+          type: array
+          items:
+            $ref: "#/components/schemas/RequestedNotCompared"

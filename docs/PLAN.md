@@ -1281,3 +1281,91 @@ Recorded in ADR-0009.
   read as "team-controlled", which the loopback-only guard refuses.
 - Optional: a check of quantization through LM Studio's model API; logging of the rejected
   reply model.
+
+## Product risk register and R4 fallback (Lab Manual 12.3, 2026-11-22)
+
+Owner: Allyanna (report Section 4.5). Top risk R4 Candidate catalog incomplete (L4 x I4 = 16, red),
+strategy Mitigate (report Table 16-17). Built: a **fallback** (contains the failure), not a guardrail
+(a catalog of every nameable model is impossible, report 4.3). Implements Table 17 actions 1-3
+(mitigation action R4.M1). Action 4 (R4.M2, add missing top-20 at refresh) is not built here; only
+its indicator (catalog gap, Table 18) is reported.
+
+### What the model authorizes (12.3.1)
+
+- R1-R5 as Risk entities in Innoslate, rated on Table 14's scales, risk table (Table 15), matrix (Figures 9-10).
+- Mitigation plan for R4: R4.M1, R4.M2 with caused-by / mitigated-by links (Figures 11-12).
+- SR 1.4.1.8 Report models missing from the catalog (added 2026-11-22; satisfied by R4.M1, traces to 5.1.6.3).
+
+### Blocking: trace to SPEC
+
+SPEC has no requirement for "flag requested models missing from the catalog". StR 5.1.6.3 / SR 1.4.1.3
+cover candidates removed by a hard constraint only. Per CLAUDE.md, nothing is built until the team
+supplies the requirement (Innoslate export, imported verbatim like 11.2) or approves another trace.
+Decision (Allyanna, 2026-11-22): the team adds a new SR for R4.M1 in Innoslate; its exported
+statement and verification are imported verbatim into SPEC §6. Build starts at step 2 once it is in hand.
+
+### Build steps (12.3.2)
+
+1. `docs/risks.md`: Table 20 as the register, plus the scales (Table 14), the overall-impact rule
+   (highest of cost/schedule/technical) and level rule (L x I, matrix colour), an Innoslate entity
+   column and an Owner column for open gaps. Done (2026-11-22).
+2. SPEC first: import the R4 requirement (above) into §1/§6; add its acceptance test to
+   `tests/test_system_requirements.py` (test_SR_<id>_...).
+3. Contract first (`contracts/api-v1.yaml`): new schema `RequestedNotCompared`
+   {name_as_written, model_id|null, reason: not_in_catalog | not_recognised, suggestions[<=3]};
+   `requested_not_compared` and `catalog_check: ran | could_not_run` on
+   PresentedRankingAndSensitivity, SelectionRationale, DecisionRecord. Regenerate `contracts/generated/`,
+   run `check_conformance.py`. ADR-0010 (fallback vs guardrail, placement, matching rule).
+4. F.7 (`provide_benchmark_evidence`): the refresh also stores a known-models index (name, slug,
+   vendor, intelligence index for every listed model, ~720) in a new `known_models` table of
+   `snapshot_schema.sql`, and returns `catalog_gap` (top-20 by intelligence index not in the 14-model
+   catalog). Same GET requests as now: no new egress (R9).
+5. The check, plain code in C.1, no language model (an LLM check would itself carry R1). Placed in
+   F.1.2 Retrieve Model Data: it runs after UC.1.11 and before UC.1.12 and compares the requirement
+   text with the catalog it already holds. Matching: casefold and drop spaces, hyphens, dots and
+   underscores; longest index match wins, on name boundaries, so "GPT 6" does not match inside
+   "GPT 6.2 Sol". Not recognised = a known vendor or family word plus a version token that matches
+   no index entry. Suggestions: up to 3 catalog models from the same vendor, else the 3 nearest on the
+   intelligence index. No index -> `catalog_check: could_not_run`.
+6. F.1.6 / UI: `result.html` box "Requested but not compared" above the ranking, or "The catalog
+   check could not run". F.1.7 stores both in the decision record (StR 5.1.6.3, UC.1.18).
+7. `tests/test_risk_r4_fallback.py`: one test per Table 21 row (T1-T8). An independent writer works
+   from the contract and SPEC only, and the tests go red first. The adversarial inputs come from the
+   assistant per 12.3.3: case, spacing and hyphen variants; prefix collisions; a name inside a
+   hard-constraint sentence; repeated names; an empty index; a name in a reopened record. Fake index
+   fixture, no network.
+8. Full suite: baseline 291 passed / 12 pre-existing failures / 2 xfailed, with no new failures.
+9. Docs: `traceability.md` row, `deployment.md` (refresh writes the index), `/log` prompt-log entry,
+   `docs/validation/risk-register/section-4-5-implementation.md` (Table 21 results, commit hash,
+   R4 re-rating from the test results for the team).
+
+### Progress (2026-11-22)
+
+- SR 1.4.1.8 imported from Innoslate into SPEC §6; SPEC §2 "Known models" added.
+- Contract v1.2.0: `checkRequestedModels`, flow 7.6, A34-A37; stubs regenerated; conformance passes.
+- Tests first: `tests/test_risk_r4_fallback.py` (T1-T8 + 3 supporting) and `test_SR_1_4_1_8_...`; 20 red, then green.
+- Built: F.1.2 `check_requested_models`, F.1.6 / F.1.7 carry `requested_models`, F.7 `known_models`
+  table, `provide_known_models()`, catalog gap; result-page box; `app.py` wiring. ADR-0010.
+- Suite: 307 passed, the same 16 failures as before in this environment (287 / 16 before).
+- Live check: 765 known models, catalog gap 16 (`docs/validation/risk-register/r4-fallback-check.md`).
+
+### Open items (12.3)
+
+- R6-R11 are not Innoslate entities (team, 2026-11-22): the register's source column cross-references them. Owners: R1 units gap Khai, R9 host check Allyanna.
+- Colours are by matrix cell, not by L x I (team, 2026-11-22): confirm the R6-R11 cells (L2/I3, L2/I4) on the Innoslate matrix.
+- Merge to main after team review; fill the commit hash in report 4.5.3.
+- Local `.env`: remove the retired `ARTIFICIAL_ANALYSIS_API_URL` (HTTP 410) so refresh uses the default.
+- Team: add the three ADR-0010 exchanges to IDEF0 A1, or accept the divergence.
+- Fix "requirement tex" typo in Table 20 R6 (report).
+
+### Rubric check (Risk Assessment: Product Risk Register and Guardrail, Advanced 15-12 pts)
+
+| Advanced criterion | Where it is met |
+|---|---|
+| Register covers conventional risks | `docs/risks.md` R3, R4, R10, R11 |
+| ...and all six AI-specific risks | R1 wrong output, R2 unavailable/slow, R6 untrusted input, R7 schema drift, R8 abandoned dependency, R9 data egress (AI category column) |
+| Cross-referenced to the model | "Source in the model" column (UC/F/C IDs) on every row; R1-R5 are also Innoslate Risk entities |
+| Guardrail or fallback for the top risk implemented | R4 fallback, build steps 4-6 |
+| States which was built and why | `docs/risks.md` R4 note + ADR-0010 (fallback: a complete catalog is impossible, so the failure is contained, not prevented) |
+| A test exercises the failure path and passes | `tests/test_risk_r4_fallback.py` T1, T5, T6, T8 (failure) and T3, T7 (adversarial), all passing |
+| Ratings are the team's own judgement | R1-R5 from Table 15; R6-R11 in `docs/risks.md` with the basis for each rating |

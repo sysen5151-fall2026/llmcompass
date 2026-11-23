@@ -1,10 +1,13 @@
 """Implements F.1.2 -- Retrieve Model Data. Mechanism: C.1 LLM Compass."""
 
 # SR 1.4.1.2 (SN-TL-02 / 5.1.2.1, SN-TL-03 / 5.1.2.2, SN-TL-08 / 5.3.1.1). IDEF0 A1 of F.1, 2026-10-26.
-# Sits behind contracts/api-v1.yaml: requestModelData, receiveModelData.
+# SR 1.4.1.8 (R4 fallback, ADR-0010). Sits behind contracts/api-v1.yaml: requestModelData,
+# receiveModelData, checkRequestedModels.
 
 import copy
+import re
 from datetime import date, timedelta
+from typing import Optional
 
 STALE_AFTER = timedelta(days=90)
 
@@ -87,3 +90,131 @@ def receive_model_data(model_data_with_provenance: list, *, staleness_threshold:
     today = date.today()  # the clock belongs to mechanism C.1
     return [_flag_stale(cand, _figure_metrics(cand), today, staleness_threshold)
             for cand in model_data_with_provenance]
+
+
+# --- R4 fallback: models named in the stated requirements but not in the catalog ---
+# SR 1.4.1.8 (R4.M1; StR 5.1.6.3). Lab Manual 12.3, ADR-0010. contracts/api-v1.yaml
+# checkRequestedModels, A34-A37. Plain code, no language model: a check run by the model
+# would itself be exposed to R1 (docs/risks.md).
+
+_WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+_MAX_RUN = 6        # A34 -- words in one name
+_MIN_KEY = 4        # A34 -- shorter keys are ignored
+_MAX_TRAIL = 3      # A35 -- words after a family word
+_MAX_SUGGESTIONS = 3
+
+
+def _key(text: str) -> str:
+    # A34 -- casefolded, spaces, hyphens, dots and underscores removed
+    return re.sub(r"[\s\-._]", "", text.casefold())
+
+
+def _words(text: str) -> list:
+    # (word, start, end); trailing punctuation such as the full stop ending a sentence is not part of a word
+    words = []
+    for m in _WORD.finditer(text):
+        word = m.group().rstrip("._-")
+        words.append((word, m.start(), m.start() + len(word)))
+    return words
+
+
+def _family(name: str) -> str:
+    first = name.split()[0] if name.split() else ""
+    m = re.match(r"[a-z]+", first.casefold())
+    return m.group() if m else ""
+
+
+def _intelligence(cand: dict):
+    fig = _metric_figure(cand, "intelligence_index")
+    return fig["value"] if fig else None
+
+
+def _suggest(catalog: list, vendor, reference) -> list:
+    # A36 -- same vendor first; else nearest on the intelligence index; else highest
+    ordered = list(enumerate(catalog))
+    same = [(i, c) for i, c in ordered if vendor and _key(c.get("vendor", "")) == _key(vendor)]
+    if same:
+        same.sort(key=lambda p: (_intelligence(p[1]) is None, -(_intelligence(p[1]) or 0), p[0]))
+        return [c["model_name"] for _, c in same[:_MAX_SUGGESTIONS]]
+    if reference is not None:
+        ordered.sort(key=lambda p: (_intelligence(p[1]) is None,
+                                    abs((_intelligence(p[1]) or 0) - reference), p[0]))
+    else:
+        ordered.sort(key=lambda p: (_intelligence(p[1]) is None, -(_intelligence(p[1]) or 0), p[0]))
+    return [c["model_name"] for _, c in ordered[:_MAX_SUGGESTIONS]]
+
+
+def _text_of(requirement) -> str:
+    # A19 -- a stated requirement is plain text or {requirement_id, text}
+    return requirement["text"] if isinstance(requirement, dict) else str(requirement)
+
+
+def check_requested_models(stated_requirements: list, candidate_evidence: list, *,
+                           known_models: Optional[list]) -> dict:
+    """Function: F.1.2 -- Retrieve Model Data. Contract operation checkRequestedModels.
+
+    in: stated_requirements, candidate_evidence (7.1). control: known_models.
+    out: requested_models_report (7.6).
+    """
+    # A37 -- no list stored: say so; never treat the check as passed
+    if known_models is None:
+        return {"catalog_check": "could_not_run", "requested_not_compared": []}
+
+    keys = {}  # name key -> (in catalog, known model or None)
+    for k in known_models:
+        for name in (k["name"], re.sub(r"\s*\([^)]*\)\s*$", "", k["name"]), k.get("slug") or ""):
+            if len(_key(name)) >= _MIN_KEY:
+                keys.setdefault(_key(name), (False, k))
+    for c in candidate_evidence:  # A35 -- a catalog key wins over a known-models key
+        for name in (c["model_id"], c.get("model_name") or ""):
+            if len(_key(name)) >= _MIN_KEY:
+                keys[_key(name)] = (True, None)
+    families = {}
+    for k in known_models:
+        families.setdefault(_family(k["name"]), []).append(k)
+    families = {f: ks for f, ks in families.items() if len(f) >= 3 and len(ks) >= 2}
+
+    report, seen = [], set()
+    for requirement in stated_requirements:
+        text = _text_of(requirement)
+        words = _words(text)
+        used = [False] * len(words)
+        # A34 -- leftmost, longest run of words that matches a key
+        i = 0
+        while i < len(words):
+            for n in range(min(_MAX_RUN, len(words) - i), 0, -1):
+                hit = keys.get(_key("".join(w for w, _, _ in words[i:i + n])))
+                if hit:
+                    in_catalog, known = hit
+                    used[i:i + n] = [True] * n
+                    if not in_catalog and ("known", known["name"]) not in seen:
+                        seen.add(("known", known["name"]))
+                        report.append({"name_as_written": text[words[i][1]:words[i + n - 1][2]],
+                                       "reason": "not_in_catalog", "known_model": known["name"],
+                                       "suggestions": _suggest(candidate_evidence, known.get("vendor"),
+                                                               known.get("intelligence_index"))})
+                    i += n
+                    break
+            else:
+                i += 1
+        # A35 -- a family word with a version that matches nothing: not recognised
+        i = 0
+        while i < len(words):
+            family = _family(words[i][0])
+            if used[i] or family not in families:
+                i += 1
+                continue
+            j = i + 1
+            while (j < len(words) and j - i <= _MAX_TRAIL and not used[j]
+                   and (words[j][0][0].isupper() or words[j][0][0].isdigit())):
+                j += 1
+            run = words[i:j]
+            name = text[run[0][1]:run[-1][2]]
+            if any(ch.isdigit() for w, _, _ in run for ch in w) and ("name", _key(name)) not in seen:
+                seen.add(("name", _key(name)))
+                vendors = {k.get("vendor") for k in families[family]}
+                report.append({"name_as_written": name, "reason": "not_recognised", "known_model": None,
+                               "suggestions": _suggest(candidate_evidence,
+                                                       vendors.pop() if len(vendors) == 1 else None, None)})
+            i = j
+    return {"catalog_check": "ran", "requested_not_compared": report}
