@@ -27,7 +27,7 @@ All seven have their modules (F.1.7 on 2026-10-26, the rest on 2026-10-28). F.1'
 | Function ID | Function Name | Requirement | Module (in backend/provide_llm_selection_decision_support/) |
 |---|---|---|---|
 | F.1.1 | Propose Criteria Mapping | 1.4.1.1 | propose_criteria_mapping (built 2026-10-28) |
-| F.1.2 | Retrieve Model Data | 1.4.1.2 | retrieve_model_data (built 2026-10-28) |
+| F.1.2 | Retrieve Model Data | 1.4.1.2, 1.4.1.8 | retrieve_model_data (built 2026-10-28; R4 check `check_requested_models` 2026-11-22, ADR-0010) |
 | F.1.3 | Apply Hard Constraints | 1.4.1.3 | apply_hard_constraints (built 2026-10-28) |
 | F.1.4 | Score and Rank Candidates | 1.4.1.4 | score_and_rank_candidates (built 2026-10-28) |
 | F.1.5 | Analyze Ranking Sensitivity | 1.4.1.5 | analyze_ranking_sensitivity (built 2026-10-28) |
@@ -66,7 +66,8 @@ shown in the second column. "Status" is the state of the test in this build (202
 | SR 1.3.3 | F.1 <-> F.7 conduit; F.7 `provide_model_data`, `refresh_model_data` (snapshot fallback) | 5.1.2.1 | SN-TL-02 | test_SR_1_3_3_data_contract_and_stored_figures_shown_dated_and_flagged; tests/test_data_access_component.py | pass |
 | SR 1.4.1 | F.1 (whole) | all | all | test_SR_1_4_1_full_comparison_walkthrough_within_30_minutes | fail: no walkthrough logged; catalog < 10 |
 
-Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC §6).
+Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC §6). 1.4.1.8 was added in
+Innoslate by the team on 2026-11-22 for risk R4 (docs/risks.md); its verification criterion is derived.
 
 | Requirement | Function | StR | Test | Status |
 |---|---|---|---|---|
@@ -77,6 +78,7 @@ Requirements 1.4.1.1-1.4.1.7 are derived from the diagrams, not exported (SPEC �
 | SR 1.4.1.5 | F.1.5 | 5.1.4.1 | test_SR_1_4_1_5_unstable_pairs_match_known_answer_under_policy | pass |
 | SR 1.4.1.6 | F.1.6 | 5.1.2.1, 5.1.3.1, 5.1.4.1, 5.1.6.3, 5.2.x | test_SR_1_4_1_6_report_shows_sourced_dated_flagged_figures_exclusions_and_pairs | pass |
 | SR 1.4.1.7 | F.1.7 | 5.1.3.2, 5.1.3.3 | test_SR_1_4_1_7_record_has_seven_sections_and_is_retrievable_after_restart | pass |
+| SR 1.4.1.8 | F.1.2 (check), F.1.6 (page), F.1.7 (record), F.7 (known-models list); R4.M1, ADR-0010 | 5.1.6.3 | test_SR_1_4_1_8_named_non_catalog_models_reported_in_presented_ranking_and_record; tests/test_risk_r4_fallback.py (T1-T8) | pass |
 
 Control input requirements and system-wide requirements (Lab Manual 8.5, 2026-11-03; SPEC §6).
 Each is satisfied by C.1; the "Element" column is the Form report Table 4 allocation.

@@ -15,6 +15,26 @@
     </table></div>
   </section>
 
+  {# UC.1.15 -- SR 1.4.1.8, R4 fallback: models named in the requirements that are not in the catalog #}
+  {% set rm = presented.requested_models %}
+  {% if rm and rm.catalog_check == "could_not_run" %}
+  <section class="error">
+    <h2>Requested but not compared</h2>
+    <p>The catalog check could not run: no list of known models is stored on this machine. Run a data
+       refresh, then check that every model named in your requirements is in the ranking.</p>
+  </section>
+  {% elif rm and rm.requested_not_compared %}
+  <section class="error">
+    <h2>Requested but not compared</h2>
+    <ul>{% for m in rm.requested_not_compared %}
+      <li><strong>{{ m.name_as_written }}</strong>:
+        {% if m.reason == "not_in_catalog" %}not in the candidate catalog ({{ m.known_model }}), so it was not ranked.
+        {% else %}not recognised as a known model, so it was not ranked.{% endif %}
+        {% if m.suggestions %}Closest catalog models: {{ m.suggestions | join(", ") }}.{% endif %}</li>
+    {% endfor %}</ul>
+  </section>
+  {% endif %}
+
   <section>
     <h2>Ranking</h2>
     {% if presented.score_breakdown %}

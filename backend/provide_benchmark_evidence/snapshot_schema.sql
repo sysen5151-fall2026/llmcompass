@@ -29,3 +29,16 @@ CREATE TABLE IF NOT EXISTS figures (
     PRIMARY KEY (pull_id, model_id, field),
     FOREIGN KEY (pull_id, model_id) REFERENCES candidates(pull_id, model_id)
 );
+
+-- SR 1.4.1.8 (R4 fallback, ADR-0010; SPEC section 2 "Known models"): every model the benchmark
+-- source lists, in the catalog or not, so the stated requirements can be checked for models the
+-- catalog lacks. Names a model; never ranked.
+CREATE TABLE IF NOT EXISTS known_models (
+    pull_id             INTEGER NOT NULL REFERENCES pulls(pull_id),
+    position            INTEGER NOT NULL,
+    name                TEXT NOT NULL CHECK (length(name) > 0),
+    slug                TEXT NOT NULL,
+    vendor              TEXT NOT NULL,
+    intelligence_index  REAL,                -- NULL when not measured
+    PRIMARY KEY (pull_id, position)
+);

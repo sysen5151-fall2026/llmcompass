@@ -42,6 +42,7 @@ from .retrieve_model_data import (  # noqa: F401 -- SPEC section 4 re-export (is
     STALE_AFTER,
     _figure_metrics,
     _flag_stale,
+    check_requested_models,
     is_stale,
     receive_model_data,
     request_model_data,

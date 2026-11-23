@@ -1,4 +1,4 @@
-"""GENERATED from contracts/api-v1.yaml (v1.1.0) -- do not hand-edit.
+"""GENERATED from contracts/api-v1.yaml (v1.2.0) -- do not hand-edit.
 Regenerate after changing the contract, never the other way around.
 
 F.1.2 Retrieve Model Data.
@@ -21,5 +21,13 @@ def receive_model_data(model_data_with_provenance: list, *, staleness_threshold:
     
     in: model_data_with_provenance. control: staleness_threshold. out: candidate_evidence.
     raises: LookupError, ValueError.
+    """
+    raise NotImplementedError  # implemented in backend/provide_llm_selection_decision_support/retrieve_model_data.py
+
+
+def check_requested_models(stated_requirements: list, candidate_evidence: list, *, known_models: Optional[list]) -> dict:
+    """operationId: checkRequestedModels. F.1.2 -> F.1.6 (implements SR 1.4.1.8)
+    
+    in: stated_requirements, candidate_evidence. control: known_models. out: requested_models_report.
     """
     raise NotImplementedError  # implemented in backend/provide_llm_selection_decision_support/retrieve_model_data.py

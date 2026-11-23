@@ -22,6 +22,7 @@ from provide_requirement_interpretation import scenario_interpretation
 from provide_llm_selection_decision_support import (
     analyze_ranking_sensitivity,
     apply_hard_constraints,
+    check_requested_models,
     confirm_mapping,
     generate_and_store_decision_record,
     generate_decision_record,
@@ -37,6 +38,7 @@ from provide_llm_selection_decision_support import request_model_data as retriev
 from provide_llm_selection_decision_support.propose_criteria_mapping import KNOWN_METRICS, propose_mapping
 from provide_benchmark_evidence import provide_model_data  # F.7 (BENCHMARK_SOURCE: file or api)
 from provide_benchmark_evidence import request_model_data
+from provide_benchmark_evidence import provide_known_models  # F.7 known-models list (SR 1.4.1.8)
 
 # C.1.1.4 by module path: the package attribute of the same name is a first-level def (A28)
 _c114 = importlib.import_module("provide_llm_selection_decision_support.propose_criteria_mapping"
@@ -73,11 +75,15 @@ def run_confirmed_mapping(confirmed_criteria_mapping: list, requirement_set: lis
     data_request = retrieve_model_data_request(required)                             # F.1.2  UC.1.10
     model_data = provide_model_data(data_request=data_request)                       # F.7    UC.1.11
     evidence = receive_model_data(model_data)                                        # F.1.2
+    # SR 1.4.1.8 (R4 fallback, ADR-0010) -- named models not in the catalog, before any exclusion
+    requested = check_requested_models(requirement_set, evidence,
+                                       known_models=provide_known_models())          # F.1.2  UC.1.11-1.12
     eligible, exclusions = apply_hard_constraints(evidence, hard_constraints=hard)   # F.1.3
     # CR 1.2.6, CR 2.1.2 -- the Ranking Engine and the Sensitivity Analyzer each get their own copy
     ranking = score_and_rank_candidates(eligible, weighted_criteria=copy.deepcopy(weighted))   # F.1.4
     finding = analyze_ranking_sensitivity(ranking, weighted_criteria=copy.deepcopy(weighted))  # F.1.5
-    presented, rationale = report_selection_rationale(ranking, exclusions, finding)  # F.1.6  UC.1.16
+    presented, rationale = report_selection_rationale(ranking, exclusions, finding,
+                                                      requested)                     # F.1.6  UC.1.15-1.16
     try:
         # F.1.7 UC.1.18 -- no selection yet (UC.1.17 planned; A22)
         record, record_error = generate_and_store_decision_record(rationale, None, basis), None

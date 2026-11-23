@@ -15,7 +15,7 @@ condition).
 |---|---|---|---|
 | Flask app | C.1 LLM Compass: `backend/app.py` (GET/POST `/`, POST `/confirm`; loads `.env` at start), the F.1 package `backend/provide_llm_selection_decision_support/` (C.1.1-C.1.7) | `cd backend && ../.venv/bin/python app.py` (set up once: `python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt`) | `127.0.0.1:5000` |
 | LM Studio (Bionic app) | C.8 Language model runtime, model Qwen2.5 7B Instruct 1M (GGUF Q4_K_M, `qwen2.5-7b-instruct-1m`; pinned identifier, ADR-0009) | Bionic app → Developer → start server, or `~/.lmstudio/bin/lms server start` | `127.0.0.1:1234` (OpenAI-compatible `/v1`) |
-| On-demand pull | Part of C.7's data access in `backend/provide_benchmark_evidence/` | `cd backend && python3 -m provide_benchmark_evidence refresh` | — (one-shot) |
+| On-demand pull | Part of C.7's data access in `backend/provide_benchmark_evidence/`. Also stores the known-models list and prints the R4 catalog gap (SR 1.4.1.8, ADR-0010) | `cd backend && python3 -m provide_benchmark_evidence refresh` | — (one-shot) |
 | pytest / CI | Verification tooling, not part of the product | `pytest`; GitHub Actions `.github/workflows/tests.yml` | — |
 
 ## What talks to what

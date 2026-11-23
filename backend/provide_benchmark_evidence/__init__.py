@@ -7,6 +7,7 @@
 
 import json
 import os
+import re
 import sqlite3
 import urllib.error
 import urllib.request
@@ -274,19 +275,24 @@ def _figures(cand: dict):
         yield f"benchmark:{b['benchmark_id']}", b["score"]
 
 
-def _store_pull(status: str, detail: dict, candidates: list, pulled_at: str) -> None:
+def _store_pull(status: str, detail: dict, candidates: list, pulled_at: str,
+                known_models: Optional[list] = None) -> None:
     conn = _connect()
     try:
-        _insert_pull(conn, status, detail, candidates, pulled_at)
+        _insert_pull(conn, status, detail, candidates, pulled_at, known_models)
     finally:
         conn.close()
 
 
-def _insert_pull(conn: sqlite3.Connection, status: str, detail: dict, candidates: list, pulled_at: str) -> None:
+def _insert_pull(conn: sqlite3.Connection, status: str, detail: dict, candidates: list, pulled_at: str,
+                 known_models: Optional[list] = None) -> None:
     with conn:  # one transaction: a pull is stored whole or not at all
         cur = conn.execute("INSERT INTO pulls (pulled_at, status, detail_json) VALUES (?, ?, ?)",
                            (pulled_at, status, json.dumps(detail)))
         pull_id = cur.lastrowid
+        for position, k in enumerate(known_models or []):  # SR 1.4.1.8
+            conn.execute("INSERT INTO known_models VALUES (?, ?, ?, ?, ?, ?)",
+                         (pull_id, position, k["name"], k["slug"], k["vendor"], k["intelligence_index"]))
         for c in candidates:
             conn.execute("INSERT INTO candidates VALUES (?, ?, ?, ?, ?)",
                          (pull_id, c["model_id"], c["vendor"], c["model_name"], json.dumps(c)))
@@ -310,10 +316,78 @@ def _latest_snapshot() -> list:
     return [json.loads(r[0]) for r in rows]
 
 
+# --- Known models (SR 1.4.1.8, R4 fallback; SPEC section 2 "Known models"; ADR-0010) ---
+
+CATALOG_GAP_TOP_N = 20  # R4 indicator "catalog gap" (docs/risks.md; report Table 18)
+
+
+def _catalog_entries() -> list:
+    return json.loads(MODEL_SOURCES.read_text())["models"]
+
+
+def _known_models_from(aa_records: dict) -> tuple:
+    # Every listed model's name, slug, vendor and intelligence index, and the names of the top-N
+    # listed models by intelligence index that are not in the catalog (the catalog gap).
+    aa = SOURCE_FIELDS["artificial_analysis"]
+    index_spec = BENCHMARK_MAP["intelligence_index"]["artificial_analysis_api"]
+    known, scored = [], []
+    for aa_id, record in aa_records.items():
+        name = record.get(aa["name"])
+        if not name:
+            continue
+        intelligence = _read(record, index_spec)
+        known.append({"name": name, "slug": record.get("slug") or "",
+                      "vendor": _path(record, "model_creator.name") or "",
+                      "intelligence_index": intelligence})
+        if intelligence is not None:
+            scored.append((intelligence, aa_id, name))
+    # A model's effort or mode variants ("GPT-6.2 Sol (High)", "(Max)") count once, under its base
+    # name, and a variant of a catalog model is not a gap.
+    catalog_ids = {e.get("artificial_analysis_id") for e in _catalog_entries()}
+    catalog_bases = {_base_name(name) for _, aa_id, name in scored if aa_id in catalog_ids}
+    catalog_bases |= {_base_name(r.get(aa["name"]) or "") for i, r in aa_records.items() if i in catalog_ids}
+    top, seen = [], set()
+    for _, aa_id, name in sorted(scored, key=lambda t: -t[0]):
+        if _base_name(name) not in seen:
+            seen.add(_base_name(name))
+            top.append(name)
+        if len(top) == CATALOG_GAP_TOP_N:
+            break
+    return known, [_strip_variant(name) for name in top if _base_name(name) not in catalog_bases]
+
+
+def _strip_variant(name: str) -> str:
+    return re.sub(r"\s*\([^)]*\)\s*$", "", name)
+
+
+def _base_name(name: str) -> str:
+    return re.sub(r"[\s\-._]", "", _strip_variant(name).casefold())
+
+
+def provide_known_models() -> Optional[list]:
+    """F.7 -- the known-models list of the last pull that stored one (SR 1.4.1.8).
+
+    out: known_models (contracts/api-v1.yaml KnownModels); None when no pull has stored one (A37).
+    """
+    if not _snapshot_db().exists():
+        return None
+    conn = _connect()
+    try:
+        row = conn.execute("SELECT MAX(pull_id) FROM known_models").fetchone()
+        if row[0] is None:
+            return None
+        rows = conn.execute("SELECT name, slug, vendor, intelligence_index FROM known_models "
+                            "WHERE pull_id = ? ORDER BY position", (row[0],)).fetchall()
+    finally:
+        conn.close()
+    return [{"name": n, "slug": s, "vendor": v, "intelligence_index": i} for n, s, v, i in rows]
+
+
 def refresh_model_data() -> dict:
     """On-demand pull from the live sources (SPEC section 2 "Refresh"; Lab Manual 8.5).
 
-    Returns {"status": "ok" | "source_unavailable", "pulled_at", "candidates", "gaps"}.
+    Returns {"status": "ok" | "source_unavailable", "pulled_at", "candidates", "gaps"}; an ok pull
+    also returns "known_models" (how many were stored) and "catalog_gap" (SR 1.4.1.8).
     """
     pulled_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     today = pulled_at[:10]  # collection_date is the pull date (SPEC section 2)
@@ -334,6 +408,9 @@ def refresh_model_data() -> dict:
         _store_pull("source_unavailable", {"gaps": gaps, "errors": errors}, [], pulled_at)
         return {"status": "source_unavailable", "pulled_at": pulled_at, "candidates": 0,
                 "gaps": gaps, "errors": errors}
-    _store_pull("ok", {"gaps": gaps, "errors": pulled["errors"]}, candidates, pulled_at)
+    # SR 1.4.1.8 -- every listed model, and the R4 catalog gap (top-20 not in the catalog)
+    known, catalog_gap = _known_models_from(pulled["aa"][1])
+    _store_pull("ok", {"gaps": gaps, "errors": pulled["errors"], "catalog_gap": catalog_gap},
+                candidates, pulled_at, known)
     return {"status": "ok", "pulled_at": pulled_at, "candidates": len(candidates),
-            "gaps": gaps, "errors": pulled["errors"]}
+            "gaps": gaps, "errors": pulled["errors"], "known_models": len(known), "catalog_gap": catalog_gap}
